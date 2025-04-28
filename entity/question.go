@@ -51,3 +51,14 @@ type Question struct {
 	Difficulty      QuestionDifficulty
 	CategoryId      uint
 }
+
+func NewQuestion(id uint, text string) *Question {
+	return &Question{
+		Id:              id,
+		Text:            text,
+		PossibleAnswers: nil,
+		CorrectAnswer:   0,
+		Difficulty:      0,
+		CategoryId:      0,
+	}
+}

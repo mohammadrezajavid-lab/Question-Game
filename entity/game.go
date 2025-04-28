@@ -23,3 +23,14 @@ type Game struct {
 	WinnerId   uint
 	StartTime  time.Time
 }
+
+func NewGame(id uint, categoryId uint) *Game {
+	return &Game{
+		Id:         id,
+		CategoryId: categoryId,
+		QuestionId: nil,
+		PlayerIds:  nil,
+		WinnerId:   0,
+		StartTime:  time.Now(),
+	}
+}
