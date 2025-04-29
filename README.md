@@ -1,0 +1,1 @@
+Rest API implementation practice project for a Q&A game application while participating in the gocasts [gocasts](https://github.com/gocasts-bootcamp) bootcamp course
