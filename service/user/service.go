@@ -8,7 +8,11 @@ import (
 )
 
 type Service struct {
-	userRepo contract.UserRepository
+	userRepository contract.UserRepository
+}
+
+func NewService(userRepository contract.UserRepository) *Service {
+	return &Service{userRepository: userRepository}
 }
 
 func (s *Service) Register(req *RegisterRequest) (*RegisterResponse, error) {
@@ -23,7 +27,7 @@ func (s *Service) Register(req *RegisterRequest) (*RegisterResponse, error) {
 	}
 
 	// check uniqueness of phone number
-	if isUniq, err := s.userRepo.IsPhoneNumberUniq(req.PhoneNumber); !isUniq || err != nil {
+	if isUniq, err := s.userRepository.IsPhoneNumberUniq(req.PhoneNumber); !isUniq || err != nil {
 		if !isUniq {
 
 			return NewRegisterResponse(entity.NewUser("", "")),
@@ -42,12 +46,12 @@ func (s *Service) Register(req *RegisterRequest) (*RegisterResponse, error) {
 	}
 
 	// create new user in storage
-	newUser, cErr := s.userRepo.RegisterUser(entity.NewUser(req.Name, req.PhoneNumber))
+	newUser, cErr := s.userRepository.RegisterUser(entity.NewUser(req.Name, req.PhoneNumber))
 	if cErr != nil {
 		return NewRegisterResponse(entity.NewUser("", "")),
 			fmt.Errorf("unexpected error: %w", cErr)
 	}
-	// return created user
 
+	// return created user
 	return NewRegisterResponse(newUser), nil
 }

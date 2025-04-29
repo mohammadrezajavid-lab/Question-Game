@@ -1,5 +1,7 @@
 package entity
 
+import "fmt"
+
 type User struct {
 	ID          uint
 	Name        string
@@ -12,4 +14,8 @@ func NewUser(name string, phoneNumber string) *User {
 		Name:        name,
 		PhoneNumber: phoneNumber,
 	}
+}
+
+func (u *User) String() string {
+	return fmt.Sprintf("ID: %d, Name: %s, PhoneNumber: %s", u.ID, u.Name, u.PhoneNumber)
 }
