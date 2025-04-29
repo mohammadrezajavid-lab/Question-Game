@@ -3,8 +3,8 @@ package user
 import "gocasts.ir/go-fundamentals/gameapp/entity"
 
 type RegisterRequest struct {
-	Name        string
-	PhoneNumber string
+	Name        string `json:"name"`
+	PhoneNumber string `json:"phoneNumber"`
 }
 
 func NewRegisterRequest(name, phoneNumber string) *RegisterRequest {
@@ -12,7 +12,7 @@ func NewRegisterRequest(name, phoneNumber string) *RegisterRequest {
 }
 
 type RegisterResponse struct {
-	User *entity.User
+	User *entity.User `json:"user"`
 }
 
 func NewRegisterResponse(user *entity.User) *RegisterResponse {

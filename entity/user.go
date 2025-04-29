@@ -3,9 +3,9 @@ package entity
 import "fmt"
 
 type User struct {
-	ID          uint
-	Name        string
-	PhoneNumber string
+	ID          uint   `json:"-"`
+	Name        string `json:"name"`
+	PhoneNumber string `json:"phoneNumber"`
 }
 
 func NewUser(name string, phoneNumber string) *User {
@@ -17,5 +17,5 @@ func NewUser(name string, phoneNumber string) *User {
 }
 
 func (u *User) String() string {
-	return fmt.Sprintf("ID: %d, Name: %s, PhoneNumber: %s", u.ID, u.Name, u.PhoneNumber)
+	return fmt.Sprintf(`{"id": %d, "name": %s, "phoneNumber": %s}`, u.ID, u.Name, u.PhoneNumber)
 }
