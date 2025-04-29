@@ -1,12 +1,23 @@
 services:
-  mysql:
+  db:
     image: mysql:8
     ports:
-      - 3306:3306
-    volumes:
-      - ~/apps/mysql:/var/lib/mysql
+      - "3308:3306"
+    container_name: gameapp_db
+    healthcheck:
+      test: [ "CMD-SHELL", "mysqladmin ping -h localhost" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    cap_add:
+      - SYS_NICE
     environment:
-      - MYSQL_ROOT_PASSWORD=S3cret
-      - MYSQL_PASSWORD=An0thrS3crt
-      - MYSQL_USER=citizix_user
-      - MYSQL_DATABASE=citizix_db
+      - "MYSQL_ROOT_PASSWORD=game_app_root"
+      - "MYSQL_USER=game_app"
+      - "MYSQL_PASSWORD=game_app_pass"
+      - "MYSQL_DATABASE=game_app_db"
+    volumes:
+      - db_vol:/var/lib/mysql
+volumes:
+  db_vol:

@@ -42,7 +42,7 @@ func (s *Service) Register(req *RegisterRequest) (*RegisterResponse, error) {
 	}
 
 	// create new user in storage
-	newUser, cErr := s.userRepo.CreateNewUser(entity.NewUser(req.Name, req.PhoneNumber))
+	newUser, cErr := s.userRepo.RegisterUser(entity.NewUser(req.Name, req.PhoneNumber))
 	if cErr != nil {
 		return NewRegisterResponse(entity.NewUser("", "")),
 			fmt.Errorf("unexpected error: %w", cErr)
