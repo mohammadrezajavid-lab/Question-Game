@@ -27,9 +27,10 @@ func (d *DB) IsPhoneNumberUniq(phoneNumber string) (bool, error) {
 
 func (d *DB) RegisterUser(user *entity.User) (*entity.User, error) {
 
-	var result, eErr = d.MysqlConnection.Exec(`INSERT INTO game_app_db.Users(name, phone_number) VALUES(?, ?)`, user.Name, user.PhoneNumber)
+	var result, eErr = d.MysqlConnection.Exec(`INSERT INTO game_app_db.Users(name, phone_number, hashed_password) VALUES(?, ?, ?)`,
+		user.Name, user.PhoneNumber, user.HashedPassword)
 	if eErr != nil {
-		return entity.NewUser("", ""), fmt.Errorf("can't execute command: %w", eErr)
+		return entity.NewUser("", "", ""), fmt.Errorf("can't execute command: %w", eErr)
 	}
 
 	// error is always nil

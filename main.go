@@ -76,7 +76,7 @@ func registerUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var requestUser = user.NewRegisterRequest("", "")
+	var requestUser = user.NewRegisterRequest("", "", "")
 	if uErr := json.Unmarshal(requestBody, requestUser); uErr != nil {
 
 		res := NewResponse(uErr.Error(), "")
