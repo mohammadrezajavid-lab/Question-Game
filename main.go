@@ -11,14 +11,16 @@ import (
 	"strings"
 )
 
-func helloHandler(w http.ResponseWriter, r *http.Request) {
+func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 
-	if _, writeErr := fmt.Fprint(w, `{"message":"welcome to this game"}`); writeErr != nil {
+	db := mysql.NewDB()
+	if err := db.MysqlConnection.Ping(); err != nil {
 
-		log.Fatal(writeErr.Error())
+		log.Println(err)
 	}
 
-	log.Printf("recived one request from addres: %s, URL: %s", r.RemoteAddr, r.URL)
+	res := NewResponse("", "health check OK")
+	ResponseWrite(w, r, res)
 }
 
 type Response struct {
@@ -98,27 +100,18 @@ func registerUserHandler(w http.ResponseWriter, r *http.Request) {
 	res := NewResponse("", registerResponse)
 	ResponseWrite(w, r, res)
 
-	//marshalRegisterRes, mErr := json.Marshal(registerResponse)
-	//if mErr != nil {
-	//
-	//	resJson := NewResponse(mErr.Error(), "")
-	//	ResponseWrite(w, r, resJson)
-	//
-	//	return
-	//
-	//}
+}
 
-	//resJson := NewResponse("", marshalRegisterRes)
-
-	//ResponseWrite(w, r, resJson)
-
-	fmt.Println(registerResponse.User.String())
+func loginUserHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO
+	http.Redirect(w, r, "/users/register", http.StatusTemporaryRedirect)
 }
 
 func main() {
 
-	http.HandleFunc("/hello", helloHandler)
+	http.HandleFunc("/health-check", healthCheckHandler)
 	http.HandleFunc("/users/register", registerUserHandler)
+	http.HandleFunc("/users/login", loginUserHandler)
 
 	fmt.Printf("server is ready in Address: %s\n", "127.0.0.1:8080")
 
