@@ -31,7 +31,7 @@ func (s *Service) Register(req *RegisterRequest) (*RegisterResponse, error) {
 		if !isUniq {
 
 			return NewRegisterResponse(entity.NewUser("", "")),
-				fmt.Errorf("phone number is not uniqe")
+				fmt.Errorf("phone number is not uniq")
 		}
 
 		return NewRegisterResponse(entity.NewUser("", "")),
