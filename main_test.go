@@ -25,14 +25,14 @@ func TestRegisterUserHttpServer(t *testing.T) {
 		{
 			"test httpMethod",
 			http.MethodGet,
-			user.NewRegisterRequest("ali", "09196881929"),
+			user.NewRegisterRequest("ali", "09196881929", "123456789"),
 			NewResponse("invalid method request", ""),
 			http.StatusOK,
 		},
 		{
 			"invalid name",
 			http.MethodPost,
-			user.NewRegisterRequest("a", "09196881929"),
+			user.NewRegisterRequest("a", "09196881929", "123456789"),
 			NewResponse("name length should be greater than 3", ""),
 			http.StatusOK,
 		},
@@ -46,15 +46,22 @@ func TestRegisterUserHttpServer(t *testing.T) {
 		{
 			"register new user",
 			http.MethodPost,
-			user.NewRegisterRequest("ali", "09126551927"),
+			user.NewRegisterRequest("ali", "09126551927", "123456789"),
 			NewResponse("", `{"user": {"name": "ali","phone_number": "09126551927"}}`),
 			http.StatusOK,
 		},
 		{
 			"phone number is invalid",
 			http.MethodPost,
-			user.NewRegisterRequest("ali", "0912"),
+			user.NewRegisterRequest("ali", "0912", "123456789"),
 			NewResponse("phone number is invalid", ""),
+			http.StatusOK,
+		},
+		{
+			"invalid password",
+			http.MethodPost,
+			user.NewRegisterRequest("ali", "0912", "123456"),
+			NewResponse("password length should be greater than 8", ""),
 			http.StatusOK,
 		},
 	}
