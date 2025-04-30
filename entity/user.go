@@ -5,7 +5,7 @@ import "fmt"
 type User struct {
 	ID          uint   `json:"-"`
 	Name        string `json:"name"`
-	PhoneNumber string `json:"phoneNumber"`
+	PhoneNumber string `json:"phone_number"`
 }
 
 func NewUser(name string, phoneNumber string) *User {
@@ -17,5 +17,5 @@ func NewUser(name string, phoneNumber string) *User {
 }
 
 func (u *User) String() string {
-	return fmt.Sprintf(`{"id": %d, "name": %s, "phoneNumber": %s}`, u.ID, u.Name, u.PhoneNumber)
+	return fmt.Sprintf(`{"id": "%d", "name": "%s", "phone_number": "%s"}`, u.ID, u.Name, u.PhoneNumber)
 }

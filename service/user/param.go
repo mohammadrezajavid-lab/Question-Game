@@ -4,7 +4,7 @@ import "gocasts.ir/go-fundamentals/gameapp/entity"
 
 type RegisterRequest struct {
 	Name        string `json:"name"`
-	PhoneNumber string `json:"phoneNumber"`
+	PhoneNumber string `json:"phone_number"`
 }
 
 func NewRegisterRequest(name, phoneNumber string) *RegisterRequest {

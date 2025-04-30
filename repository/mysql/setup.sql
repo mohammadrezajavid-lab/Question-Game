@@ -16,3 +16,6 @@ VALUES ('user1', '09191234567'),
 SELECT *
 FROM game_app_db.Users
 where phone_number = '09197654321';
+
+SELECT *
+FROM game_app_db.Users;
