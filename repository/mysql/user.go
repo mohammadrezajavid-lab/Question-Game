@@ -12,13 +12,21 @@ func (d *DB) IsPhoneNumberUniq(phoneNumber string) (bool, error) {
 	var rowUser = new(entity.User)
 	var createdAt []byte
 
-	var result *sql.Row = d.MysqlConnection.QueryRow(`SELECT * FROM game_app_db.Users WHERE phone_number = ?`, phoneNumber)
+	var result *sql.Row = d.MysqlConnection.QueryRow(
+		`SELECT * FROM game_app_db.Users WHERE phone_number = ?`,
+		phoneNumber,
+	)
 
 	if result.Err() != nil {
 		return false, result.Err()
 	}
 
-	if scanErr := result.Scan(&rowUser.ID, &rowUser.Name, &rowUser.PhoneNumber, &createdAt); errors.Is(scanErr, sql.ErrNoRows) {
+	if scanErr := result.Scan(
+		&rowUser.ID,
+		&rowUser.Name,
+		&rowUser.PhoneNumber,
+		&createdAt,
+	); errors.Is(scanErr, sql.ErrNoRows) {
 		return true, nil
 	}
 
@@ -38,4 +46,34 @@ func (d *DB) RegisterUser(user *entity.User) (*entity.User, error) {
 	user.ID = uint(userId)
 
 	return user, nil
+}
+
+func (d *DB) GetUser(phoneNumber string) (*entity.User, error) {
+
+	var result = d.MysqlConnection.QueryRow(
+		`SELECT * FROM game_app_db.Users WHERE phone_number = ?`,
+		phoneNumber,
+	)
+	if result.Err() != nil {
+		//It would have been better to pass
+		//an error related to the failure to execute the query,
+		//but for simplicity and consistency,
+		//I will pass the same error: User not found.
+		return nil, fmt.Errorf("can't found any user")
+	}
+
+	var rowUser = new(entity.User)
+	var createdAt []byte
+
+	if scanErr := result.Scan(
+		&rowUser.ID,
+		&rowUser.Name,
+		&rowUser.PhoneNumber,
+		&rowUser.HashedPassword,
+		&createdAt,
+	); errors.Is(scanErr, sql.ErrNoRows) {
+		return nil, fmt.Errorf("can't found any user")
+	}
+
+	return rowUser, nil
 }

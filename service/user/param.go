@@ -21,3 +21,20 @@ type RegisterResponse struct {
 func NewRegisterResponse(user *entity.User) *RegisterResponse {
 	return &RegisterResponse{User: user}
 }
+
+type LoginRequest struct {
+	PhoneNumber string `json:"phone_number"`
+	Password    string `json:"password"`
+}
+
+func NewLoginRequest(phoneNumber string, password string) *LoginRequest {
+
+	return &LoginRequest{
+		PhoneNumber: phoneNumber,
+		Password:    password,
+	}
+}
+
+type LoginResponse struct {
+	// TODO
+}

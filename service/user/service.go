@@ -64,3 +64,20 @@ func (s *Service) Register(req *RegisterRequest) (*RegisterResponse, error) {
 	// return created user
 	return NewRegisterResponse(newUser), nil
 }
+
+func (s *Service) Login(req *LoginRequest) (*LoginResponse, error) {
+
+	user, gErr := s.userRepository.GetUser(req.PhoneNumber)
+	if gErr != nil {
+		log.Println(gErr.Error())
+		return nil, fmt.Errorf("phoneNumber or password incorect")
+	}
+
+	if !pkg.CheckPasswordHash(req.Password, user.HashedPassword) {
+		return nil, fmt.Errorf("phoneNumber or password incorrect")
+	}
+
+	// TODO - implement Me : If the user exists
+
+	return nil, nil
+}

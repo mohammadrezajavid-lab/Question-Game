@@ -45,7 +45,15 @@ func ResponseWrite(w http.ResponseWriter, r *http.Request, response *Response) {
 	}
 }
 
-func registerUserHandler(w http.ResponseWriter, r *http.Request) {
+type UserHandlers struct {
+	UserService *user.Service
+}
+
+func NewUserHandlers() *UserHandlers {
+	return &UserHandlers{UserService: user.NewService(mysql.NewDB())}
+}
+
+func (uh *UserHandlers) registerUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("recived one request from addres: %s, URL: %s", r.RemoteAddr, r.URL)
 
@@ -60,7 +68,10 @@ func registerUserHandler(w http.ResponseWriter, r *http.Request) {
 	requestBody, readErr := io.ReadAll(r.Body)
 	if readErr != nil {
 
-		res := NewResponse(readErr.Error(), "")
+		log.Println(fmt.Errorf("can't read request body, error: %w", readErr))
+
+		err := "invalid body request"
+		res := NewResponse(err, "")
 		ResponseWrite(w, r, res)
 
 		return
@@ -85,10 +96,10 @@ func registerUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var db = mysql.NewDB()
-	var userService = user.NewService(db)
+	//var db = mysql.NewDB()
+	//var userService = user.NewService(db)
 
-	registerResponse, registerErr := userService.Register(requestUser)
+	registerResponse, registerErr := uh.UserService.Register(requestUser)
 	if registerErr != nil {
 
 		res := NewResponse(registerErr.Error(), "")
@@ -102,21 +113,68 @@ func registerUserHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func loginUserHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO
-	http.Redirect(w, r, "/users/register", http.StatusTemporaryRedirect)
+func (uh *UserHandlers) loginUserHandler(w http.ResponseWriter, r *http.Request) {
+
+	log.Printf("recived one request from addres: %s, URL: %s", r.RemoteAddr, r.URL)
+
+	if !strings.EqualFold(r.Method, http.MethodPost) {
+
+		res := NewResponse("invalid method request", "")
+		ResponseWrite(w, r, res)
+
+		return
+	}
+
+	requestBody, readErr := io.ReadAll(r.Body)
+	if readErr != nil {
+
+		log.Println(fmt.Errorf("can't read request body, error: %w", readErr))
+
+		err := "invalid body request"
+		res := NewResponse(err, "")
+		ResponseWrite(w, r, res)
+
+		return
+	}
+
+	if strings.EqualFold(string(requestBody), "") {
+
+		// when empty body request
+		err := "invalid body request"
+		res := NewResponse(err, "")
+		ResponseWrite(w, r, res)
+
+		return
+	}
+
+	var requestLogin = user.NewLoginRequest("", "")
+	if uErr := json.Unmarshal(requestBody, requestLogin); uErr != nil {
+
+		log.Println(fmt.Errorf("can't Unmarshal requestBody in Login procces, error: %w", uErr))
+
+		err := "invalid body request"
+		res := NewResponse(err, "")
+		ResponseWrite(w, r, res)
+
+		return
+	}
+
+	// TODO -
+	//loginRes, loginErr := uh.UserService.Login(requestLogin)
+
 }
 
 func main() {
 
+	userHandlers := NewUserHandlers()
+
 	http.HandleFunc("/health-check", healthCheckHandler)
-	http.HandleFunc("/users/register", registerUserHandler)
-	http.HandleFunc("/users/login", loginUserHandler)
+	http.HandleFunc("/users/register", userHandlers.registerUserHandler)
+	http.HandleFunc("/users/login", userHandlers.loginUserHandler)
 
 	fmt.Printf("server is ready in Address: %s\n", "127.0.0.1:8080")
 
 	if listenErr := http.ListenAndServe("127.0.0.1:8080", nil); listenErr != nil {
 		log.Fatal(listenErr)
 	}
-
 }
