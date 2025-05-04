@@ -36,7 +36,11 @@ func NewLoginRequest(phoneNumber string, password string) *LoginRequest {
 }
 
 type LoginResponse struct {
-	// TODO
+	AccessToken string `json:"access_token"`
+}
+
+func NewLoginResponse(token string) *LoginResponse {
+	return &LoginResponse{AccessToken: token}
 }
 
 type ProfileRequest struct {

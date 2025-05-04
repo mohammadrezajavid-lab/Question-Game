@@ -2,18 +2,34 @@ package user
 
 import (
 	"fmt"
+	"github.com/golang-jwt/jwt/v4"
 	"gocasts.ir/go-fundamentals/gameapp/entity"
 	"gocasts.ir/go-fundamentals/gameapp/pkg"
 	"gocasts.ir/go-fundamentals/gameapp/service/contract"
 	"log"
+	"time"
 )
 
 type Service struct {
 	userRepository contract.UserRepository
+	signKey        []byte
 }
 
-func NewService(userRepository contract.UserRepository) *Service {
-	return &Service{userRepository: userRepository}
+type Info struct {
+	Name   string
+	UserId uint
+}
+
+type Claims struct {
+	jwt.RegisteredClaims
+	Info
+}
+
+func NewService(userRepository contract.UserRepository, signKey []byte) *Service {
+	return &Service{
+		userRepository: userRepository,
+		signKey:        signKey,
+	}
 }
 
 func (s *Service) Register(req *RegisterRequest) (*RegisterResponse, error) {
@@ -79,7 +95,12 @@ func (s *Service) Login(req *LoginRequest) (*LoginResponse, error) {
 
 	// TODO - implement Me : If the user exists
 
-	return nil, nil
+	accessToken, cErr := createToken(user.ID, user.Name, s.signKey)
+	if cErr != nil {
+		return nil, fmt.Errorf("unexpected error: %w", cErr)
+	}
+
+	return NewLoginResponse(accessToken), nil
 }
 
 // All Request Inputs for Interaction/Service Should be Sanitized.
@@ -96,4 +117,19 @@ func (s *Service) Profile(req *ProfileRequest) (*ProfileResponse, error) {
 	}
 
 	return NewProfileResponse(user.Name), nil
+}
+
+func createToken(userId uint, name string, signKey []byte) (string, error) {
+
+	// create a signer for SHA 256
+	t := jwt.New(jwt.GetSigningMethod(jwt.SigningMethodHS256.Alg()))
+
+	// set our claims
+	t.Claims = &Claims{
+		// set the expiry time
+		jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24 * 7))},
+		Info{name, userId},
+	}
+	// create token string
+	return t.SignedString(signKey)
 }

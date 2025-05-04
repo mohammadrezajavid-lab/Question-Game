@@ -56,8 +56,12 @@ type UserHandlers struct {
 	UserService *user.Service
 }
 
+var (
+	SignKey = []byte(`jwt_secret`)
+)
+
 func NewUserHandlers() *UserHandlers {
-	return &UserHandlers{UserService: user.NewService(mysql.NewDB())}
+	return &UserHandlers{UserService: user.NewService(mysql.NewDB(), SignKey)}
 }
 
 func (uh *UserHandlers) userRegisterHandler(w http.ResponseWriter, r *http.Request) {
@@ -167,8 +171,17 @@ func (uh *UserHandlers) userLoginHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	// TODO -
-	//loginRes, loginErr := uh.UserService.Login(requestLogin)
+	loginResponse, loginErr := uh.UserService.Login(requestLogin)
+	if loginErr != nil {
 
+		res := NewResponse(loginErr.Error(), "")
+		ResponseWrite(w, r, res, http.StatusUnauthorized)
+
+		return
+	}
+
+	res := NewResponse("", loginResponse)
+	ResponseWrite(w, r, res, http.StatusOK)
 }
 
 func (uh *UserHandlers) userProfileHandler(w http.ResponseWriter, r *http.Request) {
