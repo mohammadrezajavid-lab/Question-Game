@@ -207,7 +207,12 @@ func (uh *UserHandlers) userProfileHandler(w http.ResponseWriter, r *http.Reques
 	var requestProfile = user.NewProfileRequest(0)
 	if uErr := json.Unmarshal(requestBody, requestProfile); uErr != nil {
 
-		// handel error unmarshal profileRequest
+		log.Printf("can't Unmarshal requestProfile data: %v", uErr)
+
+		err := "invalid body request"
+		res := NewResponse(err, "")
+		ResponseWrite(w, r, res, http.StatusBadRequest)
+
 		return
 	}
 
