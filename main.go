@@ -17,10 +17,15 @@ func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	if err := db.MysqlConnection.Ping(); err != nil {
 
 		log.Println(err)
+
+		res := NewResponse("unexpected error: ping to database server failed", "")
+		ResponseWrite(w, r, res, http.StatusInternalServerError)
+
+		return
 	}
 
 	res := NewResponse("", "health check OK")
-	ResponseWrite(w, r, res)
+	ResponseWrite(w, r, res, http.StatusOK)
 }
 
 type Response struct {
@@ -32,12 +37,14 @@ func NewResponse(error string, message any) *Response {
 	return &Response{Error: error, Message: message}
 }
 
-func ResponseWrite(w http.ResponseWriter, r *http.Request, response *Response) {
+func ResponseWrite(w http.ResponseWriter, r *http.Request, response *Response, statusCode int) {
 
 	marshalResponse, mErr := json.Marshal(response)
 	if mErr != nil {
-
+		log.Println(mErr.Error())
 	}
+
+	w.WriteHeader(statusCode)
 
 	if _, writeErr := fmt.Fprint(w, string(marshalResponse)); writeErr != nil {
 
@@ -53,14 +60,14 @@ func NewUserHandlers() *UserHandlers {
 	return &UserHandlers{UserService: user.NewService(mysql.NewDB())}
 }
 
-func (uh *UserHandlers) registerUserHandler(w http.ResponseWriter, r *http.Request) {
+func (uh *UserHandlers) userRegisterHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("recived one request from addres: %s, URL: %s", r.RemoteAddr, r.URL)
 
 	if !strings.EqualFold(r.Method, http.MethodPost) {
 
 		res := NewResponse("invalid method request", "")
-		ResponseWrite(w, r, res)
+		ResponseWrite(w, r, res, http.StatusMethodNotAllowed)
 
 		return
 	}
@@ -72,7 +79,7 @@ func (uh *UserHandlers) registerUserHandler(w http.ResponseWriter, r *http.Reque
 
 		err := "invalid body request"
 		res := NewResponse(err, "")
-		ResponseWrite(w, r, res)
+		ResponseWrite(w, r, res, http.StatusBadRequest)
 
 		return
 	}
@@ -82,7 +89,7 @@ func (uh *UserHandlers) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		// when empty body request
 		err := "invalid body request"
 		res := NewResponse(err, "")
-		ResponseWrite(w, r, res)
+		ResponseWrite(w, r, res, http.StatusBadRequest)
 
 		return
 	}
@@ -91,7 +98,7 @@ func (uh *UserHandlers) registerUserHandler(w http.ResponseWriter, r *http.Reque
 	if uErr := json.Unmarshal(requestBody, requestUser); uErr != nil {
 
 		res := NewResponse(uErr.Error(), "")
-		ResponseWrite(w, r, res)
+		ResponseWrite(w, r, res, http.StatusBadRequest)
 
 		return
 	}
@@ -103,24 +110,24 @@ func (uh *UserHandlers) registerUserHandler(w http.ResponseWriter, r *http.Reque
 	if registerErr != nil {
 
 		res := NewResponse(registerErr.Error(), "")
-		ResponseWrite(w, r, res)
+		ResponseWrite(w, r, res, http.StatusOK)
 
 		return
 	}
 
 	res := NewResponse("", registerResponse)
-	ResponseWrite(w, r, res)
+	ResponseWrite(w, r, res, http.StatusOK)
 
 }
 
-func (uh *UserHandlers) loginUserHandler(w http.ResponseWriter, r *http.Request) {
+func (uh *UserHandlers) userLoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("recived one request from addres: %s, URL: %s", r.RemoteAddr, r.URL)
 
 	if !strings.EqualFold(r.Method, http.MethodPost) {
 
 		res := NewResponse("invalid method request", "")
-		ResponseWrite(w, r, res)
+		ResponseWrite(w, r, res, http.StatusMethodNotAllowed)
 
 		return
 	}
@@ -132,7 +139,7 @@ func (uh *UserHandlers) loginUserHandler(w http.ResponseWriter, r *http.Request)
 
 		err := "invalid body request"
 		res := NewResponse(err, "")
-		ResponseWrite(w, r, res)
+		ResponseWrite(w, r, res, http.StatusBadRequest)
 
 		return
 	}
@@ -142,7 +149,7 @@ func (uh *UserHandlers) loginUserHandler(w http.ResponseWriter, r *http.Request)
 		// when empty body request
 		err := "invalid body request"
 		res := NewResponse(err, "")
-		ResponseWrite(w, r, res)
+		ResponseWrite(w, r, res, http.StatusBadRequest)
 
 		return
 	}
@@ -154,7 +161,7 @@ func (uh *UserHandlers) loginUserHandler(w http.ResponseWriter, r *http.Request)
 
 		err := "invalid body request"
 		res := NewResponse(err, "")
-		ResponseWrite(w, r, res)
+		ResponseWrite(w, r, res, http.StatusBadRequest)
 
 		return
 	}
@@ -164,13 +171,67 @@ func (uh *UserHandlers) loginUserHandler(w http.ResponseWriter, r *http.Request)
 
 }
 
+func (uh *UserHandlers) userProfileHandler(w http.ResponseWriter, r *http.Request) {
+
+	// TODO - we are sanitize userId in this handler after send userId to service layer
+
+	if r.Method != http.MethodGet {
+		res := NewResponse("invalid method request", "")
+		ResponseWrite(w, r, res, http.StatusMethodNotAllowed)
+
+		return
+	}
+
+	requestBody, readErr := io.ReadAll(r.Body)
+	if readErr != nil {
+
+		log.Println(fmt.Errorf("can't read request body, error: %w", readErr))
+
+		err := "invalid body request"
+		res := NewResponse(err, "")
+		ResponseWrite(w, r, res, http.StatusBadRequest)
+
+		return
+	}
+
+	if strings.EqualFold(string(requestBody), "") {
+
+		// when empty body request
+		err := "invalid body request"
+		res := NewResponse(err, "")
+		ResponseWrite(w, r, res, http.StatusBadRequest)
+
+		return
+	}
+
+	var requestProfile = user.NewProfileRequest(0)
+	if uErr := json.Unmarshal(requestBody, requestProfile); uErr != nil {
+
+		// handel error unmarshal profileRequest
+		return
+	}
+
+	profile, pErr := uh.UserService.Profile(requestProfile)
+	if pErr != nil {
+
+		res := NewResponse(pErr.Error(), "")
+		ResponseWrite(w, r, res, http.StatusOK)
+
+		return
+	}
+
+	res := NewResponse("", profile)
+	ResponseWrite(w, r, res, http.StatusOK)
+}
+
 func main() {
 
 	userHandlers := NewUserHandlers()
 
 	http.HandleFunc("/health-check", healthCheckHandler)
-	http.HandleFunc("/users/register", userHandlers.registerUserHandler)
-	http.HandleFunc("/users/login", userHandlers.loginUserHandler)
+	http.HandleFunc("/users/register", userHandlers.userRegisterHandler)
+	http.HandleFunc("/users/login", userHandlers.userLoginHandler)
+	http.HandleFunc("/users/profile", userHandlers.userProfileHandler)
 
 	fmt.Printf("server is ready in Address: %s\n", "127.0.0.1:8080")
 

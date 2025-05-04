@@ -67,7 +67,7 @@ func (s *Service) Register(req *RegisterRequest) (*RegisterResponse, error) {
 
 func (s *Service) Login(req *LoginRequest) (*LoginResponse, error) {
 
-	user, gErr := s.userRepository.GetUser(req.PhoneNumber)
+	user, gErr := s.userRepository.GetUserByPhoneNumber(req.PhoneNumber)
 	if gErr != nil {
 		log.Println(gErr.Error())
 		return nil, fmt.Errorf("phoneNumber or password incorect")
@@ -80,4 +80,20 @@ func (s *Service) Login(req *LoginRequest) (*LoginResponse, error) {
 	// TODO - implement Me : If the user exists
 
 	return nil, nil
+}
+
+// All Request Inputs for Interaction/Service Should be Sanitized.
+
+func (s *Service) Profile(req *ProfileRequest) (*ProfileResponse, error) {
+
+	user, err := s.userRepository.GetUserById(req.UserId)
+	if err != nil {
+
+		// I don't expect the repository call return "not found user record" error,
+		// because I assume the interaction input in sanitized
+		// TODO - we can use Rich Error.
+		return nil, fmt.Errorf("unexpected error: %w", err)
+	}
+
+	return NewProfileResponse(user.Name), nil
 }

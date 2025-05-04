@@ -9,24 +9,14 @@ import (
 
 func (d *DB) IsPhoneNumberUniq(phoneNumber string) (bool, error) {
 
-	var rowUser = new(entity.User)
-	var createdAt []byte
-
-	var result *sql.Row = d.MysqlConnection.QueryRow(
+	userRow := d.MysqlConnection.QueryRow(
 		`SELECT * FROM game_app_db.Users WHERE phone_number = ?`,
 		phoneNumber,
 	)
 
-	if result.Err() != nil {
-		return false, result.Err()
-	}
+	_, err := scanUser(userRow)
+	if errors.Is(err, sql.ErrNoRows) {
 
-	if scanErr := result.Scan(
-		&rowUser.ID,
-		&rowUser.Name,
-		&rowUser.PhoneNumber,
-		&createdAt,
-	); errors.Is(scanErr, sql.ErrNoRows) {
 		return true, nil
 	}
 
@@ -35,10 +25,15 @@ func (d *DB) IsPhoneNumberUniq(phoneNumber string) (bool, error) {
 
 func (d *DB) RegisterUser(user *entity.User) (*entity.User, error) {
 
-	var result, eErr = d.MysqlConnection.Exec(`INSERT INTO game_app_db.Users(name, phone_number, hashed_password) VALUES(?, ?, ?)`,
-		user.Name, user.PhoneNumber, user.HashedPassword)
+	var result, eErr = d.MysqlConnection.Exec(
+		`INSERT INTO game_app_db.Users(name, phone_number, hashed_password) VALUES(?, ?, ?)`,
+		user.Name,
+		user.PhoneNumber,
+		user.HashedPassword,
+	)
 	if eErr != nil {
-		return entity.NewUser("", "", ""), fmt.Errorf("can't execute command: %w", eErr)
+
+		return nil, fmt.Errorf("can't execute command: %w", eErr)
 	}
 
 	// error is always nil
@@ -48,32 +43,52 @@ func (d *DB) RegisterUser(user *entity.User) (*entity.User, error) {
 	return user, nil
 }
 
-func (d *DB) GetUser(phoneNumber string) (*entity.User, error) {
+func (d *DB) GetUserByPhoneNumber(phoneNumber string) (*entity.User, error) {
 
-	var result = d.MysqlConnection.QueryRow(
+	var userRow = d.MysqlConnection.QueryRow(
 		`SELECT * FROM game_app_db.Users WHERE phone_number = ?`,
 		phoneNumber,
 	)
-	if result.Err() != nil {
-		//It would have been better to pass
-		//an error related to the failure to execute the query,
-		//but for simplicity and consistency,
-		//I will pass the same error: User not found.
-		return nil, fmt.Errorf("can't found any user")
+
+	user, err := scanUser(userRow)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+
+			return nil, fmt.Errorf("record not found")
+		}
+
+		return nil, fmt.Errorf("can't scan query result: %w", err)
 	}
 
-	var rowUser = new(entity.User)
+	return user, nil
+}
+
+func (d *DB) GetUserById(userId uint) (*entity.User, error) {
+
+	userRow := d.MysqlConnection.QueryRow(
+		`SELECT * FROM game_app_db.Users WHERE id=?`,
+		userId,
+	)
+
+	user, err := scanUser(userRow)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+
+			return nil, fmt.Errorf("record not found")
+		}
+
+		return nil, fmt.Errorf("can't scan query result: %w", err)
+	}
+
+	return user, nil
+}
+
+func scanUser(row *sql.Row) (*entity.User, error) {
+
 	var createdAt []byte
 
-	if scanErr := result.Scan(
-		&rowUser.ID,
-		&rowUser.Name,
-		&rowUser.PhoneNumber,
-		&rowUser.HashedPassword,
-		&createdAt,
-	); errors.Is(scanErr, sql.ErrNoRows) {
-		return nil, fmt.Errorf("can't found any user")
-	}
+	user := entity.NewUser("", "", "")
+	err := row.Scan(&user.ID, &user.Name, &user.PhoneNumber, &user.HashedPassword, &createdAt)
 
-	return rowUser, nil
+	return user, err
 }
