@@ -7,27 +7,36 @@ import (
 	"time"
 )
 
-type Service struct {
-	signKey               []byte
-	accessExpirationTime  time.Duration
-	refreshExpirationTime time.Duration
-	accessSubject         string
-	refreshSubject        string
+type Config struct {
+	SignKey               []byte
+	AccessExpirationTime  time.Duration
+	RefreshExpirationTime time.Duration
+	AccessSubject         string
+	RefreshSubject        string
 }
 
-func NewService(
+func NewConfig(
 	signKey []byte,
 	accessExpirationTime, refreshExpirationTime time.Duration,
 	accessSubject, refreshSubject string,
-) *Service {
+) Config {
 
-	return &Service{
-		signKey:               signKey,
-		accessExpirationTime:  accessExpirationTime,
-		refreshExpirationTime: refreshExpirationTime,
-		accessSubject:         accessSubject,
-		refreshSubject:        refreshSubject,
+	return Config{
+		SignKey:               signKey,
+		AccessExpirationTime:  accessExpirationTime,
+		RefreshExpirationTime: refreshExpirationTime,
+		AccessSubject:         accessSubject,
+		RefreshSubject:        refreshSubject,
 	}
+}
+
+type Service struct {
+	config Config
+}
+
+func NewService(config Config) *Service {
+
+	return &Service{config: config}
 }
 
 func (s *Service) CreateAccessToken(user *entity.User) (string, error) {
@@ -40,21 +49,6 @@ func (s *Service) CreateRefreshToken(user *entity.User) (string, error) {
 	return s.createRefreshToken(user.ID)
 }
 
-func (s *Service) createAccessToken(userId uint) (string, error) {
-
-	// create a new jwt and set signer SHA 256 in jwt Header
-	t := jwt.New(jwt.GetSigningMethod(jwt.SigningMethodHS256.Alg()))
-
-	// set our claims
-	t.Claims = NewClaims(
-		jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.accessExpirationTime))},
-		s.accessSubject,
-		userId,
-	)
-	// create token string
-	return t.SignedString(s.signKey)
-}
-
 func (s *Service) ParseJWT(tokenString string) (*Claims, error) {
 
 	// https://pkg.go.dev/github.com/golang-jwt/jwt/v5#example-Parse-Hmac
@@ -63,7 +57,7 @@ func (s *Service) ParseJWT(tokenString string) (*Claims, error) {
 
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 
-		return s.signKey, nil
+		return s.config.SignKey, nil
 	}, jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}))
 	if err != nil {
 
@@ -79,6 +73,21 @@ func (s *Service) ParseJWT(tokenString string) (*Claims, error) {
 	}
 }
 
+func (s *Service) createAccessToken(userId uint) (string, error) {
+
+	// create a new jwt and set signer SHA 256 in jwt Header
+	t := jwt.New(jwt.GetSigningMethod(jwt.SigningMethodHS256.Alg()))
+
+	// set our claims
+	t.Claims = NewClaims(
+		jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.config.AccessExpirationTime))},
+		s.config.AccessSubject,
+		userId,
+	)
+	// create token string
+	return t.SignedString(s.config.SignKey)
+}
+
 func (s *Service) createRefreshToken(userId uint) (string, error) {
 
 	// create a new jwt and set signer SHA 256 in jwt Header
@@ -86,11 +95,11 @@ func (s *Service) createRefreshToken(userId uint) (string, error) {
 
 	// set our claims
 	t.Claims = NewClaims(
-		jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.refreshExpirationTime))},
-		s.refreshSubject,
+		jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.config.RefreshExpirationTime))},
+		s.config.RefreshSubject,
 		userId,
 	)
 
-	return t.SignedString(s.signKey)
+	return t.SignedString(s.config.SignKey)
 
 }

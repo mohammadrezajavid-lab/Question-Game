@@ -81,7 +81,7 @@ func (s *Service) Login(req *LoginRequest) (*LoginResponse, error) {
 		return nil, fmt.Errorf("phoneNumber or password incorrect")
 	}
 
-	// TODO - implement Me : If the user exists
+	// If the user exists create accessToken and refreshToken
 
 	accessToken, aErr := s.authService.CreateAccessToken(user)
 	if aErr != nil {

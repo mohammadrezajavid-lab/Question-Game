@@ -10,8 +10,8 @@ type RegisterRequest struct {
 	Password    string `json:"password"`
 }
 
-func NewRegisterRequest(name string, phoneNumber string, password string) *RegisterRequest {
-	return &RegisterRequest{Name: name, PhoneNumber: phoneNumber, Password: password}
+func NewRegisterRequest() *RegisterRequest {
+	return &RegisterRequest{Name: "name", PhoneNumber: "phoneNumber", Password: "password"}
 }
 
 type RegisterResponse struct {

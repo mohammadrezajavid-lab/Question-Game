@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"gocasts.ir/go-fundamentals/gameapp/config"
+	"gocasts.ir/go-fundamentals/gameapp/delivery/httpserver"
 	"gocasts.ir/go-fundamentals/gameapp/repository/mysql"
 	"gocasts.ir/go-fundamentals/gameapp/service/authorize"
 	"gocasts.ir/go-fundamentals/gameapp/service/user"
@@ -15,7 +17,7 @@ import (
 
 func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 
-	db := mysql.NewDB()
+	db := mysql.NewDB(mysql.NewConfig(DataBaseUserName, DataBasePassword, DataBaseName, DataBaseHost, DataBasePort))
 	if err := db.MysqlConnection.Ping(); err != nil {
 
 		log.Println(err)
@@ -66,20 +68,29 @@ const (
 	JWTSignKey            = `jwt_secret_key`
 	AccessExpirationTime  = time.Hour * 24
 	RefreshExpirationTime = time.Hour * 24 * 7
-	AccessSubject         = `at`
-	RefreshSubject        = `ar`
+	AccessSubject         = "at"
+	RefreshSubject        = "ar"
+	Host                  = "127.0.0.1"
+	Port                  = 8080
+	DataBaseUserName      = "game_app"
+	DataBasePassword      = "game_app_pass"
+	DataBaseName          = "game_app_db"
+	DataBaseHost          = "127.0.0.1"
+	DataBasePort          = 3308
 )
 
 func NewUserHandlers() *UserHandlers {
 	return &UserHandlers{
 		UserService: user.NewService(
-			mysql.NewDB(),
+			mysql.NewDB(mysql.NewConfig(DataBaseUserName, DataBasePassword, DataBaseName, DataBaseHost, DataBasePort)),
 			authorize.NewService(
-				[]byte(JWTSignKey),
-				AccessExpirationTime,
-				RefreshExpirationTime,
-				AccessSubject,
-				RefreshSubject,
+				authorize.NewConfig(
+					[]byte(JWTSignKey),
+					AccessExpirationTime,
+					RefreshExpirationTime,
+					AccessSubject,
+					RefreshSubject,
+				),
 			),
 		),
 	}
@@ -119,7 +130,7 @@ func (uh *UserHandlers) userRegisterHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	var requestUser = user.NewRegisterRequest("", "", "")
+	var requestUser = user.NewRegisterRequest()
 	if uErr := json.Unmarshal(requestBody, requestUser); uErr != nil {
 
 		res := NewResponse(uErr.Error(), "")
@@ -241,11 +252,13 @@ func (uh *UserHandlers) userProfileHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	authService := authorize.NewService(
-		[]byte(JWTSignKey),
-		AccessExpirationTime,
-		RefreshExpirationTime,
-		AccessSubject,
-		RefreshSubject,
+		authorize.NewConfig(
+			[]byte(JWTSignKey),
+			AccessExpirationTime,
+			RefreshExpirationTime,
+			AccessSubject,
+			RefreshSubject,
+		),
 	)
 	tokenAuth := r.Header.Get("Authorization")
 	claims, pErr := authService.ParseJWT(tokenAuth)
@@ -276,6 +289,12 @@ func (uh *UserHandlers) userProfileHandler(w http.ResponseWriter, r *http.Reques
 
 func main() {
 
+	cfg := setUpConfig()
+	userSvc, authSvc := setUpSVC(cfg)
+
+	httpServer := httpserver.NewHttpServer(cfg, userSvc, authSvc)
+	httpServer.Serve()
+
 	userHandlers := NewUserHandlers()
 
 	http.HandleFunc("/health-check", healthCheckHandler)
@@ -288,4 +307,41 @@ func main() {
 	if listenErr := http.ListenAndServe("127.0.0.1:8080", nil); listenErr != nil {
 		log.Fatal(listenErr)
 	}
+}
+
+func setUpConfig() config.Config {
+	return config.NewConfig(
+		config.NewHttpServerCfg(Host, Port),
+		authorize.NewConfig(
+			[]byte(JWTSignKey),
+			AccessExpirationTime,
+			RefreshExpirationTime,
+			AccessSubject,
+			RefreshSubject,
+		),
+		mysql.NewConfig(
+			DataBaseUserName,
+			DataBasePassword,
+			DataBaseName,
+			DataBaseHost,
+			DataBasePort,
+		),
+	)
+}
+
+func setUpSVC(cfg config.Config) (*user.Service, *authorize.Service) {
+
+	authSvc := authorize.NewService(cfg.AuthCfg)
+	userSvc := user.NewService(
+		mysql.NewDB(mysql.NewConfig(
+			DataBaseUserName,
+			DataBasePassword,
+			DataBaseName,
+			DataBaseHost,
+			DataBasePort),
+		),
+		authSvc,
+	)
+
+	return userSvc, authSvc
 }
