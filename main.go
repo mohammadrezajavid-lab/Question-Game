@@ -21,13 +21,13 @@ func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 
 		res := NewResponse("unexpected error: ping to database server failed", "")
-		ResponseWrite(w, r, res, http.StatusInternalServerError)
+		ResponseWrite(w, r, res, http.StatusInternalServerError, "application/json")
 
 		return
 	}
 
 	res := NewResponse("", "health check OK")
-	ResponseWrite(w, r, res, http.StatusOK)
+	ResponseWrite(w, r, res, http.StatusOK, "application/json")
 }
 
 type Response struct {
@@ -39,14 +39,18 @@ func NewResponse(error string, message any) *Response {
 	return &Response{Error: error, Message: message}
 }
 
-func ResponseWrite(w http.ResponseWriter, r *http.Request, response *Response, statusCode int) {
+func ResponseWrite(w http.ResponseWriter, r *http.Request, response *Response, statusCode int, contentType string) {
 
 	marshalResponse, mErr := json.Marshal(response)
 	if mErr != nil {
 		log.Println(mErr.Error())
 	}
 
+	// Set StatusCode
 	w.WriteHeader(statusCode)
+
+	// Set Content-Type
+	w.Header().Add("Content-Type", contentType)
 
 	if _, writeErr := fmt.Fprint(w, string(marshalResponse)); writeErr != nil {
 
@@ -88,7 +92,7 @@ func (uh *UserHandlers) userRegisterHandler(w http.ResponseWriter, r *http.Reque
 	if !strings.EqualFold(r.Method, http.MethodPost) {
 
 		res := NewResponse("invalid method request", "")
-		ResponseWrite(w, r, res, http.StatusMethodNotAllowed)
+		ResponseWrite(w, r, res, http.StatusMethodNotAllowed, "application/json")
 
 		return
 	}
@@ -100,7 +104,7 @@ func (uh *UserHandlers) userRegisterHandler(w http.ResponseWriter, r *http.Reque
 
 		err := "invalid body request"
 		res := NewResponse(err, "")
-		ResponseWrite(w, r, res, http.StatusBadRequest)
+		ResponseWrite(w, r, res, http.StatusBadRequest, "application/json")
 
 		return
 	}
@@ -110,7 +114,7 @@ func (uh *UserHandlers) userRegisterHandler(w http.ResponseWriter, r *http.Reque
 		// when empty body request
 		err := "invalid body request"
 		res := NewResponse(err, "")
-		ResponseWrite(w, r, res, http.StatusBadRequest)
+		ResponseWrite(w, r, res, http.StatusBadRequest, "application/json")
 
 		return
 	}
@@ -119,7 +123,7 @@ func (uh *UserHandlers) userRegisterHandler(w http.ResponseWriter, r *http.Reque
 	if uErr := json.Unmarshal(requestBody, requestUser); uErr != nil {
 
 		res := NewResponse(uErr.Error(), "")
-		ResponseWrite(w, r, res, http.StatusBadRequest)
+		ResponseWrite(w, r, res, http.StatusBadRequest, "application/json")
 
 		return
 	}
@@ -131,13 +135,13 @@ func (uh *UserHandlers) userRegisterHandler(w http.ResponseWriter, r *http.Reque
 	if registerErr != nil {
 
 		res := NewResponse(registerErr.Error(), "")
-		ResponseWrite(w, r, res, http.StatusOK)
+		ResponseWrite(w, r, res, http.StatusOK, "application/json")
 
 		return
 	}
 
 	res := NewResponse("", registerResponse)
-	ResponseWrite(w, r, res, http.StatusOK)
+	ResponseWrite(w, r, res, http.StatusOK, "application/json")
 
 }
 
@@ -148,7 +152,7 @@ func (uh *UserHandlers) userLoginHandler(w http.ResponseWriter, r *http.Request)
 	if !strings.EqualFold(r.Method, http.MethodPost) {
 
 		res := NewResponse("invalid method request", "")
-		ResponseWrite(w, r, res, http.StatusMethodNotAllowed)
+		ResponseWrite(w, r, res, http.StatusMethodNotAllowed, "application/json")
 
 		return
 	}
@@ -160,7 +164,7 @@ func (uh *UserHandlers) userLoginHandler(w http.ResponseWriter, r *http.Request)
 
 		err := "invalid body request"
 		res := NewResponse(err, "")
-		ResponseWrite(w, r, res, http.StatusBadRequest)
+		ResponseWrite(w, r, res, http.StatusBadRequest, "application/json")
 
 		return
 	}
@@ -170,7 +174,7 @@ func (uh *UserHandlers) userLoginHandler(w http.ResponseWriter, r *http.Request)
 		// when empty body request
 		err := "invalid body request"
 		res := NewResponse(err, "")
-		ResponseWrite(w, r, res, http.StatusBadRequest)
+		ResponseWrite(w, r, res, http.StatusBadRequest, "application/json")
 
 		return
 	}
@@ -182,7 +186,7 @@ func (uh *UserHandlers) userLoginHandler(w http.ResponseWriter, r *http.Request)
 
 		err := "invalid body request"
 		res := NewResponse(err, "")
-		ResponseWrite(w, r, res, http.StatusBadRequest)
+		ResponseWrite(w, r, res, http.StatusBadRequest, "application/json")
 
 		return
 	}
@@ -192,13 +196,13 @@ func (uh *UserHandlers) userLoginHandler(w http.ResponseWriter, r *http.Request)
 	if loginErr != nil {
 
 		res := NewResponse(loginErr.Error(), "")
-		ResponseWrite(w, r, res, http.StatusUnauthorized)
+		ResponseWrite(w, r, res, http.StatusUnauthorized, "application/json")
 
 		return
 	}
 
 	res := NewResponse("", loginResponse)
-	ResponseWrite(w, r, res, http.StatusOK)
+	ResponseWrite(w, r, res, http.StatusOK, "application/json")
 }
 
 func (uh *UserHandlers) userProfileHandler(w http.ResponseWriter, r *http.Request) {
@@ -209,7 +213,7 @@ func (uh *UserHandlers) userProfileHandler(w http.ResponseWriter, r *http.Reques
 
 	if r.Method != http.MethodGet {
 		res := NewResponse("invalid method request", "")
-		ResponseWrite(w, r, res, http.StatusMethodNotAllowed)
+		ResponseWrite(w, r, res, http.StatusMethodNotAllowed, "application/json")
 
 		return
 	}
@@ -221,7 +225,7 @@ func (uh *UserHandlers) userProfileHandler(w http.ResponseWriter, r *http.Reques
 
 		err := "invalid body request"
 		res := NewResponse(err, "")
-		ResponseWrite(w, r, res, http.StatusBadRequest)
+		ResponseWrite(w, r, res, http.StatusBadRequest, "application/json")
 
 		return
 	}
@@ -231,7 +235,7 @@ func (uh *UserHandlers) userProfileHandler(w http.ResponseWriter, r *http.Reques
 		// when empty body request
 		err := "invalid body request"
 		res := NewResponse(err, "")
-		ResponseWrite(w, r, res, http.StatusBadRequest)
+		ResponseWrite(w, r, res, http.StatusBadRequest, "application/json")
 
 		return
 	}
@@ -251,7 +255,7 @@ func (uh *UserHandlers) userProfileHandler(w http.ResponseWriter, r *http.Reques
 
 	if claims == nil {
 		res := NewResponse("Unauthorized User", "")
-		ResponseWrite(w, r, res, http.StatusUnauthorized)
+		ResponseWrite(w, r, res, http.StatusUnauthorized, "application/json")
 
 	} else {
 
@@ -259,13 +263,13 @@ func (uh *UserHandlers) userProfileHandler(w http.ResponseWriter, r *http.Reques
 		if pErr != nil {
 
 			res := NewResponse(pErr.Error(), "")
-			ResponseWrite(w, r, res, http.StatusOK)
+			ResponseWrite(w, r, res, http.StatusOK, "application/json")
 
 			return
 		}
 
 		res := NewResponse("", profile)
-		ResponseWrite(w, r, res, http.StatusOK)
+		ResponseWrite(w, r, res, http.StatusOK, "application/json")
 	}
 
 }
