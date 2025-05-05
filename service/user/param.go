@@ -36,11 +36,16 @@ func NewLoginRequest(phoneNumber string, password string) *LoginRequest {
 }
 
 type LoginResponse struct {
-	AccessToken string `json:"access_token"`
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
 }
 
-func NewLoginResponse(token string) *LoginResponse {
-	return &LoginResponse{AccessToken: token}
+func NewLoginResponse(accessToken, refreshToken string) *LoginResponse {
+
+	return &LoginResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}
 }
 
 type ProfileRequest struct {
@@ -48,6 +53,7 @@ type ProfileRequest struct {
 }
 
 func NewProfileRequest(userId uint) *ProfileRequest {
+
 	return &ProfileRequest{UserId: userId}
 }
 
@@ -56,5 +62,6 @@ type ProfileResponse struct {
 }
 
 func NewProfileResponse(name string) *ProfileResponse {
+
 	return &ProfileResponse{Name: name}
 }

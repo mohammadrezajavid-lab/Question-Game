@@ -4,11 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"gocasts.ir/go-fundamentals/gameapp/repository/mysql"
+	"gocasts.ir/go-fundamentals/gameapp/service/authorize"
 	"gocasts.ir/go-fundamentals/gameapp/service/user"
 	"io"
 	"log"
 	"net/http"
 	"strings"
+	"time"
 )
 
 func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
@@ -56,12 +58,27 @@ type UserHandlers struct {
 	UserService *user.Service
 }
 
-var (
-	SignKey = []byte(`jwt_secret`)
+const (
+	JWTSignKey            = `jwt_secret_key`
+	AccessExpirationTime  = time.Hour * 24
+	RefreshExpirationTime = time.Hour * 24 * 7
+	AccessSubject         = `at`
+	RefreshSubject        = `ar`
 )
 
 func NewUserHandlers() *UserHandlers {
-	return &UserHandlers{UserService: user.NewService(mysql.NewDB(), SignKey)}
+	return &UserHandlers{
+		UserService: user.NewService(
+			mysql.NewDB(),
+			authorize.NewService(
+				[]byte(JWTSignKey),
+				AccessExpirationTime,
+				RefreshExpirationTime,
+				AccessSubject,
+				RefreshSubject,
+			),
+		),
+	}
 }
 
 func (uh *UserHandlers) userRegisterHandler(w http.ResponseWriter, r *http.Request) {
@@ -186,6 +203,8 @@ func (uh *UserHandlers) userLoginHandler(w http.ResponseWriter, r *http.Request)
 
 func (uh *UserHandlers) userProfileHandler(w http.ResponseWriter, r *http.Request) {
 
+	log.Printf("recived one request from addres: %s, URL: %s", r.RemoteAddr, r.URL)
+
 	// TODO - we are sanitize userId in this handler after send userId to service layer
 
 	if r.Method != http.MethodGet {
@@ -207,7 +226,7 @@ func (uh *UserHandlers) userProfileHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if strings.EqualFold(string(requestBody), "") {
+	if !strings.EqualFold(string(requestBody), "") {
 
 		// when empty body request
 		err := "invalid body request"
@@ -217,29 +236,38 @@ func (uh *UserHandlers) userProfileHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	var requestProfile = user.NewProfileRequest(0)
-	if uErr := json.Unmarshal(requestBody, requestProfile); uErr != nil {
-
-		log.Printf("can't Unmarshal requestProfile data: %v", uErr)
-
-		err := "invalid body request"
-		res := NewResponse(err, "")
-		ResponseWrite(w, r, res, http.StatusBadRequest)
-
-		return
-	}
-
-	profile, pErr := uh.UserService.Profile(requestProfile)
+	authService := authorize.NewService(
+		[]byte(JWTSignKey),
+		AccessExpirationTime,
+		RefreshExpirationTime,
+		AccessSubject,
+		RefreshSubject,
+	)
+	tokenAuth := r.Header.Get("Authorization")
+	claims, pErr := authService.ParseJWT(tokenAuth)
 	if pErr != nil {
-
-		res := NewResponse(pErr.Error(), "")
-		ResponseWrite(w, r, res, http.StatusOK)
-
-		return
+		log.Println(pErr)
 	}
 
-	res := NewResponse("", profile)
-	ResponseWrite(w, r, res, http.StatusOK)
+	if claims == nil {
+		res := NewResponse("Unauthorized User", "")
+		ResponseWrite(w, r, res, http.StatusUnauthorized)
+
+	} else {
+
+		profile, pErr := uh.UserService.Profile(user.NewProfileRequest(claims.UserId))
+		if pErr != nil {
+
+			res := NewResponse(pErr.Error(), "")
+			ResponseWrite(w, r, res, http.StatusOK)
+
+			return
+		}
+
+		res := NewResponse("", profile)
+		ResponseWrite(w, r, res, http.StatusOK)
+	}
+
 }
 
 func main() {
