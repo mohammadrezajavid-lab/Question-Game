@@ -43,16 +43,40 @@ func NewLoginRequest(phoneNumber string, password string) *LoginRequest {
 	}
 }
 
-type LoginResponse struct {
+type Tokens struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
 }
 
-func NewLoginResponse(accessToken, refreshToken string) *LoginResponse {
-
-	return &LoginResponse{
+func NewTokens(accessToken, refreshToken string) Tokens {
+	return Tokens{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
+	}
+}
+
+type UserInfo struct {
+	Id   uint   `json:"id"`
+	Name string `json:"name"`
+}
+
+func NewUserInfo(id uint, name string) UserInfo {
+	return UserInfo{
+		Id:   id,
+		Name: name,
+	}
+}
+
+type LoginResponse struct {
+	User   UserInfo `json:"user"`
+	Tokens Tokens   `json:"tokens"`
+}
+
+func NewLoginResponse(userInfo UserInfo, tokens Tokens) *LoginResponse {
+
+	return &LoginResponse{
+		User:   userInfo,
+		Tokens: tokens,
 	}
 }
 

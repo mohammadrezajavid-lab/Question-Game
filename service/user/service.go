@@ -93,7 +93,7 @@ func (s *Service) Login(req *LoginRequest) (*LoginResponse, error) {
 		return nil, fmt.Errorf("unexpected error: %w", rErr)
 	}
 
-	return NewLoginResponse(accessToken, refreshToken), nil
+	return NewLoginResponse(NewUserInfo(user.ID, user.Name), NewTokens(accessToken, refreshToken)), nil
 }
 
 // All Request Inputs for Interaction/Service Should be Sanitized.
