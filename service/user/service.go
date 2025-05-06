@@ -73,11 +73,13 @@ func (s *Service) Login(req *LoginRequest) (*LoginResponse, error) {
 
 	user, gErr := s.userRepository.GetUserByPhoneNumber(req.PhoneNumber)
 	if gErr != nil {
-		log.Println(gErr.Error())
-		return nil, fmt.Errorf("unexpected error: Unauthorized")
+		log.Println("\n", gErr.Error())
+
+		return nil, fmt.Errorf("phoneNumber or password incorrect")
 	}
 
 	if !pkg.CheckPasswordHash(req.Password, user.HashedPassword) {
+
 		return nil, fmt.Errorf("phoneNumber or password incorrect")
 	}
 
@@ -85,11 +87,13 @@ func (s *Service) Login(req *LoginRequest) (*LoginResponse, error) {
 
 	accessToken, aErr := s.authService.CreateAccessToken(user)
 	if aErr != nil {
+
 		return nil, fmt.Errorf("unexpected error: %w", aErr)
 	}
 
 	refreshToken, rErr := s.authService.CreateRefreshToken(user)
 	if rErr != nil {
+
 		return nil, fmt.Errorf("unexpected error: %w", rErr)
 	}
 
