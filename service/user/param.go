@@ -15,11 +15,19 @@ func NewRegisterRequest() *RegisterRequest {
 }
 
 type RegisterResponse struct {
-	User *entity.User `json:"user"`
+	User struct {
+		Id          uint   `json:"id"`
+		PhoneNumber string `json:"phone_number"`
+		Name        string `json:"name"`
+	} `json:"user"`
 }
 
 func NewRegisterResponse(user *entity.User) *RegisterResponse {
-	return &RegisterResponse{User: user}
+	return &RegisterResponse{User: struct {
+		Id          uint   `json:"id"`
+		PhoneNumber string `json:"phone_number"`
+		Name        string `json:"name"`
+	}{Id: user.ID, PhoneNumber: user.PhoneNumber, Name: user.Name}}
 }
 
 type LoginRequest struct {

@@ -3,10 +3,10 @@ package entity
 import "fmt"
 
 type User struct {
-	ID             uint   `json:"-"`
-	Name           string `json:"name"`
-	PhoneNumber    string `json:"phone_number"`
-	HashedPassword string `json:"-"`
+	ID             uint
+	Name           string
+	PhoneNumber    string
+	HashedPassword string
 }
 
 func NewUser(name string, phoneNumber string, password string) *User {
