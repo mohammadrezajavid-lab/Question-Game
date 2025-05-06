@@ -16,8 +16,6 @@ const (
 	RefreshExpirationTime = time.Hour * 24 * 7
 	AccessSubject         = "at"
 	RefreshSubject        = "ar"
-	Host                  = "127.0.0.1"
-	Port                  = 8080
 	DataBaseUserName      = "game_app"
 	DataBasePassword      = "game_app_pass"
 	DataBaseName          = "game_app_db"
@@ -39,7 +37,7 @@ func NewSetUpConfig(host string, port int, migrationCommand string) SetUpConfig 
 		panic(fmt.Sprintf("invalid migration-command: %s", migrationCommand))
 	}
 
-	cfg := setUpConfig()
+	cfg := setUpConfig(host, port)
 	userSvc, authSvc := setUpSVC(cfg)
 	setUpMigration(mysql.NewDB(cfg.DataBaseCfg).MysqlConnection, MigrateDialect, migrationCommand)
 
@@ -50,10 +48,10 @@ func NewSetUpConfig(host string, port int, migrationCommand string) SetUpConfig 
 	}
 }
 
-func setUpConfig() Config {
+func setUpConfig(host string, port int) Config {
 
 	return NewConfig(
-		NewHttpServerCfg(Host, Port),
+		NewHttpServerCfg(host, port),
 		authorize.NewConfig(
 			[]byte(JWTSignKey),
 			AccessExpirationTime,
