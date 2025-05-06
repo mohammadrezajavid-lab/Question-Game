@@ -1,6 +1,9 @@
 package config
 
 import (
+	"database/sql"
+	"fmt"
+	"golang.project/go-fundamentals/gameapp/repository/migrator"
 	"golang.project/go-fundamentals/gameapp/repository/mysql"
 	"golang.project/go-fundamentals/gameapp/service/authorize"
 	"golang.project/go-fundamentals/gameapp/service/user"
@@ -21,6 +24,7 @@ const (
 	DataBaseHost          = "127.0.0.1"
 	DataBasePort          = 3308
 	DataBaseParseTime     = true
+	MigrateDialect        = "mysql"
 )
 
 type SetUpConfig struct {
@@ -29,9 +33,15 @@ type SetUpConfig struct {
 	AuthService *authorize.Service
 }
 
-func NewSetUpConfig() SetUpConfig {
+func NewSetUpConfig(host string, port int, migrationCommand string) SetUpConfig {
+
+	if migrationCommand != "up" && migrationCommand != "down" && migrationCommand != "skip" && migrationCommand != "status" {
+		panic(fmt.Sprintf("invalid migration-command: %s", migrationCommand))
+	}
+
 	cfg := setUpConfig()
 	userSvc, authSvc := setUpSVC(cfg)
+	setUpMigration(mysql.NewDB(cfg.DataBaseCfg).MysqlConnection, MigrateDialect, migrationCommand)
 
 	return SetUpConfig{
 		Config:      cfg,
@@ -80,4 +90,20 @@ func setUpSVC(cfg Config) (*user.Service, *authorize.Service) {
 	)
 
 	return userSvc, authSvc
+}
+
+func setUpMigration(dbConnection *sql.DB, dialect string, migrationCommand string) {
+
+	mgt := migrator.NewMigrator(dbConnection, dialect)
+
+	switch migrationCommand {
+	case "up":
+		mgt.Up()
+	case "down":
+		mgt.Down()
+	case "status":
+		mgt.Status()
+	default:
+		return
+	}
 }
