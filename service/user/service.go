@@ -2,9 +2,9 @@ package user
 
 import (
 	"fmt"
-	"gocasts.ir/go-fundamentals/gameapp/entity"
-	"gocasts.ir/go-fundamentals/gameapp/pkg"
-	"gocasts.ir/go-fundamentals/gameapp/service/contract"
+	"golang.project/go-fundamentals/gameapp/entity"
+	"golang.project/go-fundamentals/gameapp/pkg"
+	"golang.project/go-fundamentals/gameapp/service/contract"
 	"log"
 )
 

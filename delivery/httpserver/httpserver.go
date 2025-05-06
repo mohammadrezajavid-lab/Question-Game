@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"gocasts.ir/go-fundamentals/gameapp/config"
-	"gocasts.ir/go-fundamentals/gameapp/service/authorize"
-	"gocasts.ir/go-fundamentals/gameapp/service/user"
+	"golang.project/go-fundamentals/gameapp/config"
+	"golang.project/go-fundamentals/gameapp/service/authorize"
+	"golang.project/go-fundamentals/gameapp/service/user"
 	"log/slog"
 	"net/http"
 )
@@ -35,6 +35,8 @@ func (hs *HttpServer) Serve() {
 	// Routes
 	e.GET("/health-check", hs.HealthCheckHandler)
 	e.POST("/users/register", hs.UserRegisterHandler)
+	e.POST("/users/login", hs.UserLoginHandler)
+	e.GET("/users/profile", hs.UserProfileHandler)
 
 	if err := e.Start(fmt.Sprintf("%s:%d", hs.Config.HttpServerCfg.Host, hs.Config.HttpServerCfg.Port)); err != nil && errors.Is(err, http.ErrServerClosed) {
 		slog.Error("failed to start server", "error", err)

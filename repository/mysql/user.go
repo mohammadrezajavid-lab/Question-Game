@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"gocasts.ir/go-fundamentals/gameapp/entity"
+	"golang.project/go-fundamentals/gameapp/entity"
 )
 
 func (d *DB) IsPhoneNumberUniq(phoneNumber string) (bool, error) {

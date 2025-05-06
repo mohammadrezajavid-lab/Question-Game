@@ -1,8 +1,8 @@
 package config
 
 import (
-	"gocasts.ir/go-fundamentals/gameapp/repository/mysql"
-	"gocasts.ir/go-fundamentals/gameapp/service/authorize"
+	"golang.project/go-fundamentals/gameapp/repository/mysql"
+	"golang.project/go-fundamentals/gameapp/service/authorize"
 )
 
 type HttpServerCfg struct {

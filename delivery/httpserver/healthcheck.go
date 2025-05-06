@@ -2,7 +2,7 @@ package httpserver
 
 import (
 	"github.com/labstack/echo/v4"
-	"gocasts.ir/go-fundamentals/gameapp/repository/mysql"
+	"golang.project/go-fundamentals/gameapp/repository/mysql"
 	"log"
 	"net/http"
 )

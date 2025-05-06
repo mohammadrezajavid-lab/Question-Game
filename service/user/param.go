@@ -1,7 +1,7 @@
 package user
 
 import (
-	"gocasts.ir/go-fundamentals/gameapp/entity"
+	"golang.project/go-fundamentals/gameapp/entity"
 )
 
 type RegisterRequest struct {

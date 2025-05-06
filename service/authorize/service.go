@@ -2,7 +2,7 @@ package authorize
 
 import (
 	"github.com/golang-jwt/jwt/v4"
-	"gocasts.ir/go-fundamentals/gameapp/entity"
+	"golang.project/go-fundamentals/gameapp/entity"
 	"strings"
 	"time"
 )
