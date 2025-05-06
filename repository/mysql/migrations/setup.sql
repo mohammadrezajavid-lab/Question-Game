@@ -9,14 +9,19 @@ CREATE TABLE Users
     created_at      datetime     not null default current_timestamp
 );
 
-# INSERT INTO game_app_db.Users(name, phone_number)
+#
+INSERT INTO game_app_db.Users(name, phone_number)
 # VALUES ('user1', '09191234567'),
 #        ('user2', '09121234567'),
 #        ('user3', '09197654321');
 #
-# SELECT *
-# FROM game_app_db.Users
-# where phone_number = '09197654321';
 #
-# SELECT *
-# FROM game_app_db.Users;
+SELECT *
+           #
+FROM game_app_db.Users #
+where phone_number = '09197654321';
+#
+#
+SELECT *
+           #
+FROM game_app_db.Users;

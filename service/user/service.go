@@ -74,7 +74,7 @@ func (s *Service) Login(req *LoginRequest) (*LoginResponse, error) {
 	user, gErr := s.userRepository.GetUserByPhoneNumber(req.PhoneNumber)
 	if gErr != nil {
 		log.Println(gErr.Error())
-		return nil, fmt.Errorf("phoneNumber or password incorect")
+		return nil, fmt.Errorf("unexpected error: Unauthorized")
 	}
 
 	if !pkg.CheckPasswordHash(req.Password, user.HashedPassword) {

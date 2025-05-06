@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"golang.project/go-fundamentals/gameapp/entity"
+	"time"
 )
 
 func (d *DB) IsPhoneNumberUniq(phoneNumber string) (bool, error) {
@@ -54,10 +55,10 @@ func (d *DB) GetUserByPhoneNumber(phoneNumber string) (*entity.User, error) {
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 
-			return nil, fmt.Errorf("record not found")
+			return nil, fmt.Errorf("record not found\n")
 		}
 
-		return nil, fmt.Errorf("can't scan query result: %w", err)
+		return nil, fmt.Errorf("can't scan query result: %w\n", err)
 	}
 
 	return user, nil
@@ -85,7 +86,7 @@ func (d *DB) GetUserById(userId uint) (*entity.User, error) {
 
 func scanUser(row *sql.Row) (*entity.User, error) {
 
-	var createdAt []byte
+	var createdAt time.Time
 
 	user := entity.NewUser("", "", "")
 	err := row.Scan(&user.ID, &user.Name, &user.PhoneNumber, &user.HashedPassword, &createdAt)

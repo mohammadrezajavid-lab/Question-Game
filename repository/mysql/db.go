@@ -9,20 +9,22 @@ import (
 )
 
 type Config struct {
-	UserName string
-	Password string
-	DBName   string
-	Host     string
-	Port     int
+	UserName  string
+	Password  string
+	DBName    string
+	Host      string
+	ParseTime bool
+	Port      int
 }
 
-func NewConfig(userName, password, dbName, host string, port int) Config {
+func NewConfig(userName, password, dbName, host string, parseTime bool, port int) Config {
 	return Config{
-		UserName: userName,
-		Password: password,
-		DBName:   dbName,
-		Host:     host,
-		Port:     port,
+		UserName:  userName,
+		Password:  password,
+		DBName:    dbName,
+		Host:      host,
+		ParseTime: parseTime,
+		Port:      port,
 	}
 }
 
@@ -33,7 +35,15 @@ type DB struct {
 
 func NewDB(dbCfg Config) *DB {
 
-	connectionUrl := fmt.Sprintf("%s:%s@(%s:%d)/%s", dbCfg.UserName, dbCfg.Password, dbCfg.Host, dbCfg.Port, dbCfg.DBName)
+	connectionUrl := fmt.Sprintf(
+		"%s:%s@(%s:%d)/%s?parseTime=%v",
+		dbCfg.UserName,
+		dbCfg.Password,
+		dbCfg.Host,
+		dbCfg.Port,
+		dbCfg.DBName,
+		dbCfg.ParseTime,
+	)
 	db, err := sql.Open("mysql", connectionUrl)
 	if err != nil {
 		panic(fmt.Errorf("can't open mysql db: %v", err))

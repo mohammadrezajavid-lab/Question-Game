@@ -20,6 +20,7 @@ const (
 	DataBaseName          = "game_app_db"
 	DataBaseHost          = "127.0.0.1"
 	DataBasePort          = 3308
+	DataBaseParseTime     = true
 )
 
 type SetUpConfig struct {
@@ -55,6 +56,7 @@ func setUpConfig() Config {
 			DataBasePassword,
 			DataBaseName,
 			DataBaseHost,
+			DataBaseParseTime,
 			DataBasePort,
 		),
 	)
@@ -64,12 +66,15 @@ func setUpSVC(cfg Config) (*user.Service, *authorize.Service) {
 
 	authSvc := authorize.NewService(cfg.AuthCfg)
 	userSvc := user.NewService(
-		mysql.NewDB(mysql.NewConfig(
-			DataBaseUserName,
-			DataBasePassword,
-			DataBaseName,
-			DataBaseHost,
-			DataBasePort),
+		mysql.NewDB(
+			mysql.NewConfig(
+				DataBaseUserName,
+				DataBasePassword,
+				DataBaseName,
+				DataBaseHost,
+				DataBaseParseTime,
+				DataBasePort,
+			),
 		),
 		authSvc,
 	)

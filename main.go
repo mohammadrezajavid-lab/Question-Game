@@ -11,5 +11,4 @@ func main() {
 
 	httpServer := httpserver.NewHttpServer(newSetUpConfig.Config, newSetUpConfig.UserService, newSetUpConfig.AuthService)
 	httpServer.Serve()
-
 }
