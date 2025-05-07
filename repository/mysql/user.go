@@ -3,8 +3,8 @@ package mysql
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"golang.project/go-fundamentals/gameapp/entity"
+	"golang.project/go-fundamentals/gameapp/pkg/richerror"
 	"time"
 )
 
@@ -26,6 +26,7 @@ func (d *DB) IsPhoneNumberUniq(phoneNumber string) (bool, error) {
 
 func (d *DB) RegisterUser(user *entity.User) (*entity.User, error) {
 
+	const operation = "mysql.RegisterUser"
 	var result, eErr = d.MysqlConnection.Exec(
 		`INSERT INTO game_app_db.Users(name, phone_number, hashed_password) VALUES(?, ?, ?)`,
 		user.Name,
@@ -34,7 +35,10 @@ func (d *DB) RegisterUser(user *entity.User) (*entity.User, error) {
 	)
 	if eErr != nil {
 
-		return nil, fmt.Errorf("can't execute command: %w", eErr)
+		return nil, richerror.NewRichError(operation).
+			WithError(eErr).
+			WithMessage("unexpected error: can't execute command").
+			WithKind(richerror.KindUnexpected)
 	}
 
 	// error is always nil
@@ -44,7 +48,12 @@ func (d *DB) RegisterUser(user *entity.User) (*entity.User, error) {
 	return user, nil
 }
 
-func (d *DB) GetUserByPhoneNumber(phoneNumber string) (*entity.User, error) {
+// GetUserByPhoneNumber In this method, although I know that returning a bool value is misleading,
+// I put this value to determine whether a record exists in the database or not,
+// because in some cases, the record may exist in the database but an error occurred while scanning it.
+func (d *DB) GetUserByPhoneNumber(phoneNumber string) (*entity.User, bool, error) {
+
+	const operation = "mysql.GetUserByPhoneNumber"
 
 	var userRow = d.MysqlConnection.QueryRow(
 		`SELECT * FROM game_app_db.Users WHERE phone_number = ?`,
@@ -55,17 +64,26 @@ func (d *DB) GetUserByPhoneNumber(phoneNumber string) (*entity.User, error) {
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 
-			return nil, fmt.Errorf("record not found\n")
+			// in this case, user record in database not found
+			return nil, false, richerror.NewRichError(operation).
+				WithError(err).
+				WithMessage("record not found").
+				WithKind(richerror.KindNotFound)
 		}
 
-		return nil, fmt.Errorf("can't scan query result: %w\n", err)
+		// in this case can't scan query from database
+		return nil, true, richerror.NewRichError(operation).
+			WithError(err).
+			WithMessage("unexpected error: can't scan query result").
+			WithKind(richerror.KindUnexpected)
 	}
 
-	return user, nil
+	return user, true, nil
 }
 
 func (d *DB) GetUserById(userId uint) (*entity.User, error) {
 
+	const operation = "mysql.GetUserById"
 	userRow := d.MysqlConnection.QueryRow(
 		`SELECT * FROM game_app_db.Users WHERE id=?`,
 		userId,
@@ -75,10 +93,17 @@ func (d *DB) GetUserById(userId uint) (*entity.User, error) {
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 
-			return nil, fmt.Errorf("record not found")
+			return nil, richerror.NewRichError(operation).
+				WithError(err).
+				WithMessage("record not found").
+				WithKind(richerror.KindNotFound).
+				WithMeta(map[string]interface{}{"user_id": userId})
 		}
 
-		return nil, fmt.Errorf("can't scan query result: %w", err)
+		return nil, richerror.NewRichError(operation).
+			WithError(err).
+			WithMessage("unexpected error: can't scan query result").
+			WithKind(richerror.KindUnexpected)
 	}
 
 	return user, nil

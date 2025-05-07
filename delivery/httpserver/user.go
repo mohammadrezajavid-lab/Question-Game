@@ -2,6 +2,7 @@ package httpserver
 
 import (
 	"github.com/labstack/echo/v4"
+	"golang.project/go-fundamentals/gameapp/delivery/httpserver/parsericherror"
 	"golang.project/go-fundamentals/gameapp/service/user"
 	"net/http"
 )
@@ -17,7 +18,10 @@ func (hs *HttpServer) UserRegisterHandler(ctx echo.Context) error {
 	registerResponse, registerErr := hs.UserService.Register(requestUser)
 	if registerErr != nil {
 
-		return echo.NewHTTPError(http.StatusBadRequest, registerErr.Error())
+		parseRichErr := parsericherror.New()
+		message, statusCode := parseRichErr.ParseRichError(registerErr)
+
+		return echo.NewHTTPError(statusCode, message)
 	}
 
 	return ctx.JSON(http.StatusCreated, registerResponse)
@@ -33,7 +37,10 @@ func (hs *HttpServer) UserLoginHandler(ctx echo.Context) error {
 	loginRes, lErr := hs.UserService.Login(requestUser)
 	if lErr != nil {
 
-		return echo.NewHTTPError(http.StatusUnauthorized, lErr.Error())
+		parseRichErr := parsericherror.New()
+		message, statusCode := parseRichErr.ParseRichError(lErr)
+
+		return echo.NewHTTPError(statusCode, message)
 	}
 
 	return ctx.JSON(http.StatusOK, loginRes)
@@ -45,10 +52,10 @@ func (hs *HttpServer) UserProfileHandler(ctx echo.Context) error {
 
 	req := ctx.Request()
 	tokenAuth := req.Header.Get("Authorization")
-	claims, parseErr := hs.AuthService.ParseJWT(tokenAuth)
-	if parseErr != nil {
+	claims, parseJWTErr := hs.AuthService.ParseJWT(tokenAuth)
+	if parseJWTErr != nil {
 
-		return echo.NewHTTPError(http.StatusUnauthorized, parseErr.Error())
+		return echo.NewHTTPError(http.StatusUnauthorized, parseJWTErr.Error())
 	}
 
 	if claims == nil {
@@ -59,7 +66,10 @@ func (hs *HttpServer) UserProfileHandler(ctx echo.Context) error {
 	profile, pErr := hs.UserService.Profile(user.NewProfileRequest(claims.UserId))
 	if pErr != nil {
 
-		return echo.NewHTTPError(http.StatusInternalServerError, pErr.Error())
+		parseRichErr := parsericherror.New()
+		message, statusCode := parseRichErr.ParseRichError(pErr)
+
+		return echo.NewHTTPError(statusCode, message)
 	}
 
 	return ctx.JSON(http.StatusFound, profile)

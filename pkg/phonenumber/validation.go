@@ -1,4 +1,4 @@
-package pkg
+package phonenumber
 
 import "strconv"
 

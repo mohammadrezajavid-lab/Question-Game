@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+// Config The following structure for the auth service config
 type Config struct {
 	SignKey               []byte
 	AccessExpirationTime  time.Duration
