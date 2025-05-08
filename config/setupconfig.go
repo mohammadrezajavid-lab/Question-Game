@@ -7,6 +7,7 @@ import (
 	"golang.project/go-fundamentals/gameapp/repository/mysql"
 	"golang.project/go-fundamentals/gameapp/service/authorize"
 	"golang.project/go-fundamentals/gameapp/service/user"
+	"golang.project/go-fundamentals/gameapp/validator/uservalidator"
 	"time"
 )
 
@@ -29,6 +30,8 @@ type SetUpConfig struct {
 	Config      Config
 	UserService *user.Service
 	AuthService *authorize.Service
+
+	UserValidator *uservalidator.Validator
 }
 
 func NewSetUpConfig(host string, port int, migrationCommand string) SetUpConfig {
@@ -38,13 +41,17 @@ func NewSetUpConfig(host string, port int, migrationCommand string) SetUpConfig 
 	}
 
 	cfg := setUpConfig(host, port)
-	userSvc, authSvc := setUpSVC(cfg)
+	repository := mysql.NewDB(cfg.DataBaseCfg)
+	userSvc, authSvc := setUpSVC(cfg, repository)
+	userValidator := uservalidator.NewValidator(repository)
+
 	setUpMigration(mysql.NewDB(cfg.DataBaseCfg).MysqlConnection, MigrateDialect, migrationCommand)
 
 	return SetUpConfig{
-		Config:      cfg,
-		UserService: userSvc,
-		AuthService: authSvc,
+		Config:        cfg,
+		UserService:   userSvc,
+		AuthService:   authSvc,
+		UserValidator: userValidator,
 	}
 }
 
@@ -70,22 +77,10 @@ func setUpConfig(host string, port int) Config {
 	)
 }
 
-func setUpSVC(cfg Config) (*user.Service, *authorize.Service) {
+func setUpSVC(cfg Config, repository *mysql.DB) (*user.Service, *authorize.Service) {
 
 	authSvc := authorize.NewService(cfg.AuthCfg)
-	userSvc := user.NewService(
-		mysql.NewDB(
-			mysql.NewConfig(
-				DataBaseUserName,
-				DataBasePassword,
-				DataBaseName,
-				DataBaseHost,
-				DataBaseParseTime,
-				DataBasePort,
-			),
-		),
-		authSvc,
-	)
+	userSvc := user.NewService(repository, authSvc)
 
 	return userSvc, authSvc
 }

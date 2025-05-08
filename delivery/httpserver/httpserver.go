@@ -8,6 +8,7 @@ import (
 	"golang.project/go-fundamentals/gameapp/config"
 	"golang.project/go-fundamentals/gameapp/service/authorize"
 	"golang.project/go-fundamentals/gameapp/service/user"
+	"golang.project/go-fundamentals/gameapp/validator/uservalidator"
 	"log/slog"
 	"net/http"
 )
@@ -16,11 +17,13 @@ type HttpServer struct {
 	Config      config.Config
 	UserService *user.Service
 	AuthService *authorize.Service
+
+	UserValidator *uservalidator.Validator
 }
 
-func NewHttpServer(cfg config.Config, userSvc *user.Service, authSvc *authorize.Service) *HttpServer {
+func NewHttpServer(cfg config.Config, userSvc *user.Service, authSvc *authorize.Service, userValidator *uservalidator.Validator) *HttpServer {
 
-	return &HttpServer{Config: cfg, UserService: userSvc, AuthService: authSvc}
+	return &HttpServer{Config: cfg, UserService: userSvc, AuthService: authSvc, UserValidator: userValidator}
 }
 
 func (hs *HttpServer) Serve() {

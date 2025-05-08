@@ -2,17 +2,26 @@ package httpserver
 
 import (
 	"github.com/labstack/echo/v4"
+	"golang.project/go-fundamentals/gameapp/datatransferobject/userdto"
 	"golang.project/go-fundamentals/gameapp/delivery/httpserver/parsericherror"
-	"golang.project/go-fundamentals/gameapp/service/user"
 	"net/http"
 )
 
 func (hs *HttpServer) UserRegisterHandler(ctx echo.Context) error {
 
-	var requestUser = user.NewRegisterRequest()
+	var requestUser = userdto.NewRegisterRequest()
 	if err := ctx.Bind(requestUser); err != nil {
 
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	// validate requestUser
+	err := hs.UserValidator.ValidateRegisterRequest(requestUser)
+	if err != nil {
+		parseRichErr := parsericherror.New()
+		message, statusCode := parseRichErr.ParseRichError(err)
+
+		return echo.NewHTTPError(statusCode, message)
 	}
 
 	registerResponse, registerErr := hs.UserService.Register(requestUser)
@@ -29,7 +38,7 @@ func (hs *HttpServer) UserRegisterHandler(ctx echo.Context) error {
 
 func (hs *HttpServer) UserLoginHandler(ctx echo.Context) error {
 
-	var requestUser = user.NewLoginRequest("", "")
+	var requestUser = userdto.NewLoginRequest("", "")
 	if err := ctx.Bind(requestUser); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
@@ -63,7 +72,7 @@ func (hs *HttpServer) UserProfileHandler(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnauthorized, "claims is empty")
 	}
 
-	profile, pErr := hs.UserService.Profile(user.NewProfileRequest(claims.UserId))
+	profile, pErr := hs.UserService.Profile(userdto.NewProfileRequest(claims.UserId))
 	if pErr != nil {
 
 		parseRichErr := parsericherror.New()

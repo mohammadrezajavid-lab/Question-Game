@@ -10,18 +10,29 @@ import (
 
 func (d *DB) IsPhoneNumberUniq(phoneNumber string) (bool, error) {
 
+	const operation = "mysql.IsPhoneNumberUniq"
+
 	userRow := d.MysqlConnection.QueryRow(
 		`SELECT * FROM game_app_db.Users WHERE phone_number = ?`,
 		phoneNumber,
 	)
 
 	_, err := scanUser(userRow)
-	if errors.Is(err, sql.ErrNoRows) {
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
 
-		return true, nil
+			return true, nil
+		}
+
+		return false, richerror.NewRichError(operation).
+			WithError(err).
+			WithMessage("unexpected error").
+			WithKind(richerror.KindUnexpected)
 	}
 
-	return false, nil
+	return false, richerror.NewRichError(operation).
+		WithMessage("phone number is not uniq").
+		WithKind(richerror.KindInvalid)
 }
 
 func (d *DB) RegisterUser(user *entity.User) (*entity.User, error) {

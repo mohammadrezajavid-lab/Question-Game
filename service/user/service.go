@@ -1,9 +1,9 @@
 package user
 
 import (
+	"golang.project/go-fundamentals/gameapp/datatransferobject/userdto"
 	"golang.project/go-fundamentals/gameapp/entity"
 	"golang.project/go-fundamentals/gameapp/pkg/password"
-	"golang.project/go-fundamentals/gameapp/pkg/phonenumber"
 	"golang.project/go-fundamentals/gameapp/pkg/richerror"
 	"golang.project/go-fundamentals/gameapp/service/contract"
 )
@@ -20,56 +20,11 @@ func NewService(userRepository contract.UserRepository, authorizeService contrac
 	}
 }
 
-func (s *Service) Register(req *RegisterRequest) (*RegisterResponse, error) {
+func (s *Service) Register(req *userdto.RegisterRequest) (*userdto.RegisterResponse, error) {
 
 	const operation = "service.user.Register"
 
 	// TODO - We should verify Phone Number by Verification SMS Code
-
-	// validate phone number
-	if !phonenumber.IsPhoneNumberValid(req.PhoneNumber) {
-
-		return nil, richerror.NewRichError(operation).
-			WithMessage("phone number is invalid").
-			WithKind(richerror.KindInvalid).
-			WithMeta(map[string]interface{}{"phone_number": req.PhoneNumber})
-	}
-
-	// check uniqueness of phone number
-	if isUniq, err := s.userRepository.IsPhoneNumberUniq(req.PhoneNumber); !isUniq || err != nil {
-		if !isUniq {
-
-			return nil, richerror.NewRichError(operation).
-				WithError(err).
-				WithMessage("phone number is not uniq").
-				WithKind(richerror.KindInvalid).
-				WithMeta(map[string]interface{}{"phone_number": req.PhoneNumber})
-		}
-
-		return nil, richerror.NewRichError(operation).
-			WithError(err).
-			WithMessage("unexpected error").
-			WithKind(richerror.KindUnexpected)
-	}
-
-	// validate name
-	if !phonenumber.IsNameValid(req.Name) {
-
-		return nil, richerror.NewRichError(operation).
-			WithMessage("name length should be greater than 3").
-			WithKind(richerror.KindInvalid).
-			WithMeta(map[string]interface{}{"name": req.Name})
-	}
-
-	// validate password
-	// TODO - It is better to use Regex for password.
-	if len(req.Password) < 8 {
-
-		return nil, richerror.NewRichError(operation).
-			WithMessage("password length should be greater than 8").
-			WithKind(richerror.KindInvalid).
-			WithMeta(map[string]interface{}{"password": req.Password})
-	}
 
 	hashedPassword, hashErr := password.HashPassword(req.Password)
 	if hashErr != nil {
@@ -92,10 +47,10 @@ func (s *Service) Register(req *RegisterRequest) (*RegisterResponse, error) {
 	}
 
 	// return created user
-	return NewRegisterResponse(newUser), nil
+	return userdto.NewRegisterResponse(newUser), nil
 }
 
-func (s *Service) Login(req *LoginRequest) (*LoginResponse, error) {
+func (s *Service) Login(req *userdto.LoginRequest) (*userdto.LoginResponse, error) {
 
 	const operation = "service.user.Login"
 	user, exist, gErr := s.userRepository.GetUserByPhoneNumber(req.PhoneNumber)
@@ -144,12 +99,12 @@ func (s *Service) Login(req *LoginRequest) (*LoginResponse, error) {
 			WithKind(richerror.KindUnexpected)
 	}
 
-	return NewLoginResponse(NewUserInfo(user.ID, user.Name), NewTokens(accessToken, refreshToken)), nil
+	return userdto.NewLoginResponse(userdto.NewUserInfo(user.ID, user.Name), userdto.NewTokens(accessToken, refreshToken)), nil
 }
 
 // All Request Inputs for Interaction/Service Should be Sanitized.
 
-func (s *Service) Profile(req *ProfileRequest) (*ProfileResponse, error) {
+func (s *Service) Profile(req *userdto.ProfileRequest) (*userdto.ProfileResponse, error) {
 
 	const operation = "service.user.Profile"
 	user, err := s.userRepository.GetUserById(req.UserId)
@@ -158,5 +113,5 @@ func (s *Service) Profile(req *ProfileRequest) (*ProfileResponse, error) {
 		return nil, richerror.NewRichError(operation).WithError(err)
 	}
 
-	return NewProfileResponse(user.Name), nil
+	return userdto.NewProfileResponse(user.Name), nil
 }

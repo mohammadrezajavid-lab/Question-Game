@@ -18,12 +18,3 @@ func IsPhoneNumberValid(phoneNumber string) bool {
 
 	return true
 }
-
-func IsNameValid(name string) bool {
-	if len(name) < 3 {
-
-		return false
-	}
-
-	return true
-}

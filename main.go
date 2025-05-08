@@ -18,12 +18,21 @@ func main() {
 	flag.StringVar(&migrationCommand, "migrate-command", "skip", "Available commands are: [up] or [down] or [status] or [skip] (skip: for skipping migration for project)")
 	flag.Parse()
 
-	newSetUpConfig := config.NewSetUpConfig(host, port, migrationCommand)
+	// TODO - It's better to separate setUpService and setUpValidator from setUpConfig
+	setUpConfig := config.NewSetUpConfig(host, port, migrationCommand)
+	//setUpService :=
+	//setUpValidator :=
 
 	if migrationCommand == "down" || migrationCommand == "status" {
 		os.Exit(0)
 	}
 
-	httpServer := httpserver.NewHttpServer(newSetUpConfig.Config, newSetUpConfig.UserService, newSetUpConfig.AuthService)
+	httpServer := httpserver.NewHttpServer(
+		setUpConfig.Config,
+		setUpConfig.UserService,
+		setUpConfig.AuthService,
+		setUpConfig.UserValidator,
+	)
+
 	httpServer.Serve()
 }
