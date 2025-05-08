@@ -155,11 +155,7 @@ func (s *Service) Profile(req *ProfileRequest) (*ProfileResponse, error) {
 	user, err := s.userRepository.GetUserById(req.UserId)
 	if err != nil {
 
-		return nil, richerror.NewRichError(operation).
-			WithError(err).
-			WithMessage("unexpected error").
-			WithKind(richerror.KindUnexpected).
-			WithMeta(map[string]interface{}{"request": req})
+		return nil, richerror.NewRichError(operation).WithError(err)
 	}
 
 	return NewProfileResponse(user.Name), nil

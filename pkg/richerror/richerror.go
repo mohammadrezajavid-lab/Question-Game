@@ -62,7 +62,16 @@ func NewRichError(operation Operation) *RichError {
 }*/
 
 func (re RichError) GetError() error {
-	return re.wrappedError
+	if re.wrappedError != nil {
+		return re.wrappedError
+	}
+
+	re, ok := re.wrappedError.(RichError)
+	if !ok {
+		return nil
+	}
+
+	return re.GetError()
 }
 
 func (re RichError) GetOperation() Operation {
@@ -70,11 +79,30 @@ func (re RichError) GetOperation() Operation {
 }
 
 func (re RichError) GetMessage() string {
-	return re.message
+
+	if re.message != "" {
+		return re.message
+	}
+
+	re, ok := re.wrappedError.(RichError)
+	if !ok {
+		return re.wrappedError.Error()
+	}
+
+	return re.GetMessage()
 }
 
 func (re RichError) GetKind() Kind {
-	return re.kind
+	if re.kind != 0 {
+		return re.kind
+	}
+
+	re, ok := re.wrappedError.(RichError)
+	if !ok {
+		return 0
+	}
+
+	return re.GetKind()
 }
 
 func (re RichError) GetMeta() map[string]interface{} {
