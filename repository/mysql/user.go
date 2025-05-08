@@ -30,9 +30,7 @@ func (d *DB) IsPhoneNumberUniq(phoneNumber string) (bool, error) {
 			WithKind(richerror.KindUnexpected)
 	}
 
-	return false, richerror.NewRichError(operation).
-		WithMessage("phone number is not uniq").
-		WithKind(richerror.KindInvalid)
+	return false, nil
 }
 
 func (d *DB) RegisterUser(user *entity.User) (*entity.User, error) {

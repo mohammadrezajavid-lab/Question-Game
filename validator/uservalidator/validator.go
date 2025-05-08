@@ -32,8 +32,13 @@ func (v Validator) ValidateRegisterRequest(req *userdto.RegisterRequest) error {
 
 	if isUniq, err := v.repository.IsPhoneNumberUniq(req.PhoneNumber); err != nil || !isUniq {
 
+		if err != nil {
+
+			return richerror.NewRichError(operation).WithError(err)
+		}
+
 		return richerror.NewRichError(operation).
-			WithError(err).
+			WithMessage("phone number is not uniq").
 			WithMeta(map[string]interface{}{"phone_number": req.PhoneNumber})
 	}
 
