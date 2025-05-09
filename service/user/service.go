@@ -5,15 +5,25 @@ import (
 	"golang.project/go-fundamentals/gameapp/entity"
 	"golang.project/go-fundamentals/gameapp/pkg/password"
 	"golang.project/go-fundamentals/gameapp/pkg/richerror"
-	"golang.project/go-fundamentals/gameapp/service/contract"
 )
 
-type Service struct {
-	userRepository contract.UserRepository
-	authService    contract.AuthorizeGenerator
+type Repository interface {
+	RegisterUser(user *entity.User) (*entity.User, error)
+	GetUserByPhoneNumber(phoneNumber string) (*entity.User, bool, error)
+	GetUserById(userId uint) (*entity.User, error)
 }
 
-func NewService(userRepository contract.UserRepository, authorizeService contract.AuthorizeGenerator) *Service {
+type AuthorizeGenerator interface {
+	CreateAccessToken(user *entity.User) (string, error)
+	CreateRefreshToken(user *entity.User) (string, error)
+}
+
+type Service struct {
+	userRepository Repository
+	authService    AuthorizeGenerator
+}
+
+func NewService(userRepository Repository, authorizeService AuthorizeGenerator) *Service {
 	return &Service{
 		userRepository: userRepository,
 		authService:    authorizeService,
