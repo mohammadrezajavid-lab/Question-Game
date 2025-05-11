@@ -2,14 +2,14 @@ package httpserver
 
 import (
 	"github.com/labstack/echo/v4"
-	"golang.project/go-fundamentals/gameapp/datatransferobject/userdto"
 	"golang.project/go-fundamentals/gameapp/delivery/httpserver/parsericherror"
+	"golang.project/go-fundamentals/gameapp/dto"
 	"net/http"
 )
 
 func (hs *HttpServer) UserRegisterHandler(ctx echo.Context) error {
 
-	var requestUser = userdto.NewRegisterRequest()
+	var requestUser = dto.NewRegisterRequest()
 	if err := ctx.Bind(requestUser); err != nil {
 
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
@@ -38,7 +38,7 @@ func (hs *HttpServer) UserRegisterHandler(ctx echo.Context) error {
 
 func (hs *HttpServer) UserLoginHandler(ctx echo.Context) error {
 
-	var requestUser = userdto.NewLoginRequest("", "")
+	var requestUser = dto.NewLoginRequest()
 	if err := ctx.Bind(requestUser); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
@@ -72,7 +72,7 @@ func (hs *HttpServer) UserProfileHandler(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnauthorized, "claims is empty")
 	}
 
-	profile, pErr := hs.UserService.Profile(userdto.NewProfileRequest(claims.UserId))
+	profile, pErr := hs.UserService.Profile(dto.NewProfileRequest(claims.UserId))
 	if pErr != nil {
 
 		parseRichErr := parsericherror.New()

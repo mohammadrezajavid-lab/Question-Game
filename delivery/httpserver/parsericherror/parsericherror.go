@@ -14,8 +14,10 @@ func New() HttpRichErrorParse {
 
 // ParseRichError output value: message, httpStatusCode
 func (rp HttpRichErrorParse) ParseRichError(err error) (string, int) {
+
 	switch err.(type) {
 	case richerror.RichError:
+
 		re := err.(richerror.RichError)
 		message := re.GetMessage()
 		statusCode := rp.kindToHttpStatusCode(re.GetKind())
@@ -27,11 +29,13 @@ func (rp HttpRichErrorParse) ParseRichError(err error) (string, int) {
 
 		return message, statusCode
 	default:
+
 		return err.Error(), http.StatusBadRequest
 	}
 }
 
 func (rp HttpRichErrorParse) kindToHttpStatusCode(kind richerror.Kind) int {
+
 	switch kind {
 	case richerror.KindInvalid:
 		return http.StatusUnprocessableEntity

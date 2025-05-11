@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"golang.project/go-fundamentals/gameapp/repository/migrator"
 	"golang.project/go-fundamentals/gameapp/repository/mysql"
-	"golang.project/go-fundamentals/gameapp/service/authorize"
+	"golang.project/go-fundamentals/gameapp/service/auth"
 	"golang.project/go-fundamentals/gameapp/service/user"
 	"golang.project/go-fundamentals/gameapp/validator/uservalidator"
 	"time"
@@ -27,9 +27,10 @@ const (
 )
 
 type SetUpConfig struct {
-	Config      Config
+	Config Config
+
 	UserService *user.Service
-	AuthService *authorize.Service
+	AuthService *auth.Service
 
 	UserValidator *uservalidator.Validator
 }
@@ -59,7 +60,7 @@ func setUpConfig(host string, port int) Config {
 
 	return NewConfig(
 		NewHttpServerCfg(host, port),
-		authorize.NewConfig(
+		auth.NewConfig(
 			[]byte(JWTSignKey),
 			AccessExpirationTime,
 			RefreshExpirationTime,
@@ -77,9 +78,9 @@ func setUpConfig(host string, port int) Config {
 	)
 }
 
-func setUpSVC(cfg Config, repository *mysql.DB) (*user.Service, *authorize.Service) {
+func setUpSVC(cfg Config, repository *mysql.DB) (*user.Service, *auth.Service) {
 
-	authSvc := authorize.NewService(cfg.AuthCfg)
+	authSvc := auth.NewService(cfg.AuthCfg)
 	userSvc := user.NewService(repository, authSvc)
 
 	return userSvc, authSvc

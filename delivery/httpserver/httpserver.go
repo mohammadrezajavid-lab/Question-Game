@@ -6,7 +6,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"golang.project/go-fundamentals/gameapp/config"
-	"golang.project/go-fundamentals/gameapp/service/authorize"
+	"golang.project/go-fundamentals/gameapp/service/auth"
 	"golang.project/go-fundamentals/gameapp/service/user"
 	"golang.project/go-fundamentals/gameapp/validator/uservalidator"
 	"log/slog"
@@ -16,12 +16,12 @@ import (
 type HttpServer struct {
 	Config      config.Config
 	UserService *user.Service
-	AuthService *authorize.Service
+	AuthService *auth.Service
 
 	UserValidator *uservalidator.Validator
 }
 
-func NewHttpServer(cfg config.Config, userSvc *user.Service, authSvc *authorize.Service, userValidator *uservalidator.Validator) *HttpServer {
+func NewHttpServer(cfg config.Config, userSvc *user.Service, authSvc *auth.Service, userValidator *uservalidator.Validator) *HttpServer {
 
 	return &HttpServer{Config: cfg, UserService: userSvc, AuthService: authSvc, UserValidator: userValidator}
 }
@@ -44,7 +44,8 @@ func (hs *HttpServer) Serve() {
 	userGroup.POST("login", hs.UserLoginHandler)
 	userGroup.GET("profile", hs.UserProfileHandler)
 
-	if err := e.Start(fmt.Sprintf("%s:%d", hs.Config.HttpServerCfg.Host, hs.Config.HttpServerCfg.Port)); err != nil && errors.Is(err, http.ErrServerClosed) {
+	serverAddress := fmt.Sprintf("%s:%d", hs.Config.HttpServerCfg.Host, hs.Config.HttpServerCfg.Port)
+	if err := e.Start(serverAddress); err != nil && errors.Is(err, http.ErrServerClosed) {
 		slog.Error("failed to start server", "error", err)
 	}
 }

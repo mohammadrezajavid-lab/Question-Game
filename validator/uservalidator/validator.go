@@ -1,7 +1,7 @@
 package uservalidator
 
 import (
-	"golang.project/go-fundamentals/gameapp/datatransferobject/userdto"
+	"golang.project/go-fundamentals/gameapp/dto"
 	"golang.project/go-fundamentals/gameapp/pkg/phonenumber"
 	"golang.project/go-fundamentals/gameapp/pkg/richerror"
 )
@@ -18,7 +18,7 @@ func NewValidator(repository Repository) *Validator {
 	return &Validator{repository: repository}
 }
 
-func (v Validator) ValidateRegisterRequest(req *userdto.RegisterRequest) error {
+func (v Validator) ValidateRegisterRequest(req *dto.RegisterRequest) error {
 
 	const operation = "uservalidator.ValidateRegisterRequest"
 
@@ -42,7 +42,7 @@ func (v Validator) ValidateRegisterRequest(req *userdto.RegisterRequest) error {
 			WithMeta(map[string]interface{}{"phone_number": req.PhoneNumber})
 	}
 
-	// TODO - Add 8 to config
+	// TODO - Add 3 to config
 	if len(req.Name) < 3 {
 
 		return richerror.NewRichError(operation).
