@@ -4,7 +4,6 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation"
 	"golang.project/go-fundamentals/gameapp/dto"
 	"golang.project/go-fundamentals/gameapp/pkg/richerror"
-	"regexp"
 )
 
 func (v *Validator) ValidateLoginRequest(req *dto.LoginRequest) (error, map[string]string) {
@@ -37,9 +36,8 @@ func (v *Validator) validateLoginRequest(req *dto.LoginRequest) error {
 	return validation.ValidateStruct(
 		req,
 		validation.Field(&req.PhoneNumber, validation.Required, validation.Length(10, 13),
-			validation.Match(regexp.MustCompile(`^(?:\+989|09|9)\d{9}$`))),
+			validation.By(v.checkPhoneNumberUniqueness())),
 
-		validation.Field(&req.Password, validation.Required, validation.Length(8, 50),
-			validation.By(checkPasswordRegex())),
+		validation.Field(&req.Password, validation.Required, validation.Length(8, 50)),
 	)
 }

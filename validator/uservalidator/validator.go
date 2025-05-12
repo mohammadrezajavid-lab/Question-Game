@@ -39,3 +39,30 @@ func checkPasswordRegex() validation.RuleFunc {
 		return nil
 	}
 }
+
+func checkPhoneNumberRegex() validation.RuleFunc {
+
+	return func(value interface{}) error {
+		phoneNumber, ok := value.(string)
+		if !ok {
+			return errors.New("invalid phone number type")
+		}
+
+		var (
+			hasValidPrefix     = regexp.MustCompile(`^(?:\+989|09|9)`).MatchString(phoneNumber)
+			hasNineDigitsAfter = regexp.MustCompile(`^(?:\+989|09|9)\d{9}$`).MatchString(phoneNumber)
+		)
+
+		if !hasValidPrefix {
+
+			return errors.New("phone number must start with +989, 09 or 9")
+		}
+
+		if !hasNineDigitsAfter {
+
+			return errors.New("phone number must have exactly 9 digits after the prefix")
+		}
+
+		return nil
+	}
+}
