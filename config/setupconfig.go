@@ -44,6 +44,7 @@ func NewSetUpConfig(host string, port int, migrationCommand string) SetUpConfig 
 	cfg := setUpConfig(host, port)
 	repository := mysql.NewDB(cfg.DataBaseCfg)
 	userSvc, authSvc := setUpSVC(cfg, repository)
+
 	userValidator := uservalidator.NewValidator(repository)
 
 	setUpMigration(mysql.NewDB(cfg.DataBaseCfg).MysqlConnection, MigrateDialect, migrationCommand)

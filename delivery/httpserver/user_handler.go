@@ -7,6 +7,11 @@ import (
 	"net/http"
 )
 
+type Response struct {
+	Message string           `json:"message"`
+	Errors  map[string]error `json:"errors"`
+}
+
 func (hs *HttpServer) UserRegisterHandler(ctx echo.Context) error {
 
 	var requestUser = dto.NewRegisterRequest()
@@ -15,13 +20,16 @@ func (hs *HttpServer) UserRegisterHandler(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	// validate requestUser
-	err := hs.UserValidator.ValidateRegisterRequest(requestUser)
-	if err != nil {
-		parseRichErr := parsericherror.New()
-		message, statusCode := parseRichErr.ParseRichError(err)
+	// validate register request
+	if validateErr, fieldErrors := hs.UserValidator.ValidateRegisterRequest(requestUser); validateErr != nil {
 
-		return echo.NewHTTPError(statusCode, message)
+		parseRichErr := parsericherror.New()
+		message, statusCode := parseRichErr.ParseRichError(validateErr)
+
+		return ctx.JSON(statusCode, echo.Map{
+			"message": message,
+			"errors":  fieldErrors,
+		})
 	}
 
 	registerResponse, registerErr := hs.UserService.Register(requestUser)
@@ -43,11 +51,23 @@ func (hs *HttpServer) UserLoginHandler(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	loginRes, lErr := hs.UserService.Login(requestUser)
-	if lErr != nil {
+	// validate login request
+	if validateErr, fieldErrors := hs.UserValidator.ValidateLoginRequest(requestUser); validateErr != nil {
+
+		parseErr := parsericherror.New()
+		message, statusCode := parseErr.ParseRichError(validateErr)
+
+		return ctx.JSON(statusCode, echo.Map{
+			"message": message,
+			"errors":  fieldErrors,
+		})
+	}
+
+	loginRes, loginErr := hs.UserService.Login(requestUser)
+	if loginErr != nil {
 
 		parseRichErr := parsericherror.New()
-		message, statusCode := parseRichErr.ParseRichError(lErr)
+		message, statusCode := parseRichErr.ParseRichError(loginErr)
 
 		return echo.NewHTTPError(statusCode, message)
 	}
@@ -72,11 +92,11 @@ func (hs *HttpServer) UserProfileHandler(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnauthorized, "claims is empty")
 	}
 
-	profile, pErr := hs.UserService.Profile(dto.NewProfileRequest(claims.UserId))
-	if pErr != nil {
+	profile, profileErr := hs.UserService.Profile(dto.NewProfileRequest(claims.UserId))
+	if profileErr != nil {
 
 		parseRichErr := parsericherror.New()
-		message, statusCode := parseRichErr.ParseRichError(pErr)
+		message, statusCode := parseRichErr.ParseRichError(profileErr)
 
 		return echo.NewHTTPError(statusCode, message)
 	}

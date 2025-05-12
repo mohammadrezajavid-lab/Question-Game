@@ -114,7 +114,18 @@ func (re RichError) GetKind() Kind {
 }
 
 func (re RichError) GetMeta() map[string]interface{} {
-	return re.meta
+
+	if re.meta != nil {
+
+		return re.meta
+	}
+
+	re, ok := re.wrappedError.(RichError)
+	if !ok {
+		return nil
+	}
+
+	return re.GetMeta()
 }
 
 func (re RichError) WithError(err error) RichError {
@@ -148,6 +159,11 @@ func (re RichError) WithMeta(meta map[string]interface{}) RichError {
 }
 
 func (re RichError) Error() string {
+
+	if re.message == "" {
+
+		re.wrappedError.Error()
+	}
 
 	return re.message
 }

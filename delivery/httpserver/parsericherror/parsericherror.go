@@ -8,8 +8,9 @@ import (
 type HttpRichErrorParse struct {
 }
 
-func New() HttpRichErrorParse {
-	return HttpRichErrorParse{}
+func New() *HttpRichErrorParse {
+
+	return &HttpRichErrorParse{}
 }
 
 // ParseRichError output value: message, httpStatusCode

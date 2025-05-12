@@ -1,9 +1,9 @@
 package uservalidator
 
 import (
-	"golang.project/go-fundamentals/gameapp/dto"
-	"golang.project/go-fundamentals/gameapp/pkg/phonenumber"
-	"golang.project/go-fundamentals/gameapp/pkg/richerror"
+	"errors"
+	validation "github.com/go-ozzo/ozzo-validation"
+	"regexp"
 )
 
 type Repository interface {
@@ -18,48 +18,24 @@ func NewValidator(repository Repository) *Validator {
 	return &Validator{repository: repository}
 }
 
-func (v Validator) ValidateRegisterRequest(req *dto.RegisterRequest) error {
+func checkPasswordRegex() validation.RuleFunc {
 
-	const operation = "uservalidator.ValidateRegisterRequest"
-
-	if !phonenumber.IsPhoneNumberValid(req.PhoneNumber) {
-
-		return richerror.NewRichError(operation).
-			WithMessage("phone number is invalid").
-			WithKind(richerror.KindInvalid).
-			WithMeta(map[string]interface{}{"phone_number": req.PhoneNumber})
-	}
-
-	if isUniq, err := v.repository.IsPhoneNumberUniq(req.PhoneNumber); err != nil || !isUniq {
-
-		if err != nil {
-
-			return richerror.NewRichError(operation).WithError(err)
+	return func(value interface{}) error {
+		password, ok := value.(string)
+		if !ok {
+			return errors.New("invalid password type")
 		}
 
-		return richerror.NewRichError(operation).
-			WithMessage("phone number is not uniq").
-			WithMeta(map[string]interface{}{"phone_number": req.PhoneNumber})
+		var (
+			hasUpper   bool = regexp.MustCompile(`[A-Z]`).MatchString(password)
+			hasLower   bool = regexp.MustCompile(`[a-z]`).MatchString(password)
+			hasNumber  bool = regexp.MustCompile(`[0-9]`).MatchString(password)
+			hasSpecial bool = regexp.MustCompile(`[@%!%*?&#]`).MatchString(password)
+		)
+
+		if !hasUpper || !hasLower || !hasNumber || !hasSpecial {
+			return errors.New("password must contain upper, lower, digit, and special character[@%!%*?&#]")
+		}
+		return nil
 	}
-
-	// TODO - Add 3 to config
-	if len(req.Name) < 3 {
-
-		return richerror.NewRichError(operation).
-			WithMessage("name length should be greater than 3").
-			WithKind(richerror.KindInvalid).
-			WithMeta(map[string]interface{}{"name": req.Name})
-	}
-
-	// TODO - It is better to use Regex for password.
-	// TODO - Add 8 to config
-	if len(req.Password) < 8 {
-
-		return richerror.NewRichError(operation).
-			WithMessage("password length should be greater than 8").
-			WithKind(richerror.KindInvalid).
-			WithMeta(map[string]interface{}{"password": req.Password})
-	}
-
-	return nil
 }
