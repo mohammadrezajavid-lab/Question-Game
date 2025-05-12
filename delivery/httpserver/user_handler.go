@@ -4,6 +4,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"golang.project/go-fundamentals/gameapp/delivery/httpserver/parsericherror"
 	"golang.project/go-fundamentals/gameapp/dto"
+	"golang.project/go-fundamentals/gameapp/pkg/normalize"
 	"net/http"
 )
 
@@ -19,6 +20,15 @@ func (hs *HttpServer) UserRegisterHandler(ctx echo.Context) error {
 
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
+
+	// normalized register request
+	norm := normalize.New()
+	phoneNumber, err := norm.NormalizePhoneNumber(requestUser.PhoneNumber)
+	if err != nil {
+
+		return echo.NewHTTPError(http.StatusUnprocessableEntity, err.Error())
+	}
+	requestUser.PhoneNumber = phoneNumber
 
 	// validate register request
 	if validateErr, fieldErrors := hs.UserValidator.ValidateRegisterRequest(requestUser); validateErr != nil {
@@ -50,6 +60,15 @@ func (hs *HttpServer) UserLoginHandler(ctx echo.Context) error {
 	if err := ctx.Bind(requestUser); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
+
+	// normalized register request
+	norm := normalize.New()
+	phoneNumber, err := norm.NormalizePhoneNumber(requestUser.PhoneNumber)
+	if err != nil {
+
+		return echo.NewHTTPError(http.StatusUnprocessableEntity, err.Error())
+	}
+	requestUser.PhoneNumber = phoneNumber
 
 	// validate login request
 	if validateErr, fieldErrors := hs.UserValidator.ValidateLoginRequest(requestUser); validateErr != nil {

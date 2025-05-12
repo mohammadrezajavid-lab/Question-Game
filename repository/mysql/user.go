@@ -57,10 +57,7 @@ func (d *DB) RegisterUser(user *entity.User) (*entity.User, error) {
 	return user, nil
 }
 
-// GetUserByPhoneNumber In this method, although I know that returning a bool value is misleading,
-// I put this value to determine whether a record exists in the database or not,
-// because in some cases, the record may exist in the database but an error occurred while scanning it.
-func (d *DB) GetUserByPhoneNumber(phoneNumber string) (*entity.User, bool, error) {
+func (d *DB) GetUserByPhoneNumber(phoneNumber string) (*entity.User, error) {
 
 	const operation = "mysql.GetUserByPhoneNumber"
 
@@ -74,20 +71,20 @@ func (d *DB) GetUserByPhoneNumber(phoneNumber string) (*entity.User, bool, error
 		if errors.Is(err, sql.ErrNoRows) {
 
 			// in this case, user record in database not found
-			return nil, false, richerror.NewRichError(operation).
+			return nil, richerror.NewRichError(operation).
 				WithError(err).
 				WithMessage("record not found").
 				WithKind(richerror.KindNotFound)
 		}
 
 		// in this case can't scan query from database
-		return nil, true, richerror.NewRichError(operation).
+		return nil, richerror.NewRichError(operation).
 			WithError(err).
 			WithMessage("unexpected error: can't scan query result").
 			WithKind(richerror.KindUnexpected)
 	}
 
-	return user, true, nil
+	return user, nil
 }
 
 func (d *DB) GetUserById(userId uint) (*entity.User, error) {

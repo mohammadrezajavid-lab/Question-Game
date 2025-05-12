@@ -3,11 +3,13 @@ package uservalidator
 import (
 	"errors"
 	validation "github.com/go-ozzo/ozzo-validation"
+	"golang.project/go-fundamentals/gameapp/entity"
 	"regexp"
 )
 
 type Repository interface {
 	IsPhoneNumberUniq(phoneNumber string) (bool, error)
+	GetUserByPhoneNumber(phoneNumber string) (*entity.User, error)
 }
 
 type Validator struct {

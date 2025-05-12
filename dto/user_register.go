@@ -1,6 +1,8 @@
 package dto
 
-import "golang.project/go-fundamentals/gameapp/entity"
+import (
+	"golang.project/go-fundamentals/gameapp/entity"
+)
 
 type RegisterRequest struct {
 	Name        string `json:"name"`

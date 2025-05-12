@@ -1,6 +1,7 @@
 package uservalidator
 
 import (
+	"errors"
 	validation "github.com/go-ozzo/ozzo-validation"
 	"golang.project/go-fundamentals/gameapp/dto"
 	"golang.project/go-fundamentals/gameapp/pkg/richerror"
@@ -36,8 +37,26 @@ func (v *Validator) validateLoginRequest(req *dto.LoginRequest) error {
 	return validation.ValidateStruct(
 		req,
 		validation.Field(&req.PhoneNumber, validation.Required, validation.Length(10, 13),
-			validation.By(v.checkPhoneNumberUniqueness())),
+			validation.By(v.checkPhoneNumberExistence()), validation.By(checkPhoneNumberRegex())),
 
 		validation.Field(&req.Password, validation.Required, validation.Length(8, 50)),
 	)
+}
+
+func (v *Validator) checkPhoneNumberExistence() validation.RuleFunc {
+
+	return func(value interface{}) error {
+
+		phoneNumber, ok := value.(string)
+		if !ok {
+			return errors.New("invalid phone number type")
+		}
+
+		if _, err := v.repository.GetUserByPhoneNumber(phoneNumber); err != nil {
+
+			return errors.New("phone number does not exits")
+		}
+
+		return nil
+	}
 }

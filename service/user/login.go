@@ -9,22 +9,10 @@ import (
 func (s *Service) Login(req *dto.LoginRequest) (*dto.LoginResponse, error) {
 
 	const operation = "service.user.Login"
-	user, exist, gErr := s.userRepository.GetUserByPhoneNumber(req.PhoneNumber)
+	user, gErr := s.userRepository.GetUserByPhoneNumber(req.PhoneNumber)
 	if gErr != nil {
 
-		if !exist {
-
-			// error: record not found
-			return nil, richerror.NewRichError(operation).
-				WithError(gErr).
-				WithMessage("phoneNumber or password incorrect").
-				WithKind(richerror.KindNotFound)
-		}
-
-		return nil, richerror.NewRichError(operation).
-			WithError(gErr).
-			WithMessage("unexpected error").
-			WithKind(richerror.KindUnexpected)
+		return nil, richerror.NewRichError(operation).WithError(gErr)
 	}
 
 	if !hash.CheckHash(req.Password, user.HashedPassword) {
