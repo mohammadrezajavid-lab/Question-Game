@@ -1,4 +1,4 @@
-package dto
+package param
 
 import (
 	"golang.project/go-fundamentals/gameapp/entity"

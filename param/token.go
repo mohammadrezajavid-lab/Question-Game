@@ -1,4 +1,4 @@
-package dto
+package param
 
 type Tokens struct {
 	AccessToken  string `json:"access_token"`

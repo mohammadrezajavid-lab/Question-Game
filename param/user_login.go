@@ -1,4 +1,4 @@
-package dto
+package param
 
 type LoginRequest struct {
 	PhoneNumber string `json:"phone_number"`

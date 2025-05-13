@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"golang.project/go-fundamentals/gameapp/config/httpservercfg"
 	"golang.project/go-fundamentals/gameapp/delivery/httpserver"
 	"golang.project/go-fundamentals/gameapp/delivery/httpserver/userhandler"
@@ -10,7 +9,6 @@ import (
 	"golang.project/go-fundamentals/gameapp/service/auth"
 	"golang.project/go-fundamentals/gameapp/service/user"
 	"golang.project/go-fundamentals/gameapp/validator/uservalidator"
-	"log"
 	"os"
 )
 
@@ -29,13 +27,6 @@ func main() {
 	config.SetUpConfig(migrationCommand)
 	if migrationCommand == "down" || migrationCommand == "status" {
 		os.Exit(0)
-	}
-
-	//###
-	fmt.Println("here")
-	err := mysql.NewDB(config.DataBaseConfig).MysqlConnection.Ping()
-	if err != nil {
-		log.Println(err.Error())
 	}
 
 	authSvc := auth.NewService(auth.NewConfig([]byte(httpservercfg.JWTSignKey),

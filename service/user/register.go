@@ -1,13 +1,13 @@
 package user
 
 import (
-	"golang.project/go-fundamentals/gameapp/dto"
 	"golang.project/go-fundamentals/gameapp/entity"
+	"golang.project/go-fundamentals/gameapp/param"
 	"golang.project/go-fundamentals/gameapp/pkg/hash"
 	"golang.project/go-fundamentals/gameapp/pkg/richerror"
 )
 
-func (s *Service) Register(req *dto.RegisterRequest) (*dto.RegisterResponse, error) {
+func (s *Service) Register(req *param.RegisterRequest) (*param.RegisterResponse, error) {
 
 	const operation = "service.user.Register"
 
@@ -34,5 +34,5 @@ func (s *Service) Register(req *dto.RegisterRequest) (*dto.RegisterResponse, err
 	}
 
 	// return created user
-	return dto.NewRegisterResponse(newUser), nil
+	return param.NewRegisterResponse(newUser), nil
 }

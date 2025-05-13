@@ -3,7 +3,7 @@ package userhandler
 import (
 	"github.com/labstack/echo/v4"
 	"golang.project/go-fundamentals/gameapp/delivery/httpserver/parsericherror"
-	"golang.project/go-fundamentals/gameapp/dto"
+	"golang.project/go-fundamentals/gameapp/param"
 	"net/http"
 )
 
@@ -24,7 +24,7 @@ func (h *UserHandler) userProfileHandler(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnauthorized, "claims is empty")
 	}
 
-	profile, profileErr := h.UserService.Profile(dto.NewProfileRequest(claims.UserId))
+	profile, profileErr := h.UserService.Profile(param.NewProfileRequest(claims.UserId))
 	if profileErr != nil {
 
 		parseRichErr := parsericherror.New()

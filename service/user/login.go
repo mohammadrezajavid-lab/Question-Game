@@ -1,12 +1,12 @@
 package user
 
 import (
-	"golang.project/go-fundamentals/gameapp/dto"
+	"golang.project/go-fundamentals/gameapp/param"
 	"golang.project/go-fundamentals/gameapp/pkg/hash"
 	"golang.project/go-fundamentals/gameapp/pkg/richerror"
 )
 
-func (s *Service) Login(req *dto.LoginRequest) (*dto.LoginResponse, error) {
+func (s *Service) Login(req *param.LoginRequest) (*param.LoginResponse, error) {
 
 	const operation = "service.user.Login"
 	user, gErr := s.userRepository.GetUserByPhoneNumber(req.PhoneNumber)
@@ -43,5 +43,5 @@ func (s *Service) Login(req *dto.LoginRequest) (*dto.LoginResponse, error) {
 			WithKind(richerror.KindUnexpected)
 	}
 
-	return dto.NewLoginResponse(dto.NewUserInfo(user.ID, user.Name), dto.NewTokens(accessToken, refreshToken)), nil
+	return param.NewLoginResponse(param.NewUserInfo(user.ID, user.Name), param.NewTokens(accessToken, refreshToken)), nil
 }

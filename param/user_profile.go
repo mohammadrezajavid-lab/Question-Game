@@ -1,4 +1,4 @@
-package dto
+package param
 
 type ProfileRequest struct {
 	UserId uint `json:"user_id"`

@@ -3,11 +3,11 @@ package uservalidator
 import (
 	"errors"
 	validation "github.com/go-ozzo/ozzo-validation"
-	"golang.project/go-fundamentals/gameapp/dto"
+	"golang.project/go-fundamentals/gameapp/param"
 	"golang.project/go-fundamentals/gameapp/pkg/richerror"
 )
 
-func (v *Validator) ValidateLoginRequest(req *dto.LoginRequest) (error, map[string]string) {
+func (v *Validator) ValidateLoginRequest(req *param.LoginRequest) (error, map[string]string) {
 
 	const operation = "uservalidator.ValidateLoginRequest"
 
@@ -32,7 +32,7 @@ func (v *Validator) ValidateLoginRequest(req *dto.LoginRequest) (error, map[stri
 	return nil, nil
 }
 
-func (v *Validator) validateLoginRequest(req *dto.LoginRequest) error {
+func (v *Validator) validateLoginRequest(req *param.LoginRequest) error {
 
 	return validation.ValidateStruct(
 		req,
