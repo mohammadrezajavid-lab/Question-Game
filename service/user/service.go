@@ -10,20 +10,20 @@ type Repository interface {
 	GetUserById(userId uint) (*entity.User, error)
 }
 
-type AuthorizeGenerator interface {
+type AuthGenerator interface {
 	CreateAccessToken(user *entity.User) (string, error)
 	CreateRefreshToken(user *entity.User) (string, error)
 }
 
 type Service struct {
 	userRepository Repository
-	authService    AuthorizeGenerator
+	authService    AuthGenerator
 }
 
-func NewService(userRepository Repository, authorizeService AuthorizeGenerator) *Service {
+func NewService(userRepository Repository, authService AuthGenerator) *Service {
 	return &Service{
 		userRepository: userRepository,
-		authService:    authorizeService,
+		authService:    authService,
 	}
 }
 

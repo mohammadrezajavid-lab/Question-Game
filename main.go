@@ -2,8 +2,15 @@ package main
 
 import (
 	"flag"
-	"golang.project/go-fundamentals/gameapp/config"
+	"fmt"
+	"golang.project/go-fundamentals/gameapp/config/httpservercfg"
 	"golang.project/go-fundamentals/gameapp/delivery/httpserver"
+	"golang.project/go-fundamentals/gameapp/delivery/httpserver/userhandler"
+	"golang.project/go-fundamentals/gameapp/repository/mysql"
+	"golang.project/go-fundamentals/gameapp/service/auth"
+	"golang.project/go-fundamentals/gameapp/service/user"
+	"golang.project/go-fundamentals/gameapp/validator/uservalidator"
+	"log"
 	"os"
 )
 
@@ -18,21 +25,28 @@ func main() {
 	flag.StringVar(&migrationCommand, "migrate-command", "skip", "Available commands are: [up] or [down] or [status] or [skip] (skip: for skipping migration for project)")
 	flag.Parse()
 
-	// TODO - It's better to separate setUpService and setUpValidator from setUpConfig
-	setUpConfig := config.NewSetUpConfig(host, port, migrationCommand)
-	//setUpService :=
-	//setUpValidator :=
-
+	config := httpservercfg.NewConfig(host, port)
+	config.SetUpConfig(migrationCommand)
 	if migrationCommand == "down" || migrationCommand == "status" {
 		os.Exit(0)
 	}
 
-	httpServer := httpserver.NewHttpServer(
-		setUpConfig.Config,
-		setUpConfig.UserService,
-		setUpConfig.AuthService,
-		setUpConfig.UserValidator,
-	)
+	//###
+	fmt.Println("here")
+	err := mysql.NewDB(config.DataBaseConfig).MysqlConnection.Ping()
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	authSvc := auth.NewService(auth.NewConfig([]byte(httpservercfg.JWTSignKey),
+		httpservercfg.AccessExpirationTime,
+		httpservercfg.RefreshExpirationTime,
+		httpservercfg.AccessSubject,
+		httpservercfg.RefreshSubject))
+	userSvc := user.NewService(mysql.NewDB(config.DataBaseConfig), authSvc)
+	userValidator := uservalidator.NewValidator(mysql.NewDB(config.DataBaseConfig))
+
+	httpServer := httpserver.NewHttpServer(config, userhandler.NewHandler(userSvc, authSvc, userValidator))
 
 	httpServer.Serve()
 }

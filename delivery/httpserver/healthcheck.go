@@ -9,18 +9,19 @@ import (
 
 func (hs *HttpServer) HealthCheckHandler(ctx echo.Context) error {
 
-	db := mysql.NewDB(hs.Config.DataBaseCfg)
+	db := mysql.NewDB(hs.ServerConfig.DataBaseConfig)
+
 	if err := db.MysqlConnection.Ping(); err != nil {
 
 		log.Println(err)
 
-		return ctx.JSON(http.StatusInternalServerError, "unexpected error: ping to database server failed")
+		return echo.NewHTTPError(http.StatusInternalServerError, "unexpected error: ping to database server failed")
 	}
 
 	if err := db.MysqlConnection.Close(); err != nil {
 
-		return ctx.JSON(http.StatusInternalServerError, "unexpected error: close database connection is failed")
+		return echo.NewHTTPError(http.StatusInternalServerError, "unexpected error: close database connection is failed")
 	}
 
-	return ctx.JSON(http.StatusOK, "health check OK")
+	return ctx.JSON(http.StatusOK, echo.Map{"message": "health check OK"})
 }

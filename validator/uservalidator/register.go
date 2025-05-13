@@ -49,7 +49,7 @@ func (v *Validator) validateRegisterRequest(req *dto.RegisterRequest) error {
 			validation.Match(regexp.MustCompile(`^[A-Za-z]+( [A-Za-z]+)*$`))),
 
 		validation.Field(&req.PhoneNumber, validation.Required, validation.Length(10, 13),
-			validation.By(v.checkPhoneNumberUniqueness()), validation.By(checkPasswordRegex())),
+			validation.By(v.checkPhoneNumberUniqueness()), validation.By(checkPhoneNumberRegex())),
 
 		validation.Field(&req.Password, validation.Required, validation.Length(8, 50),
 			validation.By(checkPasswordRegex())),
