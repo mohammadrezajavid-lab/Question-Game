@@ -21,6 +21,7 @@ const (
 	DataBasePort          = 3308
 	DataBaseParseTime     = true
 	MigrateDialect        = "mysql"
+	//SignMethod            = jwt.SigningMethodHS256.Alg()
 )
 
 type Config struct {

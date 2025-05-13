@@ -7,16 +7,16 @@ import (
 )
 
 type UserHandler struct {
-	UserService *user.Service
-	AuthService *auth.Service
+	userService *user.Service
+	authService *auth.Service
 
-	UserValidator *uservalidator.Validator
+	userValidator *uservalidator.Validator
 }
 
 func NewHandler(userSvc *user.Service, authSvc *auth.Service, userValidator *uservalidator.Validator) UserHandler {
 	return UserHandler{
-		UserService:   userSvc,
-		AuthService:   authSvc,
-		UserValidator: userValidator,
+		userService:   userSvc,
+		authService:   authSvc,
+		userValidator: userValidator,
 	}
 }

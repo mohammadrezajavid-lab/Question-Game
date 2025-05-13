@@ -2,15 +2,17 @@ package userhandler
 
 import (
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
+	"golang.project/go-fundamentals/gameapp/delivery/httpserver/middleware"
 )
 
 func (h *UserHandler) SetRoute(e *echo.Echo) {
 
+	newMiddleware := middleware.NewMiddleware(h.authService.GetConfig(), h.authService)
+
 	// Great one group and add logger middleware for userGroup
-	userGroup := e.Group("/users/", middleware.Logger())
+	userGroup := e.Group("/users/")
 
 	userGroup.POST("register", h.userRegisterHandler)
 	userGroup.POST("login", h.userLoginHandler)
-	userGroup.GET("profile", h.userProfileHandler)
+	userGroup.GET("profile", h.userProfileHandler, newMiddleware.AuthMiddleware())
 }

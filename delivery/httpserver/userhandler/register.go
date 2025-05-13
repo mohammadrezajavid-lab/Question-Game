@@ -26,7 +26,7 @@ func (h *UserHandler) userRegisterHandler(ctx echo.Context) error {
 	requestUser.PhoneNumber = phoneNumber
 
 	// validate register request
-	if validateErr, fieldErrors := h.UserValidator.ValidateRegisterRequest(requestUser); validateErr != nil {
+	if validateErr, fieldErrors := h.userValidator.ValidateRegisterRequest(requestUser); validateErr != nil {
 
 		parseRichErr := parsericherror.New()
 		message, statusCode := parseRichErr.ParseRichError(validateErr)
@@ -37,7 +37,7 @@ func (h *UserHandler) userRegisterHandler(ctx echo.Context) error {
 		})
 	}
 
-	registerResponse, registerErr := h.UserService.Register(requestUser)
+	registerResponse, registerErr := h.userService.Register(requestUser)
 	if registerErr != nil {
 
 		parseRichErr := parsericherror.New()

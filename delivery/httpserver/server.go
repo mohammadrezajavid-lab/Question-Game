@@ -12,13 +12,13 @@ import (
 )
 
 type HttpServer struct {
-	ServerConfig httpservercfg.Config
-	UserHandler  userhandler.UserHandler
+	serverConfig httpservercfg.Config
+	userHandler  userhandler.UserHandler
 }
 
 func NewHttpServer(cfg httpservercfg.Config, userHandler userhandler.UserHandler) *HttpServer {
 
-	return &HttpServer{ServerConfig: cfg, UserHandler: userHandler}
+	return &HttpServer{serverConfig: cfg, userHandler: userHandler}
 }
 
 func (hs *HttpServer) Serve() {
@@ -27,14 +27,14 @@ func (hs *HttpServer) Serve() {
 	e := echo.New()
 
 	// Middleware
-	//e.Use(middleware.Logger())
+	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-	e.GET("/health-check", hs.HealthCheckHandler, middleware.Logger())
+	e.GET("/health-check", hs.HealthCheckHandler)
 
-	hs.UserHandler.SetRoute(e)
+	hs.userHandler.SetRoute(e)
 
-	serverAddress := fmt.Sprintf("%s:%d", hs.ServerConfig.Host, hs.ServerConfig.Port)
+	serverAddress := fmt.Sprintf("%s:%d", hs.serverConfig.Host, hs.serverConfig.Port)
 	if err := e.Start(serverAddress); err != nil && errors.Is(err, http.ErrServerClosed) {
 		slog.Error("failed to start server", "error", err)
 	}

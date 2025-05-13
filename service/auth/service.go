@@ -40,6 +40,10 @@ func NewService(authConfig Config) *Service {
 	return &Service{config: authConfig}
 }
 
+func (s *Service) GetConfig() Config {
+	return s.config
+}
+
 func (s *Service) CreateAccessToken(user *entity.User) (string, error) {
 
 	return s.createAccessToken(user.ID)

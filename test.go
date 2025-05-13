@@ -1,54 +1,41 @@
 package main
 
 import (
-	"fmt"
-	validation "github.com/go-ozzo/ozzo-validation"
-	"github.com/go-ozzo/ozzo-validation/is"
-	"regexp"
+	"errors"
+	"github.com/golang-jwt/jwt/v4"
+	echojwt "github.com/labstack/echo-jwt/v4"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+	"net/http"
 )
-
-type Address struct {
-	Street string
-	City   string
-	State  string
-	Zip    string
-}
-
-func NewAddress(street string, city string, state string, zip string) *Address {
-	return &Address{Street: street, City: city, State: state, Zip: zip}
-}
-
-func (addr *Address) Validate() error {
-	return validation.ValidateStruct(
-		addr,
-		validation.Field(&addr.Street, validation.Required, validation.Length(5, 50)),
-		validation.Field(&addr.City, validation.Required, validation.Length(5, 50)),
-		validation.Field(&addr.State, validation.Required, validation.Match(regexp.MustCompile(`^[A-Z]{2}$`))),
-		validation.Field(&addr.Zip, validation.Required, validation.Match(regexp.MustCompile(`^[0-9]{5}$`))),
-	)
-}
-
-type Customer struct {
-	Name    string
-	Email   string
-	Address Address
-}
 
 func main() {
 
-	c := Customer{
-		Name:  "Qiang Xue",
-		Email: "q@d.c",
-		Address: Address{
-			State: "Virginia",
-			Zip:   "12343",
-		},
-	}
+	e := echo.New()
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
 
-	err := validation.Errors{
-		"name":  validation.Validate(c.Name, validation.Required, validation.Length(5, 50)),
-		"email": validation.Validate(c.Email, validation.Required, is.Email),
-		"zip":   validation.Validate(c.Address.Zip, validation.Required, validation.Match(regexp.MustCompile(`^[0-9]{5}$`))),
-	}.Filter()
-	fmt.Println(err)
+	e.Use(echojwt.WithConfig(echojwt.Config{
+		SigningKey: []byte("secret_key"),
+	}))
+
+	e.GET("/", func(c echo.Context) error {
+		token, ok := c.Get("user").(*jwt.Token)
+		if !ok {
+
+			return errors.New("JWT token missing or invalid")
+		}
+
+		claims, ok := token.Claims.(jwt.MapClaims)
+		if !ok {
+
+			return errors.New("failed to cast claims as jwt.MapClaims")
+		}
+
+		return c.JSON(http.StatusOK, claims)
+	})
+
+	if err := e.Start(":8080"); err != nil {
+		panic(err)
+	}
 }

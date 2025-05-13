@@ -25,7 +25,7 @@ func (h *UserHandler) userLoginHandler(ctx echo.Context) error {
 	requestUser.PhoneNumber = phoneNumber
 
 	// validate login request
-	if validateErr, fieldErrors := h.UserValidator.ValidateLoginRequest(requestUser); validateErr != nil {
+	if validateErr, fieldErrors := h.userValidator.ValidateLoginRequest(requestUser); validateErr != nil {
 
 		parseErr := parsericherror.New()
 		message, statusCode := parseErr.ParseRichError(validateErr)
@@ -36,7 +36,7 @@ func (h *UserHandler) userLoginHandler(ctx echo.Context) error {
 		})
 	}
 
-	loginRes, loginErr := h.UserService.Login(requestUser)
+	loginRes, loginErr := h.userService.Login(requestUser)
 	if loginErr != nil {
 
 		parseRichErr := parsericherror.New()
