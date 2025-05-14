@@ -2,9 +2,9 @@ package userhandler
 
 import (
 	"github.com/labstack/echo/v4"
+	"golang.project/go-fundamentals/gameapp/config/httpservercfg/constant"
 	"golang.project/go-fundamentals/gameapp/delivery/httpserver/parsericherror"
 	"golang.project/go-fundamentals/gameapp/param"
-	"golang.project/go-fundamentals/gameapp/pkg/constant"
 	"golang.project/go-fundamentals/gameapp/service/auth"
 	"net/http"
 )

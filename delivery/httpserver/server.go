@@ -37,7 +37,7 @@ func (hs *HttpServer) Serve() {
 
 	hs.userHandler.SetRoute(e)
 
-	serverAddress := fmt.Sprintf("%s:%d", hs.serverConfig.Host, hs.serverConfig.Port)
+	serverAddress := fmt.Sprintf("%s:%d", hs.serverConfig.ServerCfg.Host, hs.serverConfig.ServerCfg.Port)
 	if err := e.Start(serverAddress); err != nil && errors.Is(err, http.ErrServerClosed) {
 		slog.Error("failed to start server", "error", err)
 	}

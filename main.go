@@ -2,7 +2,9 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"golang.project/go-fundamentals/gameapp/config/httpservercfg"
+	"golang.project/go-fundamentals/gameapp/config/httpservercfg/constant"
 	"golang.project/go-fundamentals/gameapp/delivery/httpserver"
 	"golang.project/go-fundamentals/gameapp/repository/mysql"
 	"golang.project/go-fundamentals/gameapp/service/auth"
@@ -15,15 +17,17 @@ func main() {
 
 	var host string
 	var port int
-	flag.StringVar(&host, "host", "127.0.0.1", "set your host for in http server")
-	flag.IntVar(&port, "port", 8080, "set any port for listen http server")
+	flag.StringVar(&host, "host", "", "HTTP server host")
+	flag.IntVar(&port, "port", 0, "HTTP server port")
 
 	var migrationCommand string
 	flag.StringVar(&migrationCommand, "migrate-command", "skip", "Available commands are: [up] or [down] or [status] or [skip] (skip: for skipping migration for project)")
 	flag.Parse()
 
 	config := httpservercfg.NewConfig(host, port)
-	config.SetUpConfig(migrationCommand)
+	fmt.Println("config project: ", config)
+
+	config.Migrate(migrationCommand)
 	if migrationCommand == "down" || migrationCommand == "status" {
 		os.Exit(0)
 	}
@@ -36,13 +40,17 @@ func main() {
 }
 
 func setupServices(config httpservercfg.Config) (*auth.Service, *user.Service, *uservalidator.Validator) {
-	authSvc := auth.NewService(auth.NewConfig([]byte(httpservercfg.JWTSignKey),
-		httpservercfg.AccessExpirationTime,
-		httpservercfg.RefreshExpirationTime,
-		httpservercfg.AccessSubject,
-		httpservercfg.RefreshSubject))
-	userSvc := user.NewService(mysql.NewDB(config.DataBaseConfig), authSvc)
-	userValidator := uservalidator.NewValidator(mysql.NewDB(config.DataBaseConfig))
+
+	authSvc := auth.NewService(auth.NewConfig(
+		constant.DefaultJWTSignKey,
+		constant.DefaultAccessExpirationTime,
+		constant.DefaultRefreshExpirationTime,
+		constant.DefaultAccessSubject,
+		constant.DefaultRefreshSubject))
+
+	userSvc := user.NewService(mysql.NewDB(config.DataBaseCfg), authSvc)
+
+	userValidator := uservalidator.NewValidator(mysql.NewDB(config.DataBaseCfg))
 
 	return authSvc, userSvc, userValidator
 }

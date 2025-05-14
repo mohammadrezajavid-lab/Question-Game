@@ -9,15 +9,16 @@ import (
 
 // Config The following structure for the auth service config
 type Config struct {
-	SignKey               []byte
-	AccessExpirationTime  time.Duration
-	RefreshExpirationTime time.Duration
-	AccessSubject         string
-	RefreshSubject        string
+	SignKey               string        `mapstructure:"sign_key"`
+	AccessExpirationTime  time.Duration `mapstructure:"access_expiration_time"`
+	RefreshExpirationTime time.Duration `mapstructure:"refresh_expiration_time"`
+	AccessSubject         string        `mapstructure:"access_subject"`
+	RefreshSubject        string        `mapstructure:"refresh_subject"`
+	//SignMethod            jwt.SigningMethod `mapstructure:"sign_method"`
 }
 
 func NewConfig(
-	signKey []byte,
+	signKey string,
 	accessExpirationTime, refreshExpirationTime time.Duration,
 	accessSubject, refreshSubject string,
 ) Config {

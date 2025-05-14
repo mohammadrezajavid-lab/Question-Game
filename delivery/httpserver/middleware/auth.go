@@ -4,7 +4,7 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 	jwtMiddleware "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
-	"golang.project/go-fundamentals/gameapp/pkg/constant"
+	"golang.project/go-fundamentals/gameapp/config/httpservercfg/constant"
 )
 
 func (m *Middleware) AuthMiddleware() echo.MiddlewareFunc {

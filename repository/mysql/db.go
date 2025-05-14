@@ -8,13 +8,14 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
+// Config The following structure for the DataBase service config
 type Config struct {
-	UserName  string
-	Password  string
-	DBName    string
-	Host      string
-	ParseTime bool
-	Port      int
+	UserName  string `mapstructure:"database_user_name"`
+	Password  string `mapstructure:"database_password"`
+	DBName    string `mapstructure:"database_name"`
+	Host      string `mapstructure:"database_host"`
+	ParseTime bool   `mapstructure:"database_parse_time"`
+	Port      int    `mapstructure:"database_port"`
 }
 
 func NewConfig(userName, password, dbName, host string, parseTime bool, port int) Config {
