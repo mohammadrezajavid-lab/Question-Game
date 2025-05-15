@@ -34,6 +34,9 @@ func NewConfig(host string, port int) Config {
 	}
 }
 
+// 1. read config file
+// 2. env variable
+// 3. use default env
 func loadConfig(host string, port int) (HttpServerConfig, mysql.Config, auth.Config) {
 
 	setDefaultENV()
@@ -41,20 +44,33 @@ func loadConfig(host string, port int) (HttpServerConfig, mysql.Config, auth.Con
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
 
+	// read config file
 	viper.SetConfigName(constant.DefaultConfigFileName)
 	viper.SetConfigType(constant.DefaultConfigFileType)
 	viper.AddConfigPath(constant.DefaultConfigFilePath)
 
-	// read config file
+	var appConfig Config
 	if err := viper.ReadInConfig(); err != nil {
 
 		log.Println("⚠️ config file not found, using environment variables or default values.")
-	}
-	var appConfig Config
 
-	if err := viper.Unmarshal(&appConfig); err != nil {
+		// get config from env variable
+		if uErr := viper.Sub("httpserver_cfg").Unmarshal(&appConfig.ServerCfg); uErr != nil {
+			log.Fatalf("can't unmarshal httpserver config: %v", err)
+		}
+		if uErr := viper.Sub("database_cfg").Unmarshal(&appConfig.DataBaseCfg); uErr != nil {
+			log.Fatalf("can't unmarshal database config: %v", err)
+		}
+		if uErr := viper.Sub("auth_cfg").Unmarshal(&appConfig.AuthCfg); uErr != nil {
+			log.Fatalf("can't unmarshal auth config: %v", err)
+		}
 
-		panic(fmt.Errorf("can't Unmarshal config file into struct Config, %w", err))
+	} else {
+
+		if uErr := viper.Unmarshal(&appConfig); uErr != nil {
+
+			panic(fmt.Errorf("can't Unmarshal config file into struct Config, %w", uErr))
+		}
 	}
 
 	if host != "" {

@@ -7,7 +7,7 @@ import (
 
 func (h *UserHandler) SetRoute(e *echo.Echo) {
 
-	newMiddleware := middleware.NewMiddleware(h.authService.GetConfig(), h.authService)
+	newMiddleware := middleware.NewMiddleware(h.authService)
 
 	// Great one group and add logger middleware for userGroup
 	userGroup := e.Group("/users/")

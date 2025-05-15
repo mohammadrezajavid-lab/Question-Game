@@ -11,7 +11,7 @@ func (m *Middleware) AuthMiddleware() echo.MiddlewareFunc {
 	return jwtMiddleware.WithConfig(
 		jwtMiddleware.Config{
 			ContextKey:    constant.AuthMiddlewareContextKey,
-			SigningKey:    m.authService.GetConfig().SignKey,
+			SigningKey:    m.authService.Config.SignKey,
 			SigningMethod: jwt.SigningMethodES256.Alg(),
 			ParseTokenFunc: func(c echo.Context, auth string) (interface{}, error) {
 				claims, err := m.authService.ParseJWT(auth)

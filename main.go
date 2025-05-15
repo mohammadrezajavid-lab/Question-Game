@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"golang.project/go-fundamentals/gameapp/config/httpservercfg"
-	"golang.project/go-fundamentals/gameapp/config/httpservercfg/constant"
 	"golang.project/go-fundamentals/gameapp/delivery/httpserver"
 	"golang.project/go-fundamentals/gameapp/repository/mysql"
 	"golang.project/go-fundamentals/gameapp/service/auth"
@@ -41,12 +40,14 @@ func main() {
 
 func setupServices(config httpservercfg.Config) (*auth.Service, *user.Service, *uservalidator.Validator) {
 
-	authSvc := auth.NewService(auth.NewConfig(
-		constant.DefaultJWTSignKey,
-		constant.DefaultAccessExpirationTime,
-		constant.DefaultRefreshExpirationTime,
-		constant.DefaultAccessSubject,
-		constant.DefaultRefreshSubject))
+	authSvc := auth.NewService(
+		auth.NewConfig(
+			config.AuthCfg.SignKey,
+			config.AuthCfg.AccessExpirationTime,
+			config.AuthCfg.RefreshExpirationTime,
+			config.AuthCfg.AccessSubject,
+			config.AuthCfg.RefreshSubject),
+	)
 
 	userSvc := user.NewService(mysql.NewDB(config.DataBaseCfg), authSvc)
 

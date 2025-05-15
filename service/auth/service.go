@@ -33,16 +33,12 @@ func NewConfig(
 }
 
 type Service struct {
-	config Config
+	Config Config
 }
 
 func NewService(authConfig Config) *Service {
 
-	return &Service{config: authConfig}
-}
-
-func (s *Service) GetConfig() Config {
-	return s.config
+	return &Service{Config: authConfig}
 }
 
 func (s *Service) CreateAccessToken(user *entity.User) (string, error) {
@@ -63,7 +59,7 @@ func (s *Service) ParseJWT(tokenString string) (*Claims, error) {
 
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 
-		return s.config.SignKey, nil
+		return s.Config.SignKey, nil
 	}, jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}))
 	if err != nil {
 
@@ -86,12 +82,12 @@ func (s *Service) createAccessToken(userId uint) (string, error) {
 
 	// set our claims
 	t.Claims = NewClaims(
-		jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.config.AccessExpirationTime))},
-		s.config.AccessSubject,
+		jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.Config.AccessExpirationTime))},
+		s.Config.AccessSubject,
 		userId,
 	)
 	// create token string
-	return t.SignedString(s.config.SignKey)
+	return t.SignedString(s.Config.SignKey)
 }
 
 func (s *Service) createRefreshToken(userId uint) (string, error) {
@@ -101,11 +97,11 @@ func (s *Service) createRefreshToken(userId uint) (string, error) {
 
 	// set our claims
 	t.Claims = NewClaims(
-		jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.config.RefreshExpirationTime))},
-		s.config.RefreshSubject,
+		jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.Config.RefreshExpirationTime))},
+		s.Config.RefreshSubject,
 		userId,
 	)
 
-	return t.SignedString(s.config.SignKey)
+	return t.SignedString(s.Config.SignKey)
 
 }
