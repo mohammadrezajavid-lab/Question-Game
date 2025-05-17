@@ -1,7 +1,8 @@
-package auth
+package authentication
 
 import (
 	"github.com/golang-jwt/jwt/v4"
+	"golang.project/go-fundamentals/gameapp/config/httpservercfg/constant"
 	"golang.project/go-fundamentals/gameapp/entity"
 	"strings"
 	"time"
@@ -43,12 +44,12 @@ func NewService(authConfig Config) *Service {
 
 func (s *Service) CreateAccessToken(user *entity.User) (string, error) {
 
-	return s.createAccessToken(user.ID)
+	return s.createAccessToken(user.Id)
 }
 
 func (s *Service) CreateRefreshToken(user *entity.User) (string, error) {
 
-	return s.createRefreshToken(user.ID)
+	return s.createRefreshToken(user.Id)
 }
 
 func (s *Service) ParseJWT(tokenString string) (*Claims, error) {
@@ -59,8 +60,8 @@ func (s *Service) ParseJWT(tokenString string) (*Claims, error) {
 
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 
-		return s.Config.SignKey, nil
-	}, jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}))
+		return []byte(s.Config.SignKey), nil
+	}, jwt.WithValidMethods([]string{constant.DefaultSignMethod}))
 	if err != nil {
 
 		return nil, err
@@ -78,7 +79,7 @@ func (s *Service) ParseJWT(tokenString string) (*Claims, error) {
 func (s *Service) createAccessToken(userId uint) (string, error) {
 
 	// create a new jwt and set signer SHA 256 in jwt Header
-	t := jwt.New(jwt.GetSigningMethod(jwt.SigningMethodHS256.Alg()))
+	t := jwt.New(jwt.GetSigningMethod(constant.DefaultSignMethod))
 
 	// set our claims
 	t.Claims = NewClaims(
@@ -86,14 +87,14 @@ func (s *Service) createAccessToken(userId uint) (string, error) {
 		s.Config.AccessSubject,
 		userId,
 	)
-	// create token string
-	return t.SignedString(s.Config.SignKey)
+
+	return t.SignedString([]byte(s.Config.SignKey))
 }
 
 func (s *Service) createRefreshToken(userId uint) (string, error) {
 
 	// create a new jwt and set signer SHA 256 in jwt Header
-	t := jwt.New(jwt.GetSigningMethod(jwt.SigningMethodHS256.Alg()))
+	t := jwt.New(jwt.GetSigningMethod(constant.DefaultSignMethod))
 
 	// set our claims
 	t.Claims = NewClaims(
@@ -102,6 +103,6 @@ func (s *Service) createRefreshToken(userId uint) (string, error) {
 		userId,
 	)
 
-	return t.SignedString(s.Config.SignKey)
+	return t.SignedString([]byte(s.Config.SignKey))
 
 }

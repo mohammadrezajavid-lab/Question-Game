@@ -6,7 +6,7 @@ import (
 	"golang.project/go-fundamentals/gameapp/config/httpservercfg"
 	"golang.project/go-fundamentals/gameapp/delivery/httpserver"
 	"golang.project/go-fundamentals/gameapp/repository/mysql"
-	"golang.project/go-fundamentals/gameapp/service/auth"
+	"golang.project/go-fundamentals/gameapp/service/authentication"
 	"golang.project/go-fundamentals/gameapp/service/user"
 	"golang.project/go-fundamentals/gameapp/validator/uservalidator"
 	"os"
@@ -38,10 +38,10 @@ func main() {
 	httpServer.Serve()
 }
 
-func setupServices(config httpservercfg.Config) (*auth.Service, *user.Service, *uservalidator.Validator) {
+func setupServices(config httpservercfg.Config) (*authentication.Service, *user.Service, *uservalidator.Validator) {
 
-	authSvc := auth.NewService(
-		auth.NewConfig(
+	authSvc := authentication.NewService(
+		authentication.NewConfig(
 			config.AuthCfg.SignKey,
 			config.AuthCfg.AccessExpirationTime,
 			config.AuthCfg.RefreshExpirationTime,

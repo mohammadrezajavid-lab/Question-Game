@@ -2,6 +2,7 @@ package parsericherror
 
 import (
 	"golang.project/go-fundamentals/gameapp/pkg/richerror"
+	"log"
 	"net/http"
 )
 
@@ -25,6 +26,8 @@ func (rp HttpRichErrorParse) ParseRichError(err error) (string, int) {
 
 		// we should not expose unexpected error message
 		if statusCode >= 500 {
+			log.Println(message)
+
 			message = "internal server error"
 		}
 

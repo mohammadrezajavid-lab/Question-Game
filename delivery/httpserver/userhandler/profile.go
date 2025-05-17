@@ -5,13 +5,13 @@ import (
 	"golang.project/go-fundamentals/gameapp/config/httpservercfg/constant"
 	"golang.project/go-fundamentals/gameapp/delivery/httpserver/parsericherror"
 	"golang.project/go-fundamentals/gameapp/param"
-	"golang.project/go-fundamentals/gameapp/service/auth"
+	"golang.project/go-fundamentals/gameapp/service/authentication"
 	"net/http"
 )
 
-func getClaims(ctx echo.Context) *auth.Claims {
+func getClaims(ctx echo.Context) *authentication.Claims {
 
-	claims, ok := ctx.Get(constant.AuthMiddlewareContextKey).(*auth.Claims)
+	claims, ok := ctx.Get(constant.AuthMiddlewareContextKey).(*authentication.Claims)
 	if !ok {
 
 		panic("JWT token missing or invalid")

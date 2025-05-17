@@ -7,7 +7,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"golang.project/go-fundamentals/gameapp/config/httpservercfg"
 	"golang.project/go-fundamentals/gameapp/delivery/httpserver/userhandler"
-	"golang.project/go-fundamentals/gameapp/service/auth"
+	"golang.project/go-fundamentals/gameapp/service/authentication"
 	"golang.project/go-fundamentals/gameapp/service/user"
 	"golang.project/go-fundamentals/gameapp/validator/uservalidator"
 	"log/slog"
@@ -19,7 +19,7 @@ type HttpServer struct {
 	userHandler  userhandler.UserHandler
 }
 
-func NewHttpServer(cfg httpservercfg.Config, authSvc *auth.Service, userSvc *user.Service, userValidator *uservalidator.Validator) *HttpServer {
+func NewHttpServer(cfg httpservercfg.Config, authSvc *authentication.Service, userSvc *user.Service, userValidator *uservalidator.Validator) *HttpServer {
 
 	return &HttpServer{serverConfig: cfg, userHandler: userhandler.NewHandler(userSvc, authSvc, userValidator)}
 }

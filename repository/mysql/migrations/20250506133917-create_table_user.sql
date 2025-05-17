@@ -1,12 +1,13 @@
 -- +migrate Up
-CREATE TABLE Users
+-- VARCHAR(191) for utf8mb4
+CREATE TABLE users
 (
-    id              int primary key auto_increment,
-    name            varchar(255) not null,
-    phone_number    varchar(255) not null unique,
-    hashed_password varchar(500) not null,
-    created_at      datetime     not null default current_timestamp
+    id              INT PRIMARY KEY AUTO_INCREMENT,
+    name            VARCHAR(191) NOT NULL,
+    phone_number    VARCHAR(191) NOT NULL UNIQUE,
+    hashed_password VARCHAR(191) NOT NULL,
+    created_at      DATETIME DEFAULT current_timestamp
 );
 
 -- +migrate Down
-DROP TABLE Users;
+DROP TABLE users;

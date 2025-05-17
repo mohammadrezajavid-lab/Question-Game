@@ -27,5 +27,5 @@ func NewRegisterResponse(user *entity.User) *RegisterResponse {
 		Id          uint   `json:"id"`
 		PhoneNumber string `json:"phone_number"`
 		Name        string `json:"name"`
-	}{Id: user.ID, PhoneNumber: user.PhoneNumber, Name: user.Name}}
+	}{Id: user.Id, PhoneNumber: user.PhoneNumber, Name: user.Name}}
 }

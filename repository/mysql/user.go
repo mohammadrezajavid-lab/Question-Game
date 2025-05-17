@@ -13,7 +13,7 @@ func (d *DB) IsPhoneNumberUniq(phoneNumber string) (bool, error) {
 	const operation = "mysql.IsPhoneNumberUniq"
 
 	userRow := d.MysqlConnection.QueryRow(
-		`SELECT * FROM game_app_db.Users WHERE phone_number = ?`,
+		`SELECT * FROM game_app_db.users WHERE phone_number = ?`,
 		phoneNumber,
 	)
 
@@ -37,7 +37,7 @@ func (d *DB) RegisterUser(user *entity.User) (*entity.User, error) {
 
 	const operation = "mysql.RegisterUser"
 	var result, eErr = d.MysqlConnection.Exec(
-		`INSERT INTO game_app_db.Users(name, phone_number, hashed_password) VALUES(?, ?, ?)`,
+		`INSERT INTO game_app_db.users(name, phone_number, hashed_password) VALUES(?, ?, ?)`,
 		user.Name,
 		user.PhoneNumber,
 		user.HashedPassword,
@@ -52,7 +52,7 @@ func (d *DB) RegisterUser(user *entity.User) (*entity.User, error) {
 
 	// error is always nil
 	var userId, _ = result.LastInsertId()
-	user.ID = uint(userId)
+	user.Id = uint(userId)
 
 	return user, nil
 }
@@ -62,7 +62,7 @@ func (d *DB) GetUserByPhoneNumber(phoneNumber string) (*entity.User, error) {
 	const operation = "mysql.GetUserByPhoneNumber"
 
 	var userRow = d.MysqlConnection.QueryRow(
-		`SELECT * FROM game_app_db.Users WHERE phone_number = ?`,
+		`SELECT * FROM game_app_db.users WHERE phone_number = ?`,
 		phoneNumber,
 	)
 
@@ -91,7 +91,7 @@ func (d *DB) GetUserById(userId uint) (*entity.User, error) {
 
 	const operation = "mysql.GetUserById"
 	userRow := d.MysqlConnection.QueryRow(
-		`SELECT * FROM game_app_db.Users WHERE id=?`,
+		`SELECT * FROM game_app_db.users WHERE id=?`,
 		userId,
 	)
 
@@ -118,9 +118,19 @@ func (d *DB) GetUserById(userId uint) (*entity.User, error) {
 func scanUser(row *sql.Row) (*entity.User, error) {
 
 	var createdAt time.Time
+	var roleStr string
 
 	user := entity.NewUser("", "", "")
-	err := row.Scan(&user.ID, &user.Name, &user.PhoneNumber, &user.HashedPassword, &createdAt)
+	err := row.Scan(&user.Id, &user.Name, &user.PhoneNumber, &user.HashedPassword, &createdAt, &roleStr)
+
+	switch roleStr {
+	case "user":
+		user.Role = entity.UserRole
+	case "admin":
+		user.Role = entity.AdminRole
+	default:
+		return user, errors.New("can't scan data from database")
+	}
 
 	return user, err
 }

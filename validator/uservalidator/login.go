@@ -53,7 +53,6 @@ func (v *Validator) checkPhoneNumberExistence() validation.RuleFunc {
 		}
 
 		if _, err := v.repository.GetUserByPhoneNumber(phoneNumber); err != nil {
-
 			return errors.New("phone number does not exits")
 		}
 

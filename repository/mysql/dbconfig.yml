@@ -2,4 +2,4 @@ production:
   dialect: mysql
   datasource: "game_app:game_app_pass@tcp(127.0.0.1:3308)/game_app_db?parseTime=true"
   dir: migrations
-  table: migrations
+  table: gorp_migrations

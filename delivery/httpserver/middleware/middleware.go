@@ -1,12 +1,12 @@
 package middleware
 
-import "golang.project/go-fundamentals/gameapp/service/auth"
+import "golang.project/go-fundamentals/gameapp/service/authentication"
 
 type Middleware struct {
-	authService *auth.Service
+	authService *authentication.Service
 }
 
-func NewMiddleware(authService *auth.Service) Middleware {
+func NewMiddleware(authService *authentication.Service) Middleware {
 
 	return Middleware{
 		authService: authService,

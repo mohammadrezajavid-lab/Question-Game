@@ -7,7 +7,7 @@ import (
 	"golang.project/go-fundamentals/gameapp/config/httpservercfg/constant"
 	"golang.project/go-fundamentals/gameapp/repository/migrator"
 	"golang.project/go-fundamentals/gameapp/repository/mysql"
-	"golang.project/go-fundamentals/gameapp/service/auth"
+	"golang.project/go-fundamentals/gameapp/service/authentication"
 	"log"
 	"strings"
 )
@@ -18,9 +18,9 @@ type HttpServerConfig struct {
 }
 
 type Config struct {
-	ServerCfg   HttpServerConfig `mapstructure:"httpserver_cfg"`
-	DataBaseCfg mysql.Config     `mapstructure:"database_cfg"`
-	AuthCfg     auth.Config      `mapstructure:"auth_cfg"`
+	ServerCfg   HttpServerConfig      `mapstructure:"httpserver_cfg"`
+	DataBaseCfg mysql.Config          `mapstructure:"database_cfg"`
+	AuthCfg     authentication.Config `mapstructure:"auth_cfg"`
 }
 
 func NewConfig(host string, port int) Config {
@@ -37,7 +37,7 @@ func NewConfig(host string, port int) Config {
 // 1. read config file
 // 2. env variable
 // 3. use default env
-func loadConfig(host string, port int) (HttpServerConfig, mysql.Config, auth.Config) {
+func loadConfig(host string, port int) (HttpServerConfig, mysql.Config, authentication.Config) {
 
 	setDefaultENV()
 
