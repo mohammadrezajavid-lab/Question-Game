@@ -1,22 +1,30 @@
 package userhandler
 
 import (
-	"golang.project/go-fundamentals/gameapp/service/authentication"
-	"golang.project/go-fundamentals/gameapp/service/user"
+	"golang.project/go-fundamentals/gameapp/service/authenticationservice"
+	"golang.project/go-fundamentals/gameapp/service/authorizationservice"
+	"golang.project/go-fundamentals/gameapp/service/userservice"
 	"golang.project/go-fundamentals/gameapp/validator/uservalidator"
 )
 
 type UserHandler struct {
-	userService *user.Service
-	authService *authentication.Service
+	userService          *userservice.Service
+	authService          *authenticationservice.Service
+	authorizationService *authorizationservice.Service
 
 	userValidator *uservalidator.Validator
 }
 
-func NewHandler(userSvc *user.Service, authSvc *authentication.Service, userValidator *uservalidator.Validator) UserHandler {
+func NewHandler(
+	userSvc *userservice.Service,
+	authSvc *authenticationservice.Service,
+	authorizationSvc *authorizationservice.Service,
+	userValidator *uservalidator.Validator,
+) UserHandler {
 	return UserHandler{
-		userService:   userSvc,
-		authService:   authSvc,
-		userValidator: userValidator,
+		userService:          userSvc,
+		authService:          authSvc,
+		authorizationService: authorizationSvc,
+		userValidator:        userValidator,
 	}
 }

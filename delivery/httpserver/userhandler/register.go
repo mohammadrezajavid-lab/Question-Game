@@ -28,8 +28,7 @@ func (h *UserHandler) userRegisterHandler(ctx echo.Context) error {
 	// validate register request
 	if validateErr, fieldErrors := h.userValidator.ValidateRegisterRequest(requestUser); validateErr != nil {
 
-		parseRichErr := parsericherror.New()
-		message, statusCode := parseRichErr.ParseRichError(validateErr)
+		message, statusCode := parsericherror.New().ParseRichError(validateErr)
 
 		return ctx.JSON(statusCode, echo.Map{
 			"message": message,
@@ -40,8 +39,7 @@ func (h *UserHandler) userRegisterHandler(ctx echo.Context) error {
 	registerResponse, registerErr := h.userService.Register(requestUser)
 	if registerErr != nil {
 
-		parseRichErr := parsericherror.New()
-		message, statusCode := parseRichErr.ParseRichError(registerErr)
+		message, statusCode := parsericherror.New().ParseRichError(registerErr)
 
 		return echo.NewHTTPError(statusCode, message)
 	}

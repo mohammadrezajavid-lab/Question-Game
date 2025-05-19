@@ -6,8 +6,12 @@ import (
 	"golang.project/go-fundamentals/gameapp/config/httpservercfg"
 	"golang.project/go-fundamentals/gameapp/delivery/httpserver"
 	"golang.project/go-fundamentals/gameapp/repository/mysql"
-	"golang.project/go-fundamentals/gameapp/service/authentication"
-	"golang.project/go-fundamentals/gameapp/service/user"
+	"golang.project/go-fundamentals/gameapp/repository/mysql/accesscontrolmysql"
+	"golang.project/go-fundamentals/gameapp/repository/mysql/usermysql"
+	"golang.project/go-fundamentals/gameapp/service/authenticationservice"
+	"golang.project/go-fundamentals/gameapp/service/authorizationservice"
+	"golang.project/go-fundamentals/gameapp/service/backofficeuserservice"
+	"golang.project/go-fundamentals/gameapp/service/userservice"
 	"golang.project/go-fundamentals/gameapp/validator/uservalidator"
 	"os"
 )
@@ -31,27 +35,40 @@ func main() {
 		os.Exit(0)
 	}
 
-	authSvc, userSvc, userValidator := setupServices(config)
+	authSvc, userSvc, backOfficeUserSvc, authorizationSvc, userValidator := setupServices(config)
 
-	httpServer := httpserver.NewHttpServer(config, authSvc, userSvc, userValidator)
+	httpServer := httpserver.NewHttpServer(config, authSvc, userSvc, backOfficeUserSvc, authorizationSvc, userValidator)
 
 	httpServer.Serve()
 }
 
-func setupServices(config httpservercfg.Config) (*authentication.Service, *user.Service, *uservalidator.Validator) {
+func setupServices(config httpservercfg.Config) (
+	*authenticationservice.Service,
+	*userservice.Service,
+	*backofficeuserservice.Service,
+	*authorizationservice.Service,
+	*uservalidator.Validator,
+) {
 
-	authSvc := authentication.NewService(
-		authentication.NewConfig(
+	authSvc := authenticationservice.NewService(
+		authenticationservice.NewConfig(
 			config.AuthCfg.SignKey,
 			config.AuthCfg.AccessExpirationTime,
 			config.AuthCfg.RefreshExpirationTime,
 			config.AuthCfg.AccessSubject,
 			config.AuthCfg.RefreshSubject),
 	)
+	mysqlRepo := mysql.NewDB(config.DataBaseCfg)
 
-	userSvc := user.NewService(mysql.NewDB(config.DataBaseCfg), authSvc)
+	mysqlUser := usermysql.NewDataBase(mysqlRepo)
+	userSvc := userservice.NewService(mysqlUser, authSvc)
 
-	userValidator := uservalidator.NewValidator(mysql.NewDB(config.DataBaseCfg))
+	userValidator := uservalidator.NewValidator(mysqlUser)
 
-	return authSvc, userSvc, userValidator
+	backOfficeUserSvc := backofficeuserservice.NewService()
+
+	mysqlAccessControl := accesscontrolmysql.NewDataBase(mysqlRepo)
+	authorizationSvc := authorizationservice.NewService(mysqlAccessControl)
+
+	return authSvc, userSvc, backOfficeUserSvc, authorizationSvc, userValidator
 }

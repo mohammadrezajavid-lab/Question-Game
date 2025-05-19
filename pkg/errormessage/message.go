@@ -1,5 +1,7 @@
 package errormessage
 
 const (
-// TODO - set here, all message application
+	ErrorMsgUnexpected     = "unexpected error"
+	ErrorMsgScanQuery      = "can't scan query result"
+	ErrorMsgUserNotAllowed = "user not allowed"
 )

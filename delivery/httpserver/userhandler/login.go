@@ -27,8 +27,7 @@ func (h *UserHandler) userLoginHandler(ctx echo.Context) error {
 	// validate login request
 	if validateErr, fieldErrors := h.userValidator.ValidateLoginRequest(requestUser); validateErr != nil {
 
-		parseErr := parsericherror.New()
-		message, statusCode := parseErr.ParseRichError(validateErr)
+		message, statusCode := parsericherror.New().ParseRichError(validateErr)
 
 		return ctx.JSON(statusCode, echo.Map{
 			"message": message,
@@ -39,8 +38,7 @@ func (h *UserHandler) userLoginHandler(ctx echo.Context) error {
 	loginRes, loginErr := h.userService.Login(requestUser)
 	if loginErr != nil {
 
-		parseRichErr := parsericherror.New()
-		message, statusCode := parseRichErr.ParseRichError(loginErr)
+		message, statusCode := parsericherror.New().ParseRichError(loginErr)
 
 		return echo.NewHTTPError(statusCode, message)
 	}

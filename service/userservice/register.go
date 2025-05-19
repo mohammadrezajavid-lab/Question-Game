@@ -1,4 +1,4 @@
-package user
+package userservice
 
 import (
 	"golang.project/go-fundamentals/gameapp/entity"
@@ -23,7 +23,9 @@ func (s *Service) Register(req *param.RegisterRequest) (*param.RegisterResponse,
 	}
 
 	// create new user in storage
-	newUser, cErr := s.userRepository.RegisterUser(entity.NewUser(req.Name, req.PhoneNumber, hashedPassword))
+	user := entity.NewUser(req.Name, req.PhoneNumber, hashedPassword)
+	//TODO - user.Role = entity.AdminRole // for change default user Role
+	newUser, cErr := s.userRepository.RegisterUser(user)
 	if cErr != nil {
 
 		return nil, richerror.NewRichError(operation).

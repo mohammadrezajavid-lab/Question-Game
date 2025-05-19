@@ -1,18 +1,19 @@
-package mysql
+package usermysql
 
 import (
 	"database/sql"
 	"errors"
 	"golang.project/go-fundamentals/gameapp/entity"
 	"golang.project/go-fundamentals/gameapp/pkg/richerror"
+	"golang.project/go-fundamentals/gameapp/repository/mysql"
 	"time"
 )
 
-func (d *DB) IsPhoneNumberUniq(phoneNumber string) (bool, error) {
+func (d *DataBase) IsPhoneNumberUniq(phoneNumber string) (bool, error) {
 
-	const operation = "mysql.IsPhoneNumberUniq"
+	const operation = "mysql.user.IsPhoneNumberUniq"
 
-	userRow := d.MysqlConnection.QueryRow(
+	userRow := d.dataBase.MysqlConnection.QueryRow(
 		`SELECT * FROM game_app_db.users WHERE phone_number = ?`,
 		phoneNumber,
 	)
@@ -33,14 +34,15 @@ func (d *DB) IsPhoneNumberUniq(phoneNumber string) (bool, error) {
 	return false, nil
 }
 
-func (d *DB) RegisterUser(user *entity.User) (*entity.User, error) {
+func (d *DataBase) RegisterUser(user *entity.User) (*entity.User, error) {
 
-	const operation = "mysql.RegisterUser"
-	var result, eErr = d.MysqlConnection.Exec(
-		`INSERT INTO game_app_db.users(name, phone_number, hashed_password) VALUES(?, ?, ?)`,
+	const operation = "mysql.user.RegisterUser"
+	var result, eErr = d.dataBase.MysqlConnection.Exec(
+		`INSERT INTO game_app_db.users(name, phone_number, hashed_password, role) VALUES(?, ?, ?, ?)`,
 		user.Name,
 		user.PhoneNumber,
 		user.HashedPassword,
+		user.Role.String(),
 	)
 	if eErr != nil {
 
@@ -57,11 +59,11 @@ func (d *DB) RegisterUser(user *entity.User) (*entity.User, error) {
 	return user, nil
 }
 
-func (d *DB) GetUserByPhoneNumber(phoneNumber string) (*entity.User, error) {
+func (d *DataBase) GetUserByPhoneNumber(phoneNumber string) (*entity.User, error) {
 
-	const operation = "mysql.GetUserByPhoneNumber"
+	const operation = "mysql.user.GetUserByPhoneNumber"
 
-	var userRow = d.MysqlConnection.QueryRow(
+	var userRow = d.dataBase.MysqlConnection.QueryRow(
 		`SELECT * FROM game_app_db.users WHERE phone_number = ?`,
 		phoneNumber,
 	)
@@ -87,10 +89,10 @@ func (d *DB) GetUserByPhoneNumber(phoneNumber string) (*entity.User, error) {
 	return user, nil
 }
 
-func (d *DB) GetUserById(userId uint) (*entity.User, error) {
+func (d *DataBase) GetUserById(userId uint) (*entity.User, error) {
 
-	const operation = "mysql.GetUserById"
-	userRow := d.MysqlConnection.QueryRow(
+	const operation = "mysql.user.GetUserById"
+	userRow := d.dataBase.MysqlConnection.QueryRow(
 		`SELECT * FROM game_app_db.users WHERE id=?`,
 		userId,
 	)
@@ -115,21 +117,21 @@ func (d *DB) GetUserById(userId uint) (*entity.User, error) {
 	return user, nil
 }
 
-func scanUser(row *sql.Row) (*entity.User, error) {
+func scanUser(scanner mysql.Scanner) (*entity.User, error) {
 
 	var createdAt time.Time
 	var roleStr string
 
 	user := entity.NewUser("", "", "")
-	err := row.Scan(&user.Id, &user.Name, &user.PhoneNumber, &user.HashedPassword, &createdAt, &roleStr)
+	err := scanner.Scan(&user.Id, &user.Name, &user.PhoneNumber, &user.HashedPassword, &createdAt, &roleStr)
 
-	switch roleStr {
-	case "user":
-		user.Role = entity.UserRole
-	case "admin":
-		user.Role = entity.AdminRole
-	default:
-		return user, errors.New("can't scan data from database")
+	if err == nil {
+		role := entity.MapToRoleEntity(roleStr)
+		if role == 0 {
+
+			return user, errors.New("can't scan data from database")
+		}
+		user.Role = role
 	}
 
 	return user, err

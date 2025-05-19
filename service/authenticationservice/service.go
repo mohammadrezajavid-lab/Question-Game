@@ -1,4 +1,4 @@
-package authentication
+package authenticationservice
 
 import (
 	"github.com/golang-jwt/jwt/v4"
@@ -44,12 +44,12 @@ func NewService(authConfig Config) *Service {
 
 func (s *Service) CreateAccessToken(user *entity.User) (string, error) {
 
-	return s.createAccessToken(user.Id)
+	return s.createAccessToken(user.Id, user.Role)
 }
 
 func (s *Service) CreateRefreshToken(user *entity.User) (string, error) {
 
-	return s.createRefreshToken(user.Id)
+	return s.createRefreshToken(user.Id, user.Role)
 }
 
 func (s *Service) ParseJWT(tokenString string) (*Claims, error) {
@@ -76,7 +76,7 @@ func (s *Service) ParseJWT(tokenString string) (*Claims, error) {
 	}
 }
 
-func (s *Service) createAccessToken(userId uint) (string, error) {
+func (s *Service) createAccessToken(userId uint, role entity.Role) (string, error) {
 
 	// create a new jwt and set signer SHA 256 in jwt Header
 	t := jwt.New(jwt.GetSigningMethod(constant.DefaultSignMethod))
@@ -86,12 +86,13 @@ func (s *Service) createAccessToken(userId uint) (string, error) {
 		jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.Config.AccessExpirationTime))},
 		s.Config.AccessSubject,
 		userId,
+		role,
 	)
 
 	return t.SignedString([]byte(s.Config.SignKey))
 }
 
-func (s *Service) createRefreshToken(userId uint) (string, error) {
+func (s *Service) createRefreshToken(userId uint, role entity.Role) (string, error) {
 
 	// create a new jwt and set signer SHA 256 in jwt Header
 	t := jwt.New(jwt.GetSigningMethod(constant.DefaultSignMethod))
@@ -101,6 +102,7 @@ func (s *Service) createRefreshToken(userId uint) (string, error) {
 		jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.Config.RefreshExpirationTime))},
 		s.Config.RefreshSubject,
 		userId,
+		role,
 	)
 
 	return t.SignedString([]byte(s.Config.SignKey))

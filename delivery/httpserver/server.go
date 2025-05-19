@@ -6,22 +6,39 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"golang.project/go-fundamentals/gameapp/config/httpservercfg"
+	"golang.project/go-fundamentals/gameapp/delivery/httpserver/backofficeuserhandler"
 	"golang.project/go-fundamentals/gameapp/delivery/httpserver/userhandler"
-	"golang.project/go-fundamentals/gameapp/service/authentication"
-	"golang.project/go-fundamentals/gameapp/service/user"
+	"golang.project/go-fundamentals/gameapp/service/authenticationservice"
+	"golang.project/go-fundamentals/gameapp/service/authorizationservice"
+	"golang.project/go-fundamentals/gameapp/service/backofficeuserservice"
+	"golang.project/go-fundamentals/gameapp/service/userservice"
 	"golang.project/go-fundamentals/gameapp/validator/uservalidator"
 	"log/slog"
 	"net/http"
 )
 
 type HttpServer struct {
-	serverConfig httpservercfg.Config
-	userHandler  userhandler.UserHandler
+	config httpservercfg.Config
+
+	userHandler           userhandler.UserHandler
+	backOfficeUserHandler backofficeuserhandler.BackOfficeUserHandler
 }
 
-func NewHttpServer(cfg httpservercfg.Config, authSvc *authentication.Service, userSvc *user.Service, userValidator *uservalidator.Validator) *HttpServer {
+func NewHttpServer(
+	cfg httpservercfg.Config,
+	authSvc *authenticationservice.Service,
+	userSvc *userservice.Service,
+	backOfficeUserSvc *backofficeuserservice.Service,
+	authorizationSvc *authorizationservice.Service,
+	userValidator *uservalidator.Validator,
+) *HttpServer {
 
-	return &HttpServer{serverConfig: cfg, userHandler: userhandler.NewHandler(userSvc, authSvc, userValidator)}
+	return &HttpServer{
+		config: cfg,
+
+		userHandler:           userhandler.NewHandler(userSvc, authSvc, authorizationSvc, userValidator),
+		backOfficeUserHandler: backofficeuserhandler.NewHandler(backOfficeUserSvc, authSvc, authorizationSvc, userValidator),
+	}
 }
 
 func (hs *HttpServer) Serve() {
@@ -36,8 +53,9 @@ func (hs *HttpServer) Serve() {
 	e.GET("/health-check", hs.HealthCheckHandler)
 
 	hs.userHandler.SetRoute(e)
+	hs.backOfficeUserHandler.SetRoute(e)
 
-	serverAddress := fmt.Sprintf("%s:%d", hs.serverConfig.ServerCfg.Host, hs.serverConfig.ServerCfg.Port)
+	serverAddress := fmt.Sprintf("%s:%d", hs.config.ServerCfg.Host, hs.config.ServerCfg.Port)
 	if err := e.Start(serverAddress); err != nil && errors.Is(err, http.ErrServerClosed) {
 		slog.Error("failed to start server", "error", err)
 	}

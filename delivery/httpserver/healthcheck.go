@@ -9,7 +9,7 @@ import (
 
 func (hs *HttpServer) HealthCheckHandler(ctx echo.Context) error {
 
-	db := mysql.NewDB(hs.serverConfig.DataBaseCfg)
+	db := mysql.NewDB(hs.config.DataBaseCfg)
 
 	if err := db.MysqlConnection.Ping(); err != nil {
 

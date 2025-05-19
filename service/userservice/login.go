@@ -1,4 +1,4 @@
-package user
+package userservice
 
 import (
 	"golang.project/go-fundamentals/gameapp/param"
