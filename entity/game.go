@@ -17,17 +17,17 @@ type Player struct {
 }
 type Game struct {
 	Id         uint
-	CategoryId uint
+	Category   Category
 	QuestionId []uint
 	PlayerIds  []uint
 	WinnerId   uint
 	StartTime  time.Time
 }
 
-func NewGame(id uint, categoryId uint) *Game {
+func NewGame(id uint, category Category) *Game {
 	return &Game{
 		Id:         id,
-		CategoryId: categoryId,
+		Category:   category,
 		QuestionId: nil,
 		PlayerIds:  nil,
 		WinnerId:   0,

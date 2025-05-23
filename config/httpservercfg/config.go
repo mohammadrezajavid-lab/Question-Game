@@ -4,10 +4,12 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/spf13/viper"
+	"golang.project/go-fundamentals/gameapp/adapter/redis"
 	"golang.project/go-fundamentals/gameapp/config/httpservercfg/constant"
 	"golang.project/go-fundamentals/gameapp/repository/migrator"
 	"golang.project/go-fundamentals/gameapp/repository/mysql"
 	"golang.project/go-fundamentals/gameapp/service/authenticationservice"
+	"golang.project/go-fundamentals/gameapp/service/matchingservice"
 	"log"
 	"strings"
 )
@@ -21,23 +23,27 @@ type Config struct {
 	ServerCfg   HttpServerConfig             `mapstructure:"httpserver_cfg"`
 	DataBaseCfg mysql.Config                 `mapstructure:"database_cfg"`
 	AuthCfg     authenticationservice.Config `mapstructure:"auth_cfg"`
+	MatchingCfg matchingservice.Config       `mapstructure:"matching_cfg"`
+	RedisCfg    redis.Config                 `mapstructure:"redis_cfg"`
 }
 
 func NewConfig(host string, port int) Config {
 
-	serverCfg, dataBaseCfg, authCfg := loadConfig(host, port)
+	appCfg := loadConfig(host, port)
 
 	return Config{
-		ServerCfg:   serverCfg,
-		DataBaseCfg: dataBaseCfg,
-		AuthCfg:     authCfg,
+		ServerCfg:   appCfg.ServerCfg,
+		DataBaseCfg: appCfg.DataBaseCfg,
+		AuthCfg:     appCfg.AuthCfg,
+		MatchingCfg: appCfg.MatchingCfg,
+		RedisCfg:    appCfg.RedisCfg,
 	}
 }
 
 // 1. read config file
 // 2. env variable
 // 3. use default env
-func loadConfig(host string, port int) (HttpServerConfig, mysql.Config, authenticationservice.Config) {
+func loadConfig(host string, port int) Config {
 
 	setDefaultENV()
 
@@ -56,13 +62,19 @@ func loadConfig(host string, port int) (HttpServerConfig, mysql.Config, authenti
 
 		// get config from env variable
 		if uErr := viper.Sub("httpserver_cfg").Unmarshal(&appConfig.ServerCfg); uErr != nil {
-			log.Fatalf("can't unmarshal httpserver config: %v", err)
+			log.Fatalf("can't unmarshal httpserver config: %v", uErr)
 		}
 		if uErr := viper.Sub("database_cfg").Unmarshal(&appConfig.DataBaseCfg); uErr != nil {
-			log.Fatalf("can't unmarshal database config: %v", err)
+			log.Fatalf("can't unmarshal database config: %v", uErr)
 		}
 		if uErr := viper.Sub("auth_cfg").Unmarshal(&appConfig.AuthCfg); uErr != nil {
-			log.Fatalf("can't unmarshal auth config: %v", err)
+			log.Fatalf("can't unmarshal auth config: %v", uErr)
+		}
+		if uErr := viper.Sub("matching_cfg").Unmarshal(&appConfig.MatchingCfg); uErr != nil {
+			log.Fatalf("can't unmarshal matching config: %v", uErr)
+		}
+		if uErr := viper.Sub("redis_cfg").Unmarshal(&appConfig.RedisCfg); uErr != nil {
+			log.Fatalf("can't unmarshal redis config: %v", uErr)
 		}
 
 	} else {
@@ -80,16 +92,16 @@ func loadConfig(host string, port int) (HttpServerConfig, mysql.Config, authenti
 		appConfig.ServerCfg.Port = port
 	}
 
-	return appConfig.ServerCfg, appConfig.DataBaseCfg, appConfig.AuthCfg
+	return appConfig
 }
 
 func setDefaultENV() {
 
-	// Default HTTP Server ENV
+	// Default HTTP Server config ENV
 	viper.SetDefault("httpserver_cfg.host", constant.DefaultHTTPServerHost)
 	viper.SetDefault("httpserver_cfg.port", constant.DefaultHTTPServerPort)
 
-	// Default DataBase ENV
+	// Default DataBase config ENV
 	viper.SetDefault("database_cfg.database_user_name", constant.DefaultDataBaseUserName)
 	viper.SetDefault("database_cfg.database_password", constant.DefaultDataBasePassword)
 	viper.SetDefault("database_cfg.database_name", constant.DefaultDataBaseName)
@@ -97,12 +109,15 @@ func setDefaultENV() {
 	viper.SetDefault("database_cfg.database_parse_time", constant.DefaultDataBaseParseTime)
 	viper.SetDefault("database_cfg.database_port", constant.DefaultDataBasePort)
 
-	// Default Auth ENV
+	// Default Auth config ENV
 	viper.SetDefault("auth_cfg.sign_key", constant.DefaultJWTSignKey)
 	viper.SetDefault("auth_cfg.access_expiration_time", constant.DefaultAccessExpirationTime)
 	viper.SetDefault("auth_cfg.refresh_expiration_time", constant.DefaultRefreshExpirationTime)
 	viper.SetDefault("auth_cfg.access_subject", constant.DefaultAccessSubject)
 	viper.SetDefault("auth_cfg.refresh_subject", constant.DefaultRefreshSubject)
+
+	// Default Matching config ENV
+	viper.SetDefault("waiting_time_out", constant.DefaultWaitingTimeOut)
 }
 
 func (c *Config) Migrate(migrationCommand string) {

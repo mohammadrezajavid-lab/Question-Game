@@ -28,4 +28,6 @@ const (
 
 	MigrateDialect           = "mysql"
 	AuthMiddlewareContextKey = "claims"
+
+	DefaultWaitingTimeOut = time.Minute * 2
 )

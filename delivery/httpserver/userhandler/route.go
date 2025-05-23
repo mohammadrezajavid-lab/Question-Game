@@ -9,7 +9,6 @@ func (h *UserHandler) SetRoute(e *echo.Echo) {
 
 	newMiddleware := middleware.NewMiddleware(h.authService, h.authorizationService)
 
-	// Great one group and add logger middleware for userGroup
 	userGroup := e.Group("/users/")
 
 	userGroup.POST("register", h.userRegisterHandler)

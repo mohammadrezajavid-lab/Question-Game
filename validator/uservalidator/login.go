@@ -4,6 +4,7 @@ import (
 	"errors"
 	validation "github.com/go-ozzo/ozzo-validation"
 	"golang.project/go-fundamentals/gameapp/param"
+	"golang.project/go-fundamentals/gameapp/pkg/errormessage"
 	"golang.project/go-fundamentals/gameapp/pkg/richerror"
 )
 
@@ -24,7 +25,7 @@ func (v *Validator) ValidateLoginRequest(req *param.LoginRequest) (error, map[st
 
 		return richerror.NewRichError(operation).
 				WithError(err).
-				WithMessage("invalid input").
+				WithMessage(errormessage.ErrorMsgInvalidRequest).
 				WithKind(richerror.KindInvalid),
 			fieldErrors
 	}
@@ -49,11 +50,11 @@ func (v *Validator) checkPhoneNumberExistence() validation.RuleFunc {
 
 		phoneNumber, ok := value.(string)
 		if !ok {
-			return errors.New("invalid phone number type")
+			return errors.New(errormessage.ErrorMsgInvalidPhoneType)
 		}
 
 		if _, err := v.repository.GetUserByPhoneNumber(phoneNumber); err != nil {
-			return errors.New("phone number does not exits")
+			return errors.New(errormessage.ErrorMsgNotExistPhoneNumber)
 		}
 
 		return nil

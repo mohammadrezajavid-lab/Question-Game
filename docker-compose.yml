@@ -1,5 +1,25 @@
 services:
-  db:
+
+  redis-db:
+    image: bitnami/redis:8.0.1-debian-12-r2
+    ports:
+      - "6380:6379"
+    container_name: gameapp_redis
+    healthcheck:
+      test: [ "CMD", "redis-cli", "-a", "$$REDIS_PASSWORD", "ping" ]
+    restart: always
+    environment:
+      - "REDIS_PASSWORD=password1999"
+      #      - ALLOW_EMPTY_PASSWORD=yes
+      - REDIS_DAEMON_USER=redis
+      - REDIS_RDB_POLICY_DISABLE=yes
+      - REDIS_AOF_ENABLED=yes
+    volumes:
+      - redis_data:/bitnami/redis/data
+    networks:
+      - game-app
+
+  mysql-db:
     image: mysql:8
     ports:
       - "3308:3306"
@@ -13,7 +33,7 @@ services:
     cap_add:
       - SYS_NICE
     restart: always
-    command: ['mysqld', '--character-set-server=utf8mb4', '--collation-server=utf8mb4_unicode_ci']
+    command: [ 'mysqld', '--character-set-server=utf8mb4', '--collation-server=utf8mb4_unicode_ci' ]
     environment:
       - "MYSQL_ROOT_PASSWORD=game_app_root"
       - "MYSQL_USER=game_app"
@@ -21,5 +41,16 @@ services:
       - "MYSQL_DATABASE=game_app_db"
     volumes:
       - db_vol:/var/lib/mysql
+    networks:
+      - game-app
+
 volumes:
   db_vol:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  game-app:
+    driver: bridge
+

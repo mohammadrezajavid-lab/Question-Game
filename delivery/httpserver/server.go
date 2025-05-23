@@ -7,11 +7,14 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"golang.project/go-fundamentals/gameapp/config/httpservercfg"
 	"golang.project/go-fundamentals/gameapp/delivery/httpserver/backofficeuserhandler"
+	"golang.project/go-fundamentals/gameapp/delivery/httpserver/matchinghandler"
 	"golang.project/go-fundamentals/gameapp/delivery/httpserver/userhandler"
 	"golang.project/go-fundamentals/gameapp/service/authenticationservice"
 	"golang.project/go-fundamentals/gameapp/service/authorizationservice"
 	"golang.project/go-fundamentals/gameapp/service/backofficeuserservice"
+	"golang.project/go-fundamentals/gameapp/service/matchingservice"
 	"golang.project/go-fundamentals/gameapp/service/userservice"
+	"golang.project/go-fundamentals/gameapp/validator/matchingvalidator"
 	"golang.project/go-fundamentals/gameapp/validator/uservalidator"
 	"log/slog"
 	"net/http"
@@ -22,6 +25,7 @@ type HttpServer struct {
 
 	userHandler           userhandler.UserHandler
 	backOfficeUserHandler backofficeuserhandler.BackOfficeUserHandler
+	matchingHandler       matchinghandler.MatchingHandler
 }
 
 func NewHttpServer(
@@ -31,6 +35,8 @@ func NewHttpServer(
 	backOfficeUserSvc *backofficeuserservice.Service,
 	authorizationSvc *authorizationservice.Service,
 	userValidator *uservalidator.Validator,
+	matchingSvc *matchingservice.Service,
+	matchingValidator *matchingvalidator.Validator,
 ) *HttpServer {
 
 	return &HttpServer{
@@ -38,6 +44,7 @@ func NewHttpServer(
 
 		userHandler:           userhandler.NewHandler(userSvc, authSvc, authorizationSvc, userValidator),
 		backOfficeUserHandler: backofficeuserhandler.NewHandler(backOfficeUserSvc, authSvc, authorizationSvc, userValidator),
+		matchingHandler:       matchinghandler.NewHandler(authSvc, authorizationSvc, matchingSvc, matchingValidator),
 	}
 }
 
@@ -54,6 +61,7 @@ func (hs *HttpServer) Serve() {
 
 	hs.userHandler.SetRoute(e)
 	hs.backOfficeUserHandler.SetRoute(e)
+	hs.matchingHandler.SetRoute(e)
 
 	serverAddress := fmt.Sprintf("%s:%d", hs.config.ServerCfg.Host, hs.config.ServerCfg.Port)
 	if err := e.Start(serverAddress); err != nil && errors.Is(err, http.ErrServerClosed) {

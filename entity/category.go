@@ -1,15 +1,16 @@
 package entity
 
-type Category struct {
-	Id          uint
-	Name        string
-	Description string
-}
+type Category string
 
-func NewCategory(id uint, name string, description string) *Category {
-	return &Category{
-		Id:          id,
-		Name:        name,
-		Description: description,
+const (
+	FootballCategory = "football"
+)
+
+func (c Category) IsValid() bool {
+	switch c {
+	case FootballCategory:
+		return true
+	default:
+		return false
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"errors"
 	validation "github.com/go-ozzo/ozzo-validation"
 	"golang.project/go-fundamentals/gameapp/param"
+	"golang.project/go-fundamentals/gameapp/pkg/errormessage"
 	"golang.project/go-fundamentals/gameapp/pkg/richerror"
 	"regexp"
 )
@@ -17,7 +18,7 @@ func (v *Validator) ValidateRegisterRequest(req *param.RegisterRequest) (error, 
 
 			return richerror.NewRichError(operation).
 				WithError(internalErr).
-				WithMessage("unexpected error: Try again later.").
+				WithMessage(errormessage.ErrorMsgUnexpected).
 				WithKind(richerror.KindUnexpected), nil
 		} else {
 
@@ -32,7 +33,7 @@ func (v *Validator) ValidateRegisterRequest(req *param.RegisterRequest) (error, 
 
 			return richerror.NewRichError(operation).
 					WithError(err).
-					WithMessage("invalid input").
+					WithMessage(errormessage.ErrorMsgInvalidRequest).
 					WithKind(richerror.KindInvalid),
 				fieldErrors
 		}
@@ -63,7 +64,7 @@ func (v *Validator) checkPhoneNumberUniqueness() validation.RuleFunc {
 
 		phoneNumber, ok := value.(string)
 		if !ok {
-			return errors.New("invalid phone number type")
+			return errors.New(errormessage.ErrorMsgInvalidPhoneType)
 		}
 
 		if isUniq, err := v.repository.IsPhoneNumberUniq(phoneNumber); err != nil || !isUniq {
@@ -72,7 +73,7 @@ func (v *Validator) checkPhoneNumberUniqueness() validation.RuleFunc {
 				return validation.NewInternalError(err)
 			}
 
-			return errors.New("phone number is not uniq")
+			return errors.New(errormessage.ErrorMsgPhoneNotUniq)
 		}
 
 		return nil

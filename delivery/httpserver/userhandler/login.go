@@ -40,7 +40,9 @@ func (h *UserHandler) userLoginHandler(ctx echo.Context) error {
 
 		message, statusCode := parsericherror.New().ParseRichError(loginErr)
 
-		return echo.NewHTTPError(statusCode, message)
+		return echo.NewHTTPError(statusCode, echo.Map{
+			"message": message,
+		})
 	}
 
 	return ctx.JSON(http.StatusOK, loginRes)
