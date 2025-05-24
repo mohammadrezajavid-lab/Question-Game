@@ -18,17 +18,6 @@ type Config struct {
 	Port      int    `mapstructure:"database_port"`
 }
 
-func NewConfig(userName, password, dbName, host string, parseTime bool, port int) Config {
-	return Config{
-		UserName:  userName,
-		Password:  password,
-		DBName:    dbName,
-		Host:      host,
-		ParseTime: parseTime,
-		Port:      port,
-	}
-}
-
 type DB struct {
 	config          Config
 	MysqlConnection *sql.DB
