@@ -10,17 +10,17 @@ import (
 	"golang.project/go-fundamentals/gameapp/scheduler"
 	"os"
 	"os/signal"
-	"time"
+	"sync"
 )
 
 func main() {
 
+	// get command
 	var host string
 	var port int
+	var migrationCommand string
 	flag.StringVar(&host, "host", "", "HTTP server host")
 	flag.IntVar(&port, "port", 0, "HTTP server port")
-
-	var migrationCommand string
 	flag.StringVar(
 		&migrationCommand,
 		"migrate-command",
@@ -29,17 +29,20 @@ func main() {
 	)
 	flag.Parse()
 
+	// setup http server config
 	config := httpservercfg.NewConfig(host, port)
 	fmt.Println("config project: ", config)
 
+	// run migrations
 	config.Migrate(migrationCommand)
 	if migrationCommand == "down" || migrationCommand == "status" {
 		os.Exit(0)
 	}
 
+	// setup services
 	setupSvc := setupservices.New(config)
 
-	// start http server
+	// start http server goroutine
 	server := httpserver.New(
 		config,
 		setupSvc.AuthSvc,
@@ -50,32 +53,36 @@ func main() {
 		setupSvc.MatchingSvc,
 		setupSvc.MatchingValidator,
 	)
-
 	go server.Serve()
 
-	// start scheduler
+	// start scheduler goroutine
 	done := make(chan bool)
-	go func(done <-chan bool) {
-		sch := scheduler.New()
-		sch.Start(done)
-	}(done)
+	var wg sync.WaitGroup
+	wg.Add(1)
+	sch := scheduler.New()
+	go sch.Start(done, &wg)
 
+	// waiting for interrupt signal
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
 	<-quit // blocked main in this line
-
 	fmt.Println("received interrupt signal, shutting down gracefully...")
 
+	// create one context, this context use for shutting down echo engine
 	ctx := context.Background()
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, config.AppCfg.GracefullyShutdownTimeout)
 	defer cancel()
 
+	// shutdown echo engine
 	if sErr := server.GetRouter().Shutdown(ctxWithTimeout); sErr != nil {
 		fmt.Printf("\nhttp server shutdown error: %v\n", sErr)
 	}
 
+	// stopping scheduler
 	done <- true
-	time.Sleep(config.AppCfg.GracefullyShutdownTimeout)
+
+	// waiting for stop scheduler
+	wg.Wait()
 
 	<-ctxWithTimeout.Done()
 }
