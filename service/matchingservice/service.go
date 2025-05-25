@@ -4,6 +4,7 @@ import (
 	"golang.project/go-fundamentals/gameapp/entity"
 	"golang.project/go-fundamentals/gameapp/param"
 	"golang.project/go-fundamentals/gameapp/pkg/richerror"
+	"log"
 	"time"
 )
 
@@ -34,4 +35,9 @@ func (s *Service) AddToWaitingList(req *param.AddToWaitingListRequest) (*param.A
 	}
 
 	return param.NewAddToWaitingListResponse(s.config.WaitingTimeOut), nil
+}
+
+func (s *Service) MatchWaitedUser(req *param.MatchWaitedUserRequest) (*param.MatchWaitedUserResponse, error) {
+	log.Println("run MatchWaitedUser", time.Now())
+	return nil, nil
 }

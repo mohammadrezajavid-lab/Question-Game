@@ -59,7 +59,7 @@ func main() {
 	done := make(chan bool)
 	var wg sync.WaitGroup
 	wg.Add(1)
-	sch := scheduler.New()
+	sch := scheduler.New(setupSvc.MatchingSvc)
 	go sch.Start(done, &wg)
 
 	// waiting for interrupt signal
