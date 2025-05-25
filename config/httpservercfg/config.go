@@ -12,7 +12,12 @@ import (
 	"golang.project/go-fundamentals/gameapp/service/matchingservice"
 	"log"
 	"strings"
+	"time"
 )
+
+type AppConfig struct {
+	GracefullyShutdownTimeout time.Duration `mapstructure:"gracefully_shutdown_timeout"`
+}
 
 type HttpServerConfig struct {
 	Host string `mapstructure:"host"`
@@ -20,6 +25,7 @@ type HttpServerConfig struct {
 }
 
 type Config struct {
+	AppCfg      AppConfig                    `mapstructure:"app_cfg"`
 	ServerCfg   HttpServerConfig             `mapstructure:"httpserver_cfg"`
 	DataBaseCfg mysql.Config                 `mapstructure:"database_cfg"`
 	AuthCfg     authenticationservice.Config `mapstructure:"auth_cfg"`
@@ -29,23 +35,21 @@ type Config struct {
 
 func NewConfig(host string, port int) Config {
 
-	appCfg := loadConfig(host, port)
+	cfg := loadConfig(host, port)
 
 	return Config{
-		ServerCfg:   appCfg.ServerCfg,
-		DataBaseCfg: appCfg.DataBaseCfg,
-		AuthCfg:     appCfg.AuthCfg,
-		MatchingCfg: appCfg.MatchingCfg,
-		RedisCfg:    appCfg.RedisCfg,
+		AppCfg:      cfg.AppCfg,
+		ServerCfg:   cfg.ServerCfg,
+		DataBaseCfg: cfg.DataBaseCfg,
+		AuthCfg:     cfg.AuthCfg,
+		MatchingCfg: cfg.MatchingCfg,
+		RedisCfg:    cfg.RedisCfg,
 	}
 }
 
 // 1. read config file
 // 2. env variable
-// 3. use default env
 func loadConfig(host string, port int) Config {
-
-	setDefaultENV()
 
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
@@ -55,69 +59,47 @@ func loadConfig(host string, port int) Config {
 	viper.SetConfigType(constant.DefaultConfigFileType)
 	viper.AddConfigPath(constant.DefaultConfigFilePath)
 
-	var appConfig Config
+	var cfg Config
 	if err := viper.ReadInConfig(); err != nil {
 
-		log.Println("⚠️ config file not found, using environment variables or default values.")
+		log.Println("⚠️ config file not found, using environment variables")
 
 		// get config from env variable
-		if uErr := viper.Sub("httpserver_cfg").Unmarshal(&appConfig.ServerCfg); uErr != nil {
+		if uErr := viper.Sub("httpserver_cfg").Unmarshal(&cfg.ServerCfg); uErr != nil {
 			log.Fatalf("can't unmarshal httpserver config: %v", uErr)
 		}
-		if uErr := viper.Sub("database_cfg").Unmarshal(&appConfig.DataBaseCfg); uErr != nil {
+		if uErr := viper.Sub("database_cfg").Unmarshal(&cfg.DataBaseCfg); uErr != nil {
 			log.Fatalf("can't unmarshal database config: %v", uErr)
 		}
-		if uErr := viper.Sub("auth_cfg").Unmarshal(&appConfig.AuthCfg); uErr != nil {
+		if uErr := viper.Sub("auth_cfg").Unmarshal(&cfg.AuthCfg); uErr != nil {
 			log.Fatalf("can't unmarshal auth config: %v", uErr)
 		}
-		if uErr := viper.Sub("matching_cfg").Unmarshal(&appConfig.MatchingCfg); uErr != nil {
+		if uErr := viper.Sub("matching_cfg").Unmarshal(&cfg.MatchingCfg); uErr != nil {
 			log.Fatalf("can't unmarshal matching config: %v", uErr)
 		}
-		if uErr := viper.Sub("redis_cfg").Unmarshal(&appConfig.RedisCfg); uErr != nil {
+		if uErr := viper.Sub("redis_cfg").Unmarshal(&cfg.RedisCfg); uErr != nil {
 			log.Fatalf("can't unmarshal redis config: %v", uErr)
+		}
+		if uErr := viper.Sub("app_cfg").Unmarshal(&cfg.AppCfg); uErr != nil {
+			log.Fatalf("can't unmarshal application config: %v", uErr)
 		}
 
 	} else {
 
-		if uErr := viper.Unmarshal(&appConfig); uErr != nil {
+		if uErr := viper.Unmarshal(&cfg); uErr != nil {
 
 			panic(fmt.Errorf("can't Unmarshal config file into struct Config, %w", uErr))
 		}
 	}
 
 	if host != "" {
-		appConfig.ServerCfg.Host = host
+		cfg.ServerCfg.Host = host
 	}
 	if port != 0 {
-		appConfig.ServerCfg.Port = port
+		cfg.ServerCfg.Port = port
 	}
 
-	return appConfig
-}
-
-func setDefaultENV() {
-
-	// Default HTTP Server config ENV
-	viper.SetDefault("httpserver_cfg.host", constant.DefaultHTTPServerHost)
-	viper.SetDefault("httpserver_cfg.port", constant.DefaultHTTPServerPort)
-
-	// Default DataBase config ENV
-	viper.SetDefault("database_cfg.database_user_name", constant.DefaultDataBaseUserName)
-	viper.SetDefault("database_cfg.database_password", constant.DefaultDataBasePassword)
-	viper.SetDefault("database_cfg.database_name", constant.DefaultDataBaseName)
-	viper.SetDefault("database_cfg.database_host", constant.DefaultDataBaseHost)
-	viper.SetDefault("database_cfg.database_parse_time", constant.DefaultDataBaseParseTime)
-	viper.SetDefault("database_cfg.database_port", constant.DefaultDataBasePort)
-
-	// Default Auth config ENV
-	viper.SetDefault("auth_cfg.sign_key", constant.DefaultJWTSignKey)
-	viper.SetDefault("auth_cfg.access_expiration_time", constant.DefaultAccessExpirationTime)
-	viper.SetDefault("auth_cfg.refresh_expiration_time", constant.DefaultRefreshExpirationTime)
-	viper.SetDefault("auth_cfg.access_subject", constant.DefaultAccessSubject)
-	viper.SetDefault("auth_cfg.refresh_subject", constant.DefaultRefreshSubject)
-
-	// Default Matching config ENV
-	viper.SetDefault("waiting_time_out", constant.DefaultWaitingTimeOut)
+	return cfg
 }
 
 func (c *Config) Migrate(migrationCommand string) {

@@ -12,7 +12,7 @@ func (h *UserHandler) userProfileHandler(ctx echo.Context) error {
 
 	claims := claim.GetClaimsFromEchoContext(ctx)
 
-	profile, profileErr := h.userService.Profile(param.NewProfileRequest(claims.UserId))
+	profile, profileErr := h.userService.Profile(ctx.Request().Context(), param.NewProfileRequest(claims.UserId))
 	if profileErr != nil {
 
 		message, statusCode := parsericherror.New().ParseRichError(profileErr)

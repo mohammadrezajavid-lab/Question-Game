@@ -20,15 +20,15 @@ import (
 	"net/http"
 )
 
-type HttpServer struct {
-	config httpservercfg.Config
-
+type Server struct {
+	config                httpservercfg.Config
 	userHandler           userhandler.UserHandler
 	backOfficeUserHandler backofficeuserhandler.BackOfficeUserHandler
 	matchingHandler       matchinghandler.MatchingHandler
+	router                *echo.Echo
 }
 
-func NewHttpServer(
+func New(
 	cfg httpservercfg.Config,
 	authSvc *authenticationservice.Service,
 	userSvc *userservice.Service,
@@ -37,34 +37,35 @@ func NewHttpServer(
 	userValidator *uservalidator.Validator,
 	matchingSvc *matchingservice.Service,
 	matchingValidator *matchingvalidator.Validator,
-) *HttpServer {
+) *Server {
 
-	return &HttpServer{
-		config: cfg,
-
+	return &Server{
+		config:                cfg,
 		userHandler:           userhandler.NewHandler(userSvc, authSvc, authorizationSvc, userValidator),
 		backOfficeUserHandler: backofficeuserhandler.NewHandler(backOfficeUserSvc, authSvc, authorizationSvc, userValidator),
 		matchingHandler:       matchinghandler.NewHandler(authSvc, authorizationSvc, matchingSvc, matchingValidator),
+		router:                echo.New(),
 	}
 }
 
-func (hs *HttpServer) Serve() {
+func (s *Server) GetRouter() *echo.Echo {
+	return s.router
+}
 
-	// Echo instance
-	e := echo.New()
+func (s *Server) Serve() {
 
 	// Middleware
-	e.Use(middleware.Logger())
-	e.Use(middleware.Recover())
+	s.router.Use(middleware.Logger())
+	s.router.Use(middleware.Recover())
 
-	e.GET("/health-check", hs.HealthCheckHandler)
+	s.router.GET("/health-check", s.HealthCheckHandler)
 
-	hs.userHandler.SetRoute(e)
-	hs.backOfficeUserHandler.SetRoute(e)
-	hs.matchingHandler.SetRoute(e)
+	s.userHandler.SetRoute(s.router)
+	s.backOfficeUserHandler.SetRoute(s.router)
+	s.matchingHandler.SetRoute(s.router)
 
-	serverAddress := fmt.Sprintf("%s:%d", hs.config.ServerCfg.Host, hs.config.ServerCfg.Port)
-	if err := e.Start(serverAddress); err != nil && errors.Is(err, http.ErrServerClosed) {
+	serverAddress := fmt.Sprintf("%s:%d", s.config.ServerCfg.Host, s.config.ServerCfg.Port)
+	if err := s.router.Start(serverAddress); err != nil && errors.Is(err, http.ErrServerClosed) {
 		slog.Error("failed to start server", "error", err)
 	}
 }

@@ -1,6 +1,7 @@
 package usermysql
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"golang.project/go-fundamentals/gameapp/entity"
@@ -89,10 +90,11 @@ func (d *DataBase) GetUserByPhoneNumber(phoneNumber string) (*entity.User, error
 	return user, nil
 }
 
-func (d *DataBase) GetUserById(userId uint) (*entity.User, error) {
+func (d *DataBase) GetUserById(ctx context.Context, userId uint) (*entity.User, error) {
 
 	const operation = "mysql.user.GetUserById"
-	userRow := d.dataBase.MysqlConnection.QueryRow(
+	userRow := d.dataBase.MysqlConnection.QueryRowContext(
+		ctx,
 		`SELECT * FROM game_app_db.users WHERE id=?`,
 		userId,
 	)

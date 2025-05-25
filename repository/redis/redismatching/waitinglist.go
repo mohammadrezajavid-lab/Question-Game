@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/redis/go-redis/v9"
+	"golang.project/go-fundamentals/gameapp/config/httpservercfg/constant"
 	"golang.project/go-fundamentals/gameapp/entity"
 	"golang.project/go-fundamentals/gameapp/pkg/errormessage"
 	"golang.project/go-fundamentals/gameapp/pkg/richerror"
@@ -18,7 +19,7 @@ func (r *RedisDb) AddToWaitingList(userId uint, category entity.Category) error 
 	rdb := r.redisAdapter.GetClient()
 	ctx := context.Background()
 
-	var key string = fmt.Sprintf("%s:%v", "category", category)
+	var key string = fmt.Sprintf("%s:%v", constant.RedisZSetWaitingList, category)
 	timeStamp := time.Now().UnixNano()
 	number := redis.Z{
 		Score:  float64(timeStamp),

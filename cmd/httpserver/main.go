@@ -4,10 +4,10 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/labstack/echo/v4"
 	"golang.project/go-fundamentals/gameapp/config/httpservercfg"
 	"golang.project/go-fundamentals/gameapp/config/setupservices"
 	"golang.project/go-fundamentals/gameapp/delivery/httpserver"
-	"golang.project/go-fundamentals/gameapp/scheduler"
 	"os"
 	"os/signal"
 	"time"
@@ -39,30 +39,26 @@ func main() {
 
 	setupSvc := setupservices.New(config)
 
-	// start http server
-	server := httpserver.New(
-		config,
-		setupSvc.AuthSvc,
-		setupSvc.UserSvc,
-		setupSvc.BackOfficeUserSvc,
-		setupSvc.AuthorizationSvc,
-		setupSvc.UserValidator,
-		setupSvc.MatchingSvc,
-		setupSvc.MatchingValidator,
-	)
+	var httpServerChan *echo.Echo
 
-	go server.Serve()
+	go func() {
+		httpServer := httpserver.New(
+			config,
+			setupSvc.AuthSvc,
+			setupSvc.UserSvc,
+			setupSvc.BackOfficeUserSvc,
+			setupSvc.AuthorizationSvc,
+			setupSvc.UserValidator,
+			setupSvc.MatchingSvc,
+			setupSvc.MatchingValidator,
+		)
 
-	// start scheduler
-	done := make(chan bool)
-	go func(done <-chan bool) {
-		sch := scheduler.New()
-		sch.Start(done)
-	}(done)
+		httpServerChan = httpServer.Serve()
+	}()
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
-	<-quit // blocked main in this line
+	<-quit
 
 	fmt.Println("received interrupt signal, shutting down gracefully...")
 
@@ -70,12 +66,9 @@ func main() {
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, config.AppCfg.GracefullyShutdownTimeout)
 	defer cancel()
 
-	if sErr := server.GetRouter().Shutdown(ctxWithTimeout); sErr != nil {
+	if sErr := httpServerChan.Shutdown(ctxWithTimeout); sErr != nil {
 		fmt.Printf("\nhttp server shutdown error: %v\n", sErr)
 	}
 
-	done <- true
 	time.Sleep(config.AppCfg.GracefullyShutdownTimeout)
-
-	<-ctxWithTimeout.Done()
 }
