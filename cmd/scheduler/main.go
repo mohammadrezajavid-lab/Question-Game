@@ -22,7 +22,7 @@ func main() {
 	// start scheduler goroutine
 	var wg sync.WaitGroup
 	done := make(chan bool)
-	sch := scheduler.New(setupSvc.MatchingSvc)
+	sch := scheduler.New(setupSvc.MatchingSvc, config.SchedulerCfg)
 	wg.Add(1)
 	go sch.Start(done, &wg)
 

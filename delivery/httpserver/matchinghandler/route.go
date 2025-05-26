@@ -7,9 +7,9 @@ import (
 
 func (h *MatchingHandler) SetRoute(e *echo.Echo) {
 
-	newMiddleware := middleware.NewMiddleware(h.authService, h.authorizationService)
+	newMiddleware := middleware.NewMiddleware(h.authService, h.authorizationService, h.presenceService)
 
 	userGroup := e.Group("/matching-player/")
 
-	userGroup.POST("add-to-waiting-list", h.addToWaitingList, newMiddleware.AuthMiddleware())
+	userGroup.POST("add-to-waiting-list", h.addToWaitingList, newMiddleware.AuthMiddleware(), newMiddleware.PresenceUpsert())
 }

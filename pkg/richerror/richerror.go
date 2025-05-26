@@ -162,7 +162,7 @@ func (re RichError) Error() string {
 
 	if re.message == "" {
 
-		re.wrappedError.Error()
+		return re.wrappedError.Error()
 	}
 
 	return re.message

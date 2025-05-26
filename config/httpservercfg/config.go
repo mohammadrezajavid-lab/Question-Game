@@ -8,8 +8,10 @@ import (
 	"golang.project/go-fundamentals/gameapp/config/httpservercfg/constant"
 	"golang.project/go-fundamentals/gameapp/repository/migrator"
 	"golang.project/go-fundamentals/gameapp/repository/mysql"
+	"golang.project/go-fundamentals/gameapp/scheduler"
 	"golang.project/go-fundamentals/gameapp/service/authenticationservice"
 	"golang.project/go-fundamentals/gameapp/service/matchingservice"
+	"golang.project/go-fundamentals/gameapp/service/presenceservice"
 	"log"
 	"strings"
 	"time"
@@ -25,12 +27,14 @@ type HttpServerConfig struct {
 }
 
 type Config struct {
-	AppCfg      AppConfig                    `mapstructure:"app_cfg"`
-	ServerCfg   HttpServerConfig             `mapstructure:"httpserver_cfg"`
-	DataBaseCfg mysql.Config                 `mapstructure:"database_cfg"`
-	AuthCfg     authenticationservice.Config `mapstructure:"auth_cfg"`
-	MatchingCfg matchingservice.Config       `mapstructure:"matching_cfg"`
-	RedisCfg    redis.Config                 `mapstructure:"redis_cfg"`
+	AppCfg       AppConfig                    `mapstructure:"app_cfg"`
+	ServerCfg    HttpServerConfig             `mapstructure:"httpserver_cfg"`
+	DataBaseCfg  mysql.Config                 `mapstructure:"database_cfg"`
+	AuthCfg      authenticationservice.Config `mapstructure:"auth_cfg"`
+	MatchingCfg  matchingservice.Config       `mapstructure:"matching_cfg"`
+	RedisCfg     redis.Config                 `mapstructure:"redis_cfg"`
+	PresenceCfg  presenceservice.Config       `mapstructure:"presence_cfg"`
+	SchedulerCfg scheduler.Config             `mapstructure:"scheduler_cfg"`
 }
 
 func NewConfig(host string, port int) Config {
@@ -38,12 +42,14 @@ func NewConfig(host string, port int) Config {
 	cfg := loadConfig(host, port)
 
 	return Config{
-		AppCfg:      cfg.AppCfg,
-		ServerCfg:   cfg.ServerCfg,
-		DataBaseCfg: cfg.DataBaseCfg,
-		AuthCfg:     cfg.AuthCfg,
-		MatchingCfg: cfg.MatchingCfg,
-		RedisCfg:    cfg.RedisCfg,
+		AppCfg:       cfg.AppCfg,
+		ServerCfg:    cfg.ServerCfg,
+		DataBaseCfg:  cfg.DataBaseCfg,
+		AuthCfg:      cfg.AuthCfg,
+		MatchingCfg:  cfg.MatchingCfg,
+		RedisCfg:     cfg.RedisCfg,
+		PresenceCfg:  cfg.PresenceCfg,
+		SchedulerCfg: cfg.SchedulerCfg,
 	}
 }
 
@@ -82,6 +88,12 @@ func loadConfig(host string, port int) Config {
 		}
 		if uErr := viper.Sub("app_cfg").Unmarshal(&cfg.AppCfg); uErr != nil {
 			log.Fatalf("can't unmarshal application config: %v", uErr)
+		}
+		if uErr := viper.Sub("presence_cfg").Unmarshal(&cfg.PresenceCfg); uErr != nil {
+			log.Fatalf("can't unmarshal presence config: %v", uErr)
+		}
+		if uErr := viper.Sub("scheduler_cfg").Unmarshal(&cfg.SchedulerCfg); uErr != nil {
+			log.Fatalf("can't unmarshal scheduler config: %v", uErr)
 		}
 
 	} else {

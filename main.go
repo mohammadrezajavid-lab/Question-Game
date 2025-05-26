@@ -52,6 +52,7 @@ func main() {
 		setupSvc.UserValidator,
 		setupSvc.MatchingSvc,
 		setupSvc.MatchingValidator,
+		setupSvc.PresenceSvc,
 	)
 	go server.Serve()
 
@@ -59,7 +60,7 @@ func main() {
 	done := make(chan bool)
 	var wg sync.WaitGroup
 	wg.Add(1)
-	sch := scheduler.New(setupSvc.MatchingSvc)
+	sch := scheduler.New(setupSvc.MatchingSvc, config.SchedulerCfg)
 	go sch.Start(done, &wg)
 
 	// waiting for interrupt signal

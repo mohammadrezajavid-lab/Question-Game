@@ -10,12 +10,17 @@ import (
 	"time"
 )
 
+type Config struct {
+	Crontab string `mapstructure:"crontab"`
+}
+
 type Scheduler struct {
 	sch         gocron.Scheduler
 	matchingSvc *matchingservice.Service
+	config      Config
 }
 
-func New(matchingSvc *matchingservice.Service) *Scheduler {
+func New(matchingSvc *matchingservice.Service, config Config) *Scheduler {
 
 	// TODO - we can set location timezone in config.yaml file and use this for scheduler
 	sch, err := gocron.NewScheduler(gocron.WithLocation(time.Local))
@@ -26,6 +31,7 @@ func New(matchingSvc *matchingservice.Service) *Scheduler {
 	return &Scheduler{
 		sch:         sch,
 		matchingSvc: matchingSvc,
+		config:      config,
 	}
 }
 
@@ -44,7 +50,7 @@ func (s *Scheduler) Start(done <-chan bool, wg *sync.WaitGroup) {
 
 func (s *Scheduler) newJobMatchWaitedUser() {
 	matchWaitedUsersJob, nErr := s.sch.NewJob(
-		gocron.CronJob("*/2 * * * *", false),
+		gocron.CronJob(s.config.Crontab, false),
 		gocron.NewTask(s.matchWaitedUser),
 		gocron.WithSingletonMode(gocron.LimitModeWait),
 		gocron.WithName("match-waited-user"),

@@ -29,3 +29,10 @@ app_cfg:
 
 matching_cfg:
   waiting_time_out: 2m # 2 min
+
+presence_cfg:
+  expiration_time: 60m
+  prefix: "presence"
+
+scheduler_cfg:
+  crontab: "*/2 * * * *"

@@ -13,10 +13,11 @@ import (
 	"golang.project/go-fundamentals/gameapp/service/authorizationservice"
 	"golang.project/go-fundamentals/gameapp/service/backofficeuserservice"
 	"golang.project/go-fundamentals/gameapp/service/matchingservice"
+	"golang.project/go-fundamentals/gameapp/service/presenceservice"
 	"golang.project/go-fundamentals/gameapp/service/userservice"
 	"golang.project/go-fundamentals/gameapp/validator/matchingvalidator"
 	"golang.project/go-fundamentals/gameapp/validator/uservalidator"
-	"log/slog"
+	"log"
 	"net/http"
 )
 
@@ -37,13 +38,14 @@ func New(
 	userValidator *uservalidator.Validator,
 	matchingSvc *matchingservice.Service,
 	matchingValidator *matchingvalidator.Validator,
+	presenceSvc *presenceservice.Service,
 ) *Server {
 
 	return &Server{
 		config:                cfg,
-		userHandler:           userhandler.NewHandler(userSvc, authSvc, authorizationSvc, userValidator),
-		backOfficeUserHandler: backofficeuserhandler.NewHandler(backOfficeUserSvc, authSvc, authorizationSvc, userValidator),
-		matchingHandler:       matchinghandler.NewHandler(authSvc, authorizationSvc, matchingSvc, matchingValidator),
+		userHandler:           userhandler.NewHandler(userSvc, authSvc, authorizationSvc, userValidator, presenceSvc),
+		backOfficeUserHandler: backofficeuserhandler.NewHandler(backOfficeUserSvc, authSvc, authorizationSvc, userValidator, presenceSvc),
+		matchingHandler:       matchinghandler.NewHandler(authSvc, authorizationSvc, matchingSvc, matchingValidator, presenceSvc),
 		router:                echo.New(),
 	}
 }
@@ -66,6 +68,6 @@ func (s *Server) Serve() {
 
 	serverAddress := fmt.Sprintf("%s:%d", s.config.ServerCfg.Host, s.config.ServerCfg.Port)
 	if err := s.router.Start(serverAddress); err != nil && errors.Is(err, http.ErrServerClosed) {
-		slog.Error("failed to start server", "error", err)
+		log.Printf("failed to start server, error: %v\n", err)
 	}
 }
