@@ -4,23 +4,21 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/labstack/echo/v4"
 	"golang.project/go-fundamentals/gameapp/config/httpservercfg"
 	"golang.project/go-fundamentals/gameapp/config/setupservices"
 	"golang.project/go-fundamentals/gameapp/delivery/httpserver"
 	"os"
 	"os/signal"
-	"time"
 )
 
 func main() {
 
+	// get command
 	var host string
 	var port int
+	var migrationCommand string
 	flag.StringVar(&host, "host", "", "HTTP server host")
 	flag.IntVar(&port, "port", 0, "HTTP server port")
-
-	var migrationCommand string
 	flag.StringVar(
 		&migrationCommand,
 		"migrate-command",
@@ -29,46 +27,47 @@ func main() {
 	)
 	flag.Parse()
 
+	// setup config
 	config := httpservercfg.NewConfig(host, port)
 	fmt.Println("config project: ", config)
 
+	// run migrations
 	config.Migrate(migrationCommand)
 	if migrationCommand == "down" || migrationCommand == "status" {
 		os.Exit(0)
 	}
 
+	// setup services
 	setupSvc := setupservices.New(config)
 
-	var httpServerChan *echo.Echo
+	// start http server goroutine
+	server := httpserver.New(
+		config,
+		setupSvc.AuthSvc,
+		setupSvc.UserSvc,
+		setupSvc.BackOfficeUserSvc,
+		setupSvc.AuthorizationSvc,
+		setupSvc.UserValidator,
+		setupSvc.MatchingSvc,
+		setupSvc.MatchingValidator,
+	)
+	go server.Serve()
 
-	go func() {
-		httpServer := httpserver.New(
-			config,
-			setupSvc.AuthSvc,
-			setupSvc.UserSvc,
-			setupSvc.BackOfficeUserSvc,
-			setupSvc.AuthorizationSvc,
-			setupSvc.UserValidator,
-			setupSvc.MatchingSvc,
-			setupSvc.MatchingValidator,
-		)
-
-		httpServerChan = httpServer.Serve()
-	}()
-
+	// waiting for interrupt signal
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
-	<-quit
-
+	<-quit // blocked main in this line
 	fmt.Println("received interrupt signal, shutting down gracefully...")
 
+	// create one context, this context use for shutting down echo engine
 	ctx := context.Background()
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, config.AppCfg.GracefullyShutdownTimeout)
 	defer cancel()
 
-	if sErr := httpServerChan.Shutdown(ctxWithTimeout); sErr != nil {
+	// shutdown echo engine
+	if sErr := server.GetRouter().Shutdown(ctxWithTimeout); sErr != nil {
 		fmt.Printf("\nhttp server shutdown error: %v\n", sErr)
 	}
 
-	time.Sleep(config.AppCfg.GracefullyShutdownTimeout)
+	<-ctxWithTimeout.Done()
 }

@@ -38,6 +38,7 @@ func (s *Scheduler) Start(done <-chan bool, wg *sync.WaitGroup) {
 
 	<-done
 	fmt.Printf("Scheduler exiting...\n")
+	time.Sleep(15 * time.Second)
 	wg.Done()
 }
 
