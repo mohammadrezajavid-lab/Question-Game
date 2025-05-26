@@ -30,7 +30,7 @@ func (h *MatchingHandler) addToWaitingList(ctx echo.Context) error {
 		})
 	}
 
-	response, aErr := h.matchingService.AddToWaitingList(request)
+	response, aErr := h.matchingService.AddToWaitingList(ctx.Request().Context(), request)
 	if aErr != nil {
 
 		message, statusCode := parsericherror.New().ParseRichError(aErr)

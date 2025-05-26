@@ -11,12 +11,11 @@ import (
 	"strconv"
 )
 
-func (r *RedisDb) AddToWaitingList(userId uint, category entity.Category) error {
+func (r *RedisDb) AddToWaitingList(ctx context.Context, userId uint, category entity.Category) error {
 
 	const operation = "redismatching.AddToWaitingList"
 
 	rdb := r.redisAdapter.GetClient()
-	ctx := context.Background()
 
 	var key = fmt.Sprintf("%s:%v", r.config.WaitingListPrefix, category)
 	timeStamp := timestamp.Now()
