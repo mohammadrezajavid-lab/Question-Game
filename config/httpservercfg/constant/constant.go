@@ -9,5 +9,4 @@ const (
 
 	MigrateDialect           = "mysql"
 	AuthMiddlewareContextKey = "claims"
-	RedisZSetWaitingList     = "waiting-list"
 )
