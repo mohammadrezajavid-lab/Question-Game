@@ -1,4 +1,4 @@
-package param
+package userparam
 
 type UserInfo struct {
 	Id   uint   `json:"id"`

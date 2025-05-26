@@ -3,13 +3,13 @@ package uservalidator
 import (
 	"errors"
 	validation "github.com/go-ozzo/ozzo-validation"
-	"golang.project/go-fundamentals/gameapp/param"
+	"golang.project/go-fundamentals/gameapp/param/userparam"
 	"golang.project/go-fundamentals/gameapp/pkg/errormessage"
 	"golang.project/go-fundamentals/gameapp/pkg/richerror"
 	"regexp"
 )
 
-func (v *Validator) ValidateRegisterRequest(req *param.RegisterRequest) (error, map[string]string) {
+func (v *Validator) ValidateRegisterRequest(req *userparam.RegisterRequest) (error, map[string]string) {
 
 	const operation = "uservalidator.ValidateRegisterRequest"
 
@@ -42,7 +42,7 @@ func (v *Validator) ValidateRegisterRequest(req *param.RegisterRequest) (error, 
 	return nil, nil
 }
 
-func (v *Validator) validateRegisterRequest(req *param.RegisterRequest) error {
+func (v *Validator) validateRegisterRequest(req *userparam.RegisterRequest) error {
 
 	return validation.ValidateStruct(
 		req,

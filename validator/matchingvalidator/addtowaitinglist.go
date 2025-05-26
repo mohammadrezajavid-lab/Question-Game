@@ -4,12 +4,12 @@ import (
 	"errors"
 	validation "github.com/go-ozzo/ozzo-validation"
 	"golang.project/go-fundamentals/gameapp/entity"
-	"golang.project/go-fundamentals/gameapp/param"
+	"golang.project/go-fundamentals/gameapp/param/matchingparam"
 	"golang.project/go-fundamentals/gameapp/pkg/errormessage"
 	"golang.project/go-fundamentals/gameapp/pkg/richerror"
 )
 
-func (v *Validator) ValidateAddToWaitingListRequest(req *param.AddToWaitingListRequest) (error, map[string]string) {
+func (v *Validator) ValidateAddToWaitingListRequest(req *matchingparam.AddToWaitingListRequest) (error, map[string]string) {
 
 	const operation = "matchingvalidator.ValidateAddToWaitingListRequest"
 	if err := v.validateAddToWaitingListRequest(req); err != nil {
@@ -41,7 +41,7 @@ func (v *Validator) ValidateAddToWaitingListRequest(req *param.AddToWaitingListR
 	return nil, nil
 }
 
-func (v *Validator) validateAddToWaitingListRequest(req *param.AddToWaitingListRequest) error {
+func (v *Validator) validateAddToWaitingListRequest(req *matchingparam.AddToWaitingListRequest) error {
 
 	return validation.ValidateStruct(req, validation.Field(&req.Category, validation.Required, validation.By(v.checkCategoryIsValid())))
 }

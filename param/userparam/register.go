@@ -1,4 +1,4 @@
-package param
+package userparam
 
 import (
 	"golang.project/go-fundamentals/gameapp/entity"

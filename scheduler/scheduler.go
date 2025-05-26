@@ -3,7 +3,7 @@ package scheduler
 import (
 	"fmt"
 	"github.com/go-co-op/gocron/v2"
-	"golang.project/go-fundamentals/gameapp/param"
+	"golang.project/go-fundamentals/gameapp/param/matchingparam"
 	"golang.project/go-fundamentals/gameapp/service/matchingservice"
 	"log"
 	"sync"
@@ -64,5 +64,5 @@ func (s *Scheduler) newJobMatchWaitedUser() {
 func (s *Scheduler) matchWaitedUser() {
 	log.Println("Executing matchWaitedUser job at:", time.Now())
 
-	s.matchingSvc.MatchWaitedUser(param.NewMatchWaitedUserRequest())
+	s.matchingSvc.MatchWaitedUser(matchingparam.NewMatchWaitedUserRequest())
 }

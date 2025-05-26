@@ -1,4 +1,4 @@
-package param
+package matchingparam
 
 type MatchWaitedUserRequest struct {
 }

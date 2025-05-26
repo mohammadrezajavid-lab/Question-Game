@@ -3,14 +3,14 @@ package matchinghandler
 import (
 	"github.com/labstack/echo/v4"
 	"golang.project/go-fundamentals/gameapp/delivery/httpserver/parsericherror"
-	"golang.project/go-fundamentals/gameapp/param"
+	"golang.project/go-fundamentals/gameapp/param/matchingparam"
 	"golang.project/go-fundamentals/gameapp/pkg/claim"
 	"net/http"
 )
 
 func (h *MatchingHandler) addToWaitingList(ctx echo.Context) error {
 
-	var request = param.NewAddToWaitingListRequest()
+	var request = matchingparam.NewAddToWaitingListRequest()
 	if err := ctx.Bind(request); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}

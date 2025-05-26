@@ -1,4 +1,4 @@
-package param
+package userparam
 
 type LoginRequest struct {
 	PhoneNumber string `json:"phone_number"`

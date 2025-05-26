@@ -3,14 +3,14 @@ package userhandler
 import (
 	"github.com/labstack/echo/v4"
 	"golang.project/go-fundamentals/gameapp/delivery/httpserver/parsericherror"
-	"golang.project/go-fundamentals/gameapp/param"
+	"golang.project/go-fundamentals/gameapp/param/userparam"
 	"golang.project/go-fundamentals/gameapp/pkg/normalize"
 	"net/http"
 )
 
 func (h *UserHandler) userRegisterHandler(ctx echo.Context) error {
 
-	var requestUser = param.NewRegisterRequest()
+	var requestUser = userparam.NewRegisterRequest()
 	if err := ctx.Bind(requestUser); err != nil {
 
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())

@@ -1,4 +1,4 @@
-package param
+package userparam
 
 type ProfileRequest struct {
 	UserId uint `json:"user_id"`

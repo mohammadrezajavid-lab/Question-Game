@@ -1,4 +1,4 @@
-package param
+package userparam
 
 type Tokens struct {
 	AccessToken  string `json:"access_token"`

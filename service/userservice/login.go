@@ -1,12 +1,12 @@
 package userservice
 
 import (
-	"golang.project/go-fundamentals/gameapp/param"
+	"golang.project/go-fundamentals/gameapp/param/userparam"
 	"golang.project/go-fundamentals/gameapp/pkg/hash"
 	"golang.project/go-fundamentals/gameapp/pkg/richerror"
 )
 
-func (s *Service) Login(req *param.LoginRequest) (*param.LoginResponse, error) {
+func (s *Service) Login(req *userparam.LoginRequest) (*userparam.LoginResponse, error) {
 
 	const operation = "service.user.Login"
 	user, gErr := s.userRepository.GetUserByPhoneNumber(req.PhoneNumber)
@@ -43,5 +43,5 @@ func (s *Service) Login(req *param.LoginRequest) (*param.LoginResponse, error) {
 			WithKind(richerror.KindUnexpected)
 	}
 
-	return param.NewLoginResponse(param.NewUserInfo(user.Id, user.Name), param.NewTokens(accessToken, refreshToken)), nil
+	return userparam.NewLoginResponse(userparam.NewUserInfo(user.Id, user.Name), userparam.NewTokens(accessToken, refreshToken)), nil
 }
