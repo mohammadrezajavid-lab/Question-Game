@@ -37,3 +37,7 @@ func (s *Service) Upsert(ctx context.Context, req *presenceparam.UpsertPresenceR
 
 	return nil, nil
 }
+
+func (s *Service) IsOnline() bool {
+	return false
+}

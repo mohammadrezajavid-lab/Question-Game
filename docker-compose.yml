@@ -10,10 +10,11 @@ services:
     restart: always
     environment:
       - "REDIS_PASSWORD=password1999"
+      - "REDIS_DAEMON_USER=redis"
+      - "REDIS_RDB_POLICY_DISABLE=yes"
+      - "REDIS_AOF_ENABLED=yes"
+      #      - "REDIS_RDB_ENABLED=yes"
       #      - ALLOW_EMPTY_PASSWORD=yes
-      - REDIS_DAEMON_USER=redis
-      - REDIS_RDB_POLICY_DISABLE=yes
-      - REDIS_AOF_ENABLED=yes
     volumes:
       - redis_data:/bitnami/redis/data
     networks:

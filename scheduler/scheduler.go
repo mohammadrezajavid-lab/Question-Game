@@ -1,9 +1,9 @@
 package scheduler
 
 import (
+	"context"
 	"fmt"
 	"github.com/go-co-op/gocron/v2"
-	"golang.project/go-fundamentals/gameapp/param/matchingparam"
 	"golang.project/go-fundamentals/gameapp/service/matchingservice"
 	"log"
 	"sync"
@@ -20,7 +20,7 @@ type Scheduler struct {
 	config      Config
 }
 
-func New(matchingSvc *matchingservice.Service, config Config) *Scheduler {
+func New(matchingSvc *matchingservice.Service, config Config) Scheduler {
 
 	// TODO - we can set location timezone in config.yaml file and use this for scheduler
 	sch, err := gocron.NewScheduler(gocron.WithLocation(time.Local))
@@ -28,7 +28,7 @@ func New(matchingSvc *matchingservice.Service, config Config) *Scheduler {
 		log.Fatalf("Failed to create scheduler: %v", err)
 	}
 
-	return &Scheduler{
+	return Scheduler{
 		sch:         sch,
 		matchingSvc: matchingSvc,
 		config:      config,
@@ -36,7 +36,7 @@ func New(matchingSvc *matchingservice.Service, config Config) *Scheduler {
 }
 
 // Start Start() is a long running process
-func (s *Scheduler) Start(done <-chan bool, wg *sync.WaitGroup) {
+func (s Scheduler) Start(done <-chan bool, wg *sync.WaitGroup) {
 	log.Println("scheduler started.")
 
 	s.newJobMatchWaitedUser()
@@ -48,10 +48,10 @@ func (s *Scheduler) Start(done <-chan bool, wg *sync.WaitGroup) {
 	wg.Done()
 }
 
-func (s *Scheduler) newJobMatchWaitedUser() {
+func (s Scheduler) newJobMatchWaitedUser() {
 	matchWaitedUsersJob, nErr := s.sch.NewJob(
 		gocron.CronJob(s.config.Crontab, false),
-		gocron.NewTask(s.matchWaitedUser),
+		gocron.NewTask(s.matchWaitedUserTask),
 		gocron.WithSingletonMode(gocron.LimitModeWait),
 		gocron.WithName("match-waited-user"),
 		gocron.WithTags("matching-service"),
@@ -64,11 +64,19 @@ func (s *Scheduler) newJobMatchWaitedUser() {
 		log.Fatalf("Failed to create matchWaitedUser job, %s\n", matchWaitedUsersJobInfo)
 	}
 
-	log.Printf("matchWaitedUser job created, %s\n", matchWaitedUsersJobInfo)
+	log.Printf("✅ matchWaitedUser job created, %s\n", matchWaitedUsersJobInfo)
 }
 
-func (s *Scheduler) matchWaitedUser() {
-	log.Println("Executing matchWaitedUser job at:", time.Now())
+func (s Scheduler) matchWaitedUserTask() {
 
-	s.matchingSvc.MatchWaitedUser(matchingparam.NewMatchWaitedUserRequest())
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	err := s.matchingSvc.MatchWaitedUsers(ctx)
+	if err != nil {
+		log.Printf("🚨 MatchWaitedUsers failed: %v", err)
+		// TODO - update metrics
+	} else {
+		log.Println("✅ MatchWaitedUsers ran successfully.")
+		// TODO - update metrics
+	}
 }
