@@ -53,7 +53,7 @@ func New(config httpservercfg.Config) *SetupServices {
 
 	redisAdapter := redis.New(config.RedisCfg)
 
-	matchingSvc := matchingservice.NewService(config.MatchingCfg, redismatching.NewRedisDb(redisAdapter, config.MatchingRepoCfg))
+	matchingSvc := matchingservice.NewService(config.MatchingCfg, redismatching.NewRedisDb(redisAdapter, config.MatchingRepoCfg), nil)
 	matchingValidator := matchingvalidator.NewValidator()
 
 	presenceSvc := presenceservice.New(redispresence.NewRedisDb(redisAdapter), config.PresenceCfg)
