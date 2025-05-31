@@ -9,19 +9,19 @@ import (
 )
 
 type BackOfficeUserHandler struct {
-	backOfficeUserService *backofficeuserservice.Service
-	authService           *authenticationservice.Service
-	authorizationService  *authorizationservice.Service
-	userValidator         *uservalidator.Validator
-	presenceService       *presenceservice.Service
+	backOfficeUserService backofficeuserservice.Service
+	authService           authenticationservice.Service
+	authorizationService  authorizationservice.Service
+	userValidator         uservalidator.Validator
+	presenceService       presenceservice.Service
 }
 
 func NewHandler(
-	backOfficeUserSvc *backofficeuserservice.Service,
-	authSvc *authenticationservice.Service,
-	authorizationSvc *authorizationservice.Service,
-	userValidator *uservalidator.Validator,
-	presenceService *presenceservice.Service,
+	backOfficeUserSvc backofficeuserservice.Service,
+	authSvc authenticationservice.Service,
+	authorizationSvc authorizationservice.Service,
+	userValidator uservalidator.Validator,
+	presenceService presenceservice.Service,
 ) BackOfficeUserHandler {
 	return BackOfficeUserHandler{
 		backOfficeUserService: backOfficeUserSvc,

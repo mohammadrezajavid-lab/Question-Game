@@ -13,8 +13,8 @@ type Service struct {
 	accessControlRepo Repository
 }
 
-func NewService(accessControlRepo Repository) *Service {
-	return &Service{accessControlRepo: accessControlRepo}
+func NewService(accessControlRepo Repository) Service {
+	return Service{accessControlRepo: accessControlRepo}
 }
 
 func (s *Service) CheckAccess(userId uint, role entity.Role, permissions ...entity.PermissionTitle) (bool, error) {

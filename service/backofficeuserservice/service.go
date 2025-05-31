@@ -5,8 +5,8 @@ import "golang.project/go-fundamentals/gameapp/entity"
 type Service struct {
 }
 
-func NewService() *Service {
-	return &Service{}
+func NewService() Service {
+	return Service{}
 }
 
 func (s Service) ListAllUsers() ([]entity.User, error) {

@@ -9,19 +9,19 @@ import (
 )
 
 type MatchingHandler struct {
-	authService          *authenticationservice.Service
-	authorizationService *authorizationservice.Service
-	matchingService      *matchingservice.Service
-	matchingValidator    *matchingvalidator.Validator
-	presenceService      *presenceservice.Service
+	authService          authenticationservice.Service
+	authorizationService authorizationservice.Service
+	matchingService      matchingservice.Service
+	matchingValidator    matchingvalidator.Validator
+	presenceService      presenceservice.Service
 }
 
 func NewHandler(
-	authService *authenticationservice.Service,
-	authorizationService *authorizationservice.Service,
-	matchingService *matchingservice.Service,
-	matchingValidator *matchingvalidator.Validator,
-	presenceService *presenceservice.Service,
+	authService authenticationservice.Service,
+	authorizationService authorizationservice.Service,
+	matchingService matchingservice.Service,
+	matchingValidator matchingvalidator.Validator,
+	presenceService presenceservice.Service,
 ) MatchingHandler {
 
 	return MatchingHandler{

@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package presence;
+option go_package = "golang.project/go-fundamentals/gameapp/contract/golang/presence";
+
+message GetPresenceRequest {
+  repeated uint64 user_ids = 1;
+}
+
+message GetPresenceResponse {
+  repeated Presence items = 1;
+}
+
+message Presence {
+  uint64 user_id = 1;
+  int64 timestamp = 2;
+}
+
+service PresenceService{
+  rpc GetPresence(GetPresenceRequest) returns (GetPresenceResponse);
+}

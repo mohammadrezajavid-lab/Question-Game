@@ -9,19 +9,19 @@ import (
 )
 
 type UserHandler struct {
-	userService          *userservice.Service
-	authService          *authenticationservice.Service
-	authorizationService *authorizationservice.Service
-	userValidator        *uservalidator.Validator
-	presenceService      *presenceservice.Service
+	userService          userservice.Service
+	authService          authenticationservice.Service
+	authorizationService authorizationservice.Service
+	userValidator        uservalidator.Validator
+	presenceService      presenceservice.Service
 }
 
 func NewHandler(
-	userSvc *userservice.Service,
-	authSvc *authenticationservice.Service,
-	authorizationSvc *authorizationservice.Service,
-	userValidator *uservalidator.Validator,
-	presenceService *presenceservice.Service,
+	userSvc userservice.Service,
+	authSvc authenticationservice.Service,
+	authorizationSvc authorizationservice.Service,
+	userValidator uservalidator.Validator,
+	presenceService presenceservice.Service,
 ) UserHandler {
 	return UserHandler{
 		userService:          userSvc,

@@ -7,15 +7,15 @@ import (
 )
 
 type Middleware struct {
-	authService          *authenticationservice.Service
-	authorizationService *authorizationservice.Service
-	presenceService      *presenceservice.Service
+	authService          authenticationservice.Service
+	authorizationService authorizationservice.Service
+	presenceService      presenceservice.Service
 }
 
 func NewMiddleware(
-	authService *authenticationservice.Service,
-	authorizationService *authorizationservice.Service,
-	presenceService *presenceservice.Service,
+	authService authenticationservice.Service,
+	authorizationService authorizationservice.Service,
+	presenceService presenceservice.Service,
 ) Middleware {
 
 	return Middleware{

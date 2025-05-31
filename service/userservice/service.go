@@ -21,8 +21,8 @@ type Service struct {
 	authService    AuthGenerator
 }
 
-func NewService(userRepository Repository, authService AuthGenerator) *Service {
-	return &Service{
+func NewService(userRepository Repository, authService AuthGenerator) Service {
+	return Service{
 		userRepository: userRepository,
 		authService:    authService,
 	}

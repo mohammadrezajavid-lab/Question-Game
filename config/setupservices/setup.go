@@ -1,6 +1,7 @@
 package setupservices
 
 import (
+	"golang.project/go-fundamentals/gameapp/adapter/presenceclient"
 	"golang.project/go-fundamentals/gameapp/adapter/redis"
 	"golang.project/go-fundamentals/gameapp/config/httpservercfg"
 	"golang.project/go-fundamentals/gameapp/repository/mysql"
@@ -16,20 +17,21 @@ import (
 	"golang.project/go-fundamentals/gameapp/service/userservice"
 	"golang.project/go-fundamentals/gameapp/validator/matchingvalidator"
 	"golang.project/go-fundamentals/gameapp/validator/uservalidator"
+	"google.golang.org/grpc"
 )
 
 type SetupServices struct {
-	AuthSvc           *authenticationservice.Service
-	AuthorizationSvc  *authorizationservice.Service
-	UserSvc           *userservice.Service
-	UserValidator     *uservalidator.Validator
-	BackOfficeUserSvc *backofficeuserservice.Service
-	MatchingSvc       *matchingservice.Service
-	MatchingValidator *matchingvalidator.Validator
-	PresenceSvc       *presenceservice.Service
+	AuthSvc           authenticationservice.Service
+	AuthorizationSvc  authorizationservice.Service
+	UserSvc           userservice.Service
+	UserValidator     uservalidator.Validator
+	BackOfficeUserSvc backofficeuserservice.Service
+	MatchingSvc       matchingservice.Service
+	MatchingValidator matchingvalidator.Validator
+	PresenceSvc       presenceservice.Service
 }
 
-func New(config httpservercfg.Config) *SetupServices {
+func New(config httpservercfg.Config, grpcConnectionClient *grpc.ClientConn) *SetupServices {
 
 	mysqlRepo := mysql.NewDB(config.DataBaseCfg)
 
@@ -46,14 +48,20 @@ func New(config httpservercfg.Config) *SetupServices {
 	authorizationSvc := authorizationservice.NewService(mysqlAccessControl)
 
 	mysqlUser := usermysql.NewDataBase(mysqlRepo)
-	userSvc := userservice.NewService(mysqlUser, authSvc)
+	userSvc := userservice.NewService(mysqlUser, &authSvc)
 	userValidator := uservalidator.NewValidator(mysqlUser)
 
 	backOfficeUserSvc := backofficeuserservice.NewService()
 
 	redisAdapter := redis.New(config.RedisCfg)
 
-	matchingSvc := matchingservice.NewService(config.MatchingCfg, redismatching.NewRedisDb(redisAdapter, config.MatchingRepoCfg), nil)
+	presenceAdapter := presenceclient.NewClient(grpcConnectionClient)
+	matchingSvc := matchingservice.NewService(
+		config.MatchingCfg,
+		redismatching.NewRedisDb(redisAdapter, config.MatchingRepoCfg),
+		presenceAdapter,
+	)
+
 	matchingValidator := matchingvalidator.NewValidator()
 
 	presenceSvc := presenceservice.New(redispresence.NewRedisDb(redisAdapter), config.PresenceCfg)

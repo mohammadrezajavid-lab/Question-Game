@@ -3,6 +3,6 @@ package matchingvalidator
 type Validator struct {
 }
 
-func NewValidator() *Validator {
-	return &Validator{}
+func NewValidator() Validator {
+	return Validator{}
 }

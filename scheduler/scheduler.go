@@ -16,11 +16,11 @@ type Config struct {
 
 type Scheduler struct {
 	sch         gocron.Scheduler
-	matchingSvc *matchingservice.Service
+	matchingSvc matchingservice.Service
 	config      Config
 }
 
-func New(matchingSvc *matchingservice.Service, config Config) Scheduler {
+func New(matchingSvc matchingservice.Service, config Config) Scheduler {
 
 	// TODO - we can set location timezone in config.yaml file and use this for scheduler
 	sch, err := gocron.NewScheduler(gocron.WithLocation(time.Local))

@@ -37,9 +37,9 @@ type Service struct {
 	Config Config
 }
 
-func NewService(authConfig Config) *Service {
+func NewService(authConfig Config) Service {
 
-	return &Service{Config: authConfig}
+	return Service{Config: authConfig}
 }
 
 func (s *Service) CreateAccessToken(user *entity.User) (string, error) {

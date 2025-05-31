@@ -36,8 +36,8 @@ type Config struct {
 	WaitingTimeOut time.Duration `mapstructure:"waiting_time_out"`
 }
 
-func NewService(config Config, repo Repository, presenceClient PresenceClient) *Service {
-	return &Service{config: config, repo: repo, presenceClient: presenceClient}
+func NewService(config Config, repo Repository, presenceClient PresenceClient) Service {
+	return Service{config: config, repo: repo, presenceClient: presenceClient}
 }
 
 func (s *Service) AddToWaitingList(ctx context.Context, req *matchingparam.AddToWaitingListRequest) (*matchingparam.AddToWaitingListResponse, error) {
@@ -54,6 +54,7 @@ func (s *Service) AddToWaitingList(ctx context.Context, req *matchingparam.AddTo
 
 func (s *Service) MatchWaitedUsers(ctx context.Context) error {
 	const operation = "matchingservice.MatchWaitedUsers"
+
 	log.Println("Executing matchWaitedUser job at:", time.Now())
 
 	categories := entity.Category("all_categories").GetCategories()
@@ -84,8 +85,12 @@ func (s *Service) MatchWaitedUsers(ctx context.Context) error {
 			if pErr != nil {
 				// TODO - update metrics
 				// TODO - log error
+				log.Println(pErr.Error())
 				return
 			}
+
+			fmt.Println(operation)
+			fmt.Println("getPresenceResponse: ", getPresenceResponse)
 
 			waitedUsersId = sort.NewQuickSort(waitedUsersId).Sort()
 
@@ -98,7 +103,6 @@ func (s *Service) MatchWaitedUsers(ctx context.Context) error {
 					continue
 				}
 
-				//ToDo - remove item.UserId from zset waited list
 				if rErr := s.repo.RemoveUserFromWaitedList(ctx, item.UserId, category); rErr != nil {
 					errCh <- richerror.NewRichError(operation).WithError(rErr)
 
@@ -109,12 +113,13 @@ func (s *Service) MatchWaitedUsers(ctx context.Context) error {
 				}
 			}
 
+			fmt.Println(operation)
+			fmt.Println("finalListWaitedUsers: ", finalListWaitedUsers)
 			for j := 0; j+1 < len(finalListWaitedUsers); j += 2 {
 				mu := entity.NewMatchedUsers(category, []uint{finalListWaitedUsers[j].UserId, finalListWaitedUsers[j+1].UserId})
 				fmt.Println(mu)
 				//now published a new event for mu and send to message broker
 
-				// ToDo - remove mu.UserIds from zset
 				for _, userId := range mu.UserIds {
 					if rErr := s.repo.RemoveUserFromWaitedList(ctx, userId, category); rErr != nil {
 						errCh <- richerror.NewRichError(operation).WithError(rErr)

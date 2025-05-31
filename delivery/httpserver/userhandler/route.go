@@ -12,6 +12,6 @@ func (h *UserHandler) SetRoute(e *echo.Echo) {
 	userGroup := e.Group("/users/")
 
 	userGroup.POST("register", h.userRegisterHandler)
-	userGroup.POST("login", h.userLoginHandler, newMiddleware.PresenceUpsert())
+	userGroup.POST("login", h.userLoginHandler)
 	userGroup.GET("profile", h.userProfileHandler, newMiddleware.AuthMiddleware(), newMiddleware.PresenceUpsert())
 }

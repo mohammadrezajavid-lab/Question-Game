@@ -16,8 +16,8 @@ type Validator struct {
 	repository Repository
 }
 
-func NewValidator(repository Repository) *Validator {
-	return &Validator{repository: repository}
+func NewValidator(repository Repository) Validator {
+	return Validator{repository: repository}
 }
 
 func checkPasswordRegex() validation.RuleFunc {

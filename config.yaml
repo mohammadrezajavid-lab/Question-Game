@@ -1,3 +1,7 @@
+grpc_server_cfg:
+  host: "127.0.0.1"
+  port: 8086
+
 httpserver_cfg:
   host: "127.0.0.1"
   port: 8080
@@ -35,7 +39,7 @@ presence_cfg:
   prefix: "presence"
 
 scheduler_cfg:
-  crontab: "*/2 * * * *"
+  crontab: "*/1 * * * *"
 
 matching_repo_cfg:
   waiting_list_prefix: "waiting-list"

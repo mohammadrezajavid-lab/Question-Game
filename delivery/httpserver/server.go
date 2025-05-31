@@ -31,14 +31,14 @@ type Server struct {
 
 func New(
 	cfg httpservercfg.Config,
-	authSvc *authenticationservice.Service,
-	userSvc *userservice.Service,
-	backOfficeUserSvc *backofficeuserservice.Service,
-	authorizationSvc *authorizationservice.Service,
-	userValidator *uservalidator.Validator,
-	matchingSvc *matchingservice.Service,
-	matchingValidator *matchingvalidator.Validator,
-	presenceSvc *presenceservice.Service,
+	authSvc authenticationservice.Service,
+	userSvc userservice.Service,
+	backOfficeUserSvc backofficeuserservice.Service,
+	authorizationSvc authorizationservice.Service,
+	userValidator uservalidator.Validator,
+	matchingSvc matchingservice.Service,
+	matchingValidator matchingvalidator.Validator,
+	presenceSvc presenceservice.Service,
 ) *Server {
 
 	return &Server{
