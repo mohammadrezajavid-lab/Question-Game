@@ -19,6 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
+	PresenceService_Upsert_FullMethodName      = "/presence.PresenceService/Upsert"
 	PresenceService_GetPresence_FullMethodName = "/presence.PresenceService/GetPresence"
 )
 
@@ -26,6 +27,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PresenceServiceClient interface {
+	Upsert(ctx context.Context, in *UpsertPresenceRequest, opts ...grpc.CallOption) (*UpsertPresenceResponse, error)
 	GetPresence(ctx context.Context, in *GetPresenceRequest, opts ...grpc.CallOption) (*GetPresenceResponse, error)
 }
 
@@ -35,6 +37,16 @@ type presenceServiceClient struct {
 
 func NewPresenceServiceClient(cc grpc.ClientConnInterface) PresenceServiceClient {
 	return &presenceServiceClient{cc}
+}
+
+func (c *presenceServiceClient) Upsert(ctx context.Context, in *UpsertPresenceRequest, opts ...grpc.CallOption) (*UpsertPresenceResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpsertPresenceResponse)
+	err := c.cc.Invoke(ctx, PresenceService_Upsert_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *presenceServiceClient) GetPresence(ctx context.Context, in *GetPresenceRequest, opts ...grpc.CallOption) (*GetPresenceResponse, error) {
@@ -51,6 +63,7 @@ func (c *presenceServiceClient) GetPresence(ctx context.Context, in *GetPresence
 // All implementations must embed UnimplementedPresenceServiceServer
 // for forward compatibility.
 type PresenceServiceServer interface {
+	Upsert(context.Context, *UpsertPresenceRequest) (*UpsertPresenceResponse, error)
 	GetPresence(context.Context, *GetPresenceRequest) (*GetPresenceResponse, error)
 	mustEmbedUnimplementedPresenceServiceServer()
 }
@@ -62,6 +75,9 @@ type PresenceServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedPresenceServiceServer struct{}
 
+func (UnimplementedPresenceServiceServer) Upsert(context.Context, *UpsertPresenceRequest) (*UpsertPresenceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Upsert not implemented")
+}
 func (UnimplementedPresenceServiceServer) GetPresence(context.Context, *GetPresenceRequest) (*GetPresenceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPresence not implemented")
 }
@@ -84,6 +100,24 @@ func RegisterPresenceServiceServer(s grpc.ServiceRegistrar, srv PresenceServiceS
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&PresenceService_ServiceDesc, srv)
+}
+
+func _PresenceService_Upsert_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpsertPresenceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PresenceServiceServer).Upsert(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PresenceService_Upsert_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PresenceServiceServer).Upsert(ctx, req.(*UpsertPresenceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _PresenceService_GetPresence_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -111,6 +145,10 @@ var PresenceService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "presence.PresenceService",
 	HandlerType: (*PresenceServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Upsert",
+			Handler:    _PresenceService_Upsert_Handler,
+		},
 		{
 			MethodName: "GetPresence",
 			Handler:    _PresenceService_GetPresence_Handler,

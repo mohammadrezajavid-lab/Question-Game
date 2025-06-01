@@ -3,6 +3,7 @@ package presenceservice
 import (
 	"context"
 	"fmt"
+	"golang.project/go-fundamentals/gameapp/entity"
 	"golang.project/go-fundamentals/gameapp/param/presenceparam"
 	"golang.project/go-fundamentals/gameapp/pkg/richerror"
 	"time"
@@ -10,44 +11,60 @@ import (
 
 type Repository interface {
 	Upsert(ctx context.Context, key string, timestamp int64, expirationTime time.Duration) error
+	GetPresence(ctx context.Context, key string) (entity.Presence, error)
 }
-
 type Config struct {
 	ExpirationTime time.Duration `mapstructure:"expiration_time"`
 	Prefix         string        `mapstructure:"prefix"`
 }
 
 type Service struct {
-	repo   Repository
-	config Config
+	Repo   Repository
+	Config Config
 }
 
-func New(repo Repository, config Config) Service {
-	return Service{repo: repo, config: config}
+func New(repo Repository, config Config) *Service {
+	return &Service{Repo: repo, Config: config}
 }
 
-func (s *Service) Upsert(ctx context.Context, req *presenceparam.UpsertPresenceRequest) (*presenceparam.UpsertPresenceResponse, error) {
+func (s Service) Upsert(ctx context.Context, req presenceparam.UpsertPresenceRequest) (presenceparam.UpsertPresenceResponse, error) {
 	const operation = "presenceservice.Upsert"
 
-	key := fmt.Sprintf("%s:%d", s.config.Prefix, req.UserId)
-	if err := s.repo.Upsert(ctx, key, req.TimeStamp, s.config.ExpirationTime); err != nil {
+	key := s.GetKey(req.UserId)
+	if err := s.Repo.Upsert(ctx, key, req.TimeStamp, s.Config.ExpirationTime); err != nil {
 
-		return nil, richerror.NewRichError(operation).WithError(err)
+		return presenceparam.UpsertPresenceResponse{}, richerror.NewRichError(operation).WithError(err)
 	}
 
-	return nil, nil
+	return presenceparam.NewUpsertPresenceResponse(req.TimeStamp), nil
 }
 
-func (s *Service) GetPresence(ctx context.Context, request presenceparam.GetPresenceRequest) (presenceparam.GetPresenceResponse, error) {
-	// TODO - implement me
+func (s Service) GetPresence(ctx context.Context, request presenceparam.GetPresenceRequest) (presenceparam.GetPresenceResponse, error) {
 
-	fmt.Println("presenceservice.GetPresence: request: 	", request)
+	const operation = "presenceservice.GetPresence"
 
-	return presenceparam.GetPresenceResponse{Items: []presenceparam.PresenceItem{
-		{UserId: 1, Timestamp: 2343242342},
-		{UserId: 2, Timestamp: 2343242343},
-		{UserId: 3, Timestamp: 2343242344},
-		{UserId: 4, Timestamp: 2343242345},
-		{UserId: 5, Timestamp: 2343242346},
-	}}, nil
+	tmpPresenceItem := presenceparam.NewPresenceItem()
+	presenceItems := make([]presenceparam.PresenceItem, 0)
+
+	for _, userId := range request.UserIds {
+		key := s.GetKey(userId)
+
+		presence, err := s.Repo.GetPresence(ctx, key)
+		if err != nil {
+
+			return presenceparam.GetPresenceResponse{}, richerror.NewRichError(operation).WithError(err)
+		}
+		presence.UserId = userId
+
+		tmpPresenceItem.UserId = presence.UserId
+		tmpPresenceItem.Timestamp = presence.Timestamp
+
+		presenceItems = append(presenceItems, tmpPresenceItem)
+	}
+
+	return presenceparam.NewGetPresenceResponse(presenceItems), nil
+}
+
+func (s Service) GetKey(userId uint) string {
+	return fmt.Sprintf("%s:%d", s.Config.Prefix, userId)
 }

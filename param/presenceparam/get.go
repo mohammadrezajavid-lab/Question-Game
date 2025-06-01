@@ -13,6 +13,14 @@ type PresenceItem struct {
 	Timestamp int64
 }
 
+func NewPresenceItem() PresenceItem {
+	return PresenceItem{}
+}
+
 type GetPresenceResponse struct {
 	Items []PresenceItem
+}
+
+func NewGetPresenceResponse(items []PresenceItem) GetPresenceResponse {
+	return GetPresenceResponse{Items: items}
 }

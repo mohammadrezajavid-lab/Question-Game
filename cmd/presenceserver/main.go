@@ -25,9 +25,10 @@ func main() {
 	)
 	flag.Parse()
 
-	grpcCfg := grpcconfig.NewConfig(host, port)
+	grpcCfg := grpcconfig.NewConfig().LoadConfig(host, port)
+
 	redisAdapter := redis.New(grpcCfg.RedisCfg)
-	presenceSvc := presenceservice.New(redispresence.NewRedisDb(redisAdapter), grpcCfg.PresenceCfg)
-	server := presenceserver.NewPresenceGrpcServer(presenceSvc)
+	presenceSvc := presenceservice.New(redispresence.NewRedisDb(redisAdapter), *grpcCfg.PresenceCfg)
+	server := presenceserver.NewPresenceGrpcServer(presenceSvc, grpcCfg)
 	server.Start()
 }

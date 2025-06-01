@@ -17,7 +17,7 @@ type Adapter struct {
 	client *redis.Client
 }
 
-func New(cfg Config) *Adapter {
+func New(cfg *Config) *Adapter {
 	return &Adapter{client: redis.NewClient(&redis.Options{
 		Network:  cfg.Network,
 		Addr:     fmt.Sprintf("%s:%d", cfg.Host, cfg.Port),

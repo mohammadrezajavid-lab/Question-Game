@@ -161,6 +161,102 @@ func (x *Presence) GetTimestamp() int64 {
 	return 0
 }
 
+type UpsertPresenceRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        uint64                 `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Timestamp     int64                  `protobuf:"varint,2,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpsertPresenceRequest) Reset() {
+	*x = UpsertPresenceRequest{}
+	mi := &file_presence_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpsertPresenceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpsertPresenceRequest) ProtoMessage() {}
+
+func (x *UpsertPresenceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_presence_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpsertPresenceRequest.ProtoReflect.Descriptor instead.
+func (*UpsertPresenceRequest) Descriptor() ([]byte, []int) {
+	return file_presence_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *UpsertPresenceRequest) GetUserId() uint64 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+func (x *UpsertPresenceRequest) GetTimestamp() int64 {
+	if x != nil {
+		return x.Timestamp
+	}
+	return 0
+}
+
+type UpsertPresenceResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Timestamp     int64                  `protobuf:"varint,1,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpsertPresenceResponse) Reset() {
+	*x = UpsertPresenceResponse{}
+	mi := &file_presence_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpsertPresenceResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpsertPresenceResponse) ProtoMessage() {}
+
+func (x *UpsertPresenceResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_presence_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpsertPresenceResponse.ProtoReflect.Descriptor instead.
+func (*UpsertPresenceResponse) Descriptor() ([]byte, []int) {
+	return file_presence_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *UpsertPresenceResponse) GetTimestamp() int64 {
+	if x != nil {
+		return x.Timestamp
+	}
+	return 0
+}
+
 var File_presence_proto protoreflect.FileDescriptor
 
 const file_presence_proto_rawDesc = "" +
@@ -172,8 +268,14 @@ const file_presence_proto_rawDesc = "" +
 	"\x05items\x18\x01 \x03(\v2\x12.presence.PresenceR\x05items\"A\n" +
 	"\bPresence\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\x04R\x06userId\x12\x1c\n" +
-	"\ttimestamp\x18\x02 \x01(\x03R\ttimestamp2]\n" +
-	"\x0fPresenceService\x12J\n" +
+	"\ttimestamp\x18\x02 \x01(\x03R\ttimestamp\"N\n" +
+	"\x15UpsertPresenceRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\x04R\x06userId\x12\x1c\n" +
+	"\ttimestamp\x18\x02 \x01(\x03R\ttimestamp\"6\n" +
+	"\x16UpsertPresenceResponse\x12\x1c\n" +
+	"\ttimestamp\x18\x01 \x01(\x03R\ttimestamp2\xaa\x01\n" +
+	"\x0fPresenceService\x12K\n" +
+	"\x06Upsert\x12\x1f.presence.UpsertPresenceRequest\x1a .presence.UpsertPresenceResponse\x12J\n" +
 	"\vGetPresence\x12\x1c.presence.GetPresenceRequest\x1a\x1d.presence.GetPresenceResponseBAZ?golang.project/go-fundamentals/gameapp/contract/golang/presenceb\x06proto3"
 
 var (
@@ -188,18 +290,22 @@ func file_presence_proto_rawDescGZIP() []byte {
 	return file_presence_proto_rawDescData
 }
 
-var file_presence_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_presence_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_presence_proto_goTypes = []any{
-	(*GetPresenceRequest)(nil),  // 0: presence.GetPresenceRequest
-	(*GetPresenceResponse)(nil), // 1: presence.GetPresenceResponse
-	(*Presence)(nil),            // 2: presence.Presence
+	(*GetPresenceRequest)(nil),     // 0: presence.GetPresenceRequest
+	(*GetPresenceResponse)(nil),    // 1: presence.GetPresenceResponse
+	(*Presence)(nil),               // 2: presence.Presence
+	(*UpsertPresenceRequest)(nil),  // 3: presence.UpsertPresenceRequest
+	(*UpsertPresenceResponse)(nil), // 4: presence.UpsertPresenceResponse
 }
 var file_presence_proto_depIdxs = []int32{
 	2, // 0: presence.GetPresenceResponse.items:type_name -> presence.Presence
-	0, // 1: presence.PresenceService.GetPresence:input_type -> presence.GetPresenceRequest
-	1, // 2: presence.PresenceService.GetPresence:output_type -> presence.GetPresenceResponse
-	2, // [2:3] is the sub-list for method output_type
-	1, // [1:2] is the sub-list for method input_type
+	3, // 1: presence.PresenceService.Upsert:input_type -> presence.UpsertPresenceRequest
+	0, // 2: presence.PresenceService.GetPresence:input_type -> presence.GetPresenceRequest
+	4, // 3: presence.PresenceService.Upsert:output_type -> presence.UpsertPresenceResponse
+	1, // 4: presence.PresenceService.GetPresence:output_type -> presence.GetPresenceResponse
+	3, // [3:5] is the sub-list for method output_type
+	1, // [1:3] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
 	1, // [1:1] is the sub-list for extension extendee
 	0, // [0:1] is the sub-list for field type_name
@@ -216,7 +322,7 @@ func file_presence_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_presence_proto_rawDesc), len(file_presence_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
