@@ -30,3 +30,14 @@ func (c Client) GetPresence(ctx context.Context, request presenceparam.GetPresen
 
 	return protobufmapper.MapProtobufToGetPresenceResponse(res), nil
 }
+
+func (c Client) Upsert(ctx context.Context, request presenceparam.UpsertPresenceRequest) (presenceparam.UpsertPresenceResponse, error) {
+	res, err := c.client.Upsert(ctx, &presence.UpsertPresenceRequest{UserId: uint64(request.UserId), Timestamp: request.TimeStamp})
+	if err != nil {
+		log.Println(err)
+
+		return presenceparam.UpsertPresenceResponse{}, err
+	}
+
+	return presenceparam.NewUpsertPresenceResponse(res.Timestamp), nil
+}
