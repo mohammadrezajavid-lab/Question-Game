@@ -15,7 +15,6 @@ import (
 	"golang.project/go-fundamentals/gameapp/service/userservice"
 	"golang.project/go-fundamentals/gameapp/validator/matchingvalidator"
 	"golang.project/go-fundamentals/gameapp/validator/uservalidator"
-	"google.golang.org/grpc"
 )
 
 type SetupServices struct {
@@ -29,7 +28,7 @@ type SetupServices struct {
 	PresenceClient    presenceclient.Client
 }
 
-func New(config httpservercfg.Config, grpcConnectionClient *grpc.ClientConn) *SetupServices {
+func New(config httpservercfg.Config) *SetupServices {
 
 	mysqlRepo := mysql.NewDB(config.DataBaseCfg)
 
@@ -53,16 +52,15 @@ func New(config httpservercfg.Config, grpcConnectionClient *grpc.ClientConn) *Se
 
 	redisAdapter := redis.New(config.RedisCfg)
 
-	presenceAdapter := presenceclient.NewClient(grpcConnectionClient)
+	presenceClient := presenceclient.NewClient(config.GrpcPresenceClientCfg)
+
 	matchingSvc := matchingservice.NewService(
 		config.MatchingCfg,
 		redismatching.NewRedisDb(redisAdapter, config.MatchingRepoCfg),
-		presenceAdapter,
+		presenceClient,
 	)
-
 	matchingValidator := matchingvalidator.NewValidator()
 
-	presenceClient := presenceclient.NewClient(grpcConnectionClient)
 	return &SetupServices{
 		AuthSvc:           authSvc,
 		AuthorizationSvc:  authorizationSvc,

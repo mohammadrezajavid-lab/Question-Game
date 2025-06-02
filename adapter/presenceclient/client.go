@@ -2,6 +2,7 @@ package presenceclient
 
 import (
 	"context"
+	"fmt"
 	"golang.project/go-fundamentals/gameapp/contract/golang/presence"
 	"golang.project/go-fundamentals/gameapp/param/presenceparam"
 	"golang.project/go-fundamentals/gameapp/pkg/protobufmapper"
@@ -10,18 +11,26 @@ import (
 	"log"
 )
 
+type Config struct {
+	Host    string `mapstructure:"host"`
+	Port    int    `mapstructure:"port"`
+	Network string `mapstructure:"network"`
+}
 type Client struct {
-	client presence.PresenceServiceClient
+	config Config
 }
 
-func NewClient(cc *grpc.ClientConn) Client {
+func NewClient(config Config) Client {
 	return Client{
-		client: presence.NewPresenceServiceClient(cc),
+		config: config,
 	}
 }
 
 func (c Client) GetPresence(ctx context.Context, request presenceparam.GetPresenceRequest) (presenceparam.GetPresenceResponse, error) {
-	res, err := c.client.GetPresence(ctx, &presence.GetPresenceRequest{UserIds: slice.MapFromUintToUint64(request.UserIds)})
+
+	client := c.definitionGrpcClient()
+
+	res, err := client.GetPresence(ctx, &presence.GetPresenceRequest{UserIds: slice.MapFromUintToUint64(request.UserIds)})
 	if err != nil {
 		log.Println(err)
 
@@ -32,7 +41,10 @@ func (c Client) GetPresence(ctx context.Context, request presenceparam.GetPresen
 }
 
 func (c Client) Upsert(ctx context.Context, request presenceparam.UpsertPresenceRequest) (presenceparam.UpsertPresenceResponse, error) {
-	res, err := c.client.Upsert(ctx, &presence.UpsertPresenceRequest{UserId: uint64(request.UserId), Timestamp: request.TimeStamp})
+
+	client := c.definitionGrpcClient()
+
+	res, err := client.Upsert(ctx, &presence.UpsertPresenceRequest{UserId: uint64(request.UserId), Timestamp: request.TimeStamp})
 	if err != nil {
 		log.Println(err)
 
@@ -40,4 +52,17 @@ func (c Client) Upsert(ctx context.Context, request presenceparam.UpsertPresence
 	}
 
 	return presenceparam.NewUpsertPresenceResponse(res.Timestamp), nil
+}
+
+func (c Client) definitionGrpcClient() presence.PresenceServiceClient {
+	target := fmt.Sprintf("%s:%d", c.config.Host, c.config.Port)
+	grpcConnectionClient, err := grpc.Dial(target, grpc.WithInsecure())
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+	defer grpcConnectionClient.Close()
+
+	client := presence.NewPresenceServiceClient(grpcConnectionClient)
+
+	return client
 }

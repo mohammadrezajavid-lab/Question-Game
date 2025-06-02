@@ -8,7 +8,6 @@ import (
 	"golang.project/go-fundamentals/gameapp/config/setupservices"
 	"golang.project/go-fundamentals/gameapp/delivery/httpserver"
 	"golang.project/go-fundamentals/gameapp/scheduler"
-	"google.golang.org/grpc"
 	"os"
 	"os/signal"
 	"sync"
@@ -40,15 +39,8 @@ func main() {
 		os.Exit(0)
 	}
 
-	// definition presence grpc client
-	grpcConnectionClient, err := grpc.Dial("127.0.0.1:8086", grpc.WithInsecure())
-	if err != nil {
-		panic(err)
-	}
-	defer grpcConnectionClient.Close()
-
 	// setup services
-	setupSvc := setupservices.New(config, grpcConnectionClient)
+	setupSvc := setupservices.New(config)
 
 	// start http server goroutine
 	server := httpserver.New(

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/spf13/viper"
+	"golang.project/go-fundamentals/gameapp/adapter/presenceclient"
 	"golang.project/go-fundamentals/gameapp/adapter/redis"
 	"golang.project/go-fundamentals/gameapp/config/httpservercfg/constant"
 	"golang.project/go-fundamentals/gameapp/repository/migrator"
@@ -27,14 +28,15 @@ type HttpServerConfig struct {
 }
 
 type Config struct {
-	AppCfg          AppConfig                    `mapstructure:"app_cfg"`
-	ServerCfg       HttpServerConfig             `mapstructure:"httpserver_cfg"`
-	DataBaseCfg     mysql.Config                 `mapstructure:"database_cfg"`
-	AuthCfg         authenticationservice.Config `mapstructure:"auth_cfg"`
-	MatchingCfg     matchingservice.Config       `mapstructure:"matching_cfg"`
-	RedisCfg        redis.Config                 `mapstructure:"redis_cfg"`
-	SchedulerCfg    scheduler.Config             `mapstructure:"scheduler_cfg"`
-	MatchingRepoCfg redismatching.Config         `mapstructure:"matching_repo_cfg"`
+	AppCfg                AppConfig                    `mapstructure:"app_cfg"`
+	ServerCfg             HttpServerConfig             `mapstructure:"httpserver_cfg"`
+	DataBaseCfg           mysql.Config                 `mapstructure:"database_cfg"`
+	AuthCfg               authenticationservice.Config `mapstructure:"auth_cfg"`
+	MatchingCfg           matchingservice.Config       `mapstructure:"matching_cfg"`
+	RedisCfg              redis.Config                 `mapstructure:"redis_cfg"`
+	SchedulerCfg          scheduler.Config             `mapstructure:"scheduler_cfg"`
+	MatchingRepoCfg       redismatching.Config         `mapstructure:"matching_repo_cfg"`
+	GrpcPresenceClientCfg presenceclient.Config        `mapstructure:"grpc_presence_client_cfg"`
 }
 
 func NewConfig(host string, port int) Config {
@@ -42,14 +44,15 @@ func NewConfig(host string, port int) Config {
 	cfg := loadConfig(host, port)
 
 	return Config{
-		AppCfg:          cfg.AppCfg,
-		ServerCfg:       cfg.ServerCfg,
-		DataBaseCfg:     cfg.DataBaseCfg,
-		AuthCfg:         cfg.AuthCfg,
-		MatchingCfg:     cfg.MatchingCfg,
-		RedisCfg:        cfg.RedisCfg,
-		SchedulerCfg:    cfg.SchedulerCfg,
-		MatchingRepoCfg: cfg.MatchingRepoCfg,
+		AppCfg:                cfg.AppCfg,
+		ServerCfg:             cfg.ServerCfg,
+		DataBaseCfg:           cfg.DataBaseCfg,
+		AuthCfg:               cfg.AuthCfg,
+		MatchingCfg:           cfg.MatchingCfg,
+		RedisCfg:              cfg.RedisCfg,
+		SchedulerCfg:          cfg.SchedulerCfg,
+		MatchingRepoCfg:       cfg.MatchingRepoCfg,
+		GrpcPresenceClientCfg: cfg.GrpcPresenceClientCfg,
 	}
 }
 
@@ -94,6 +97,9 @@ func loadConfig(host string, port int) Config {
 		}
 		if uErr := viper.Sub("matching_repo_cfg").Unmarshal(&cfg.MatchingRepoCfg); uErr != nil {
 			log.Fatalf("can't unmarshal matching_repo_cfg config: %v", uErr)
+		}
+		if uErr := viper.Sub("grpc_presence_client_cfg").Unmarshal(&cfg.GrpcPresenceClientCfg); uErr != nil {
+			log.Fatalf("can't unmarshal grpc_presence_client_cfg config: %v", uErr)
 		}
 	} else {
 

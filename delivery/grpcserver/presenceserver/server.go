@@ -71,13 +71,13 @@ func (s *PresenceGrpcServer) Start() {
 	}
 
 	// grpc-presence server
-	presenceSvcSrv := NewPresenceGrpcServer(s.presenceSvc, s.grpcCfg)
+	//presenceSvcSrv := NewPresenceGrpcServer(s.presenceSvc, s.grpcCfg)
 
 	// grpc server
 	grpcSrv := grpc.NewServer()
 
 	// presence service register to grpc server
-	presence.RegisterPresenceServiceServer(grpcSrv, presenceSvcSrv)
+	presence.RegisterPresenceServiceServer(grpcSrv, s)
 
 	// server grpcServer by listen
 	log.Printf("presence grpc server started on %s/n", addr)
