@@ -28,7 +28,8 @@ func NewClient(config Config) Client {
 
 func (c Client) GetPresence(ctx context.Context, request presenceparam.GetPresenceRequest) (presenceparam.GetPresenceResponse, error) {
 
-	client := c.definitionGrpcClient()
+	client, grpcClientConn := c.definitionGrpcClient()
+	defer grpcClientConn.Close()
 
 	res, err := client.GetPresence(ctx, &presence.GetPresenceRequest{UserIds: slice.MapFromUintToUint64(request.UserIds)})
 	if err != nil {
@@ -42,7 +43,8 @@ func (c Client) GetPresence(ctx context.Context, request presenceparam.GetPresen
 
 func (c Client) Upsert(ctx context.Context, request presenceparam.UpsertPresenceRequest) (presenceparam.UpsertPresenceResponse, error) {
 
-	client := c.definitionGrpcClient()
+	client, grpcClientConn := c.definitionGrpcClient()
+	defer grpcClientConn.Close()
 
 	res, err := client.Upsert(ctx, &presence.UpsertPresenceRequest{UserId: uint64(request.UserId), Timestamp: request.TimeStamp})
 	if err != nil {
@@ -54,15 +56,14 @@ func (c Client) Upsert(ctx context.Context, request presenceparam.UpsertPresence
 	return presenceparam.NewUpsertPresenceResponse(res.Timestamp), nil
 }
 
-func (c Client) definitionGrpcClient() presence.PresenceServiceClient {
+func (c Client) definitionGrpcClient() (presence.PresenceServiceClient, *grpc.ClientConn) {
 	target := fmt.Sprintf("%s:%d", c.config.Host, c.config.Port)
 	grpcConnectionClient, err := grpc.Dial(target, grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
-	defer grpcConnectionClient.Close()
 
 	client := presence.NewPresenceServiceClient(grpcConnectionClient)
 
-	return client
+	return client, grpcConnectionClient
 }
