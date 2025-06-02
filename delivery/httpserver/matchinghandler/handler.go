@@ -1,10 +1,10 @@
 package matchinghandler
 
 import (
+	"golang.project/go-fundamentals/gameapp/adapter/presenceclient"
 	"golang.project/go-fundamentals/gameapp/service/authenticationservice"
 	"golang.project/go-fundamentals/gameapp/service/authorizationservice"
 	"golang.project/go-fundamentals/gameapp/service/matchingservice"
-	"golang.project/go-fundamentals/gameapp/service/presenceservice"
 	"golang.project/go-fundamentals/gameapp/validator/matchingvalidator"
 )
 
@@ -13,7 +13,7 @@ type MatchingHandler struct {
 	authorizationService authorizationservice.Service
 	matchingService      matchingservice.Service
 	matchingValidator    matchingvalidator.Validator
-	presenceService      presenceservice.Service
+	presenceClient       presenceclient.Client
 }
 
 func NewHandler(
@@ -21,7 +21,7 @@ func NewHandler(
 	authorizationService authorizationservice.Service,
 	matchingService matchingservice.Service,
 	matchingValidator matchingvalidator.Validator,
-	presenceService presenceservice.Service,
+	presenceClient presenceclient.Client,
 ) MatchingHandler {
 
 	return MatchingHandler{
@@ -29,6 +29,6 @@ func NewHandler(
 		authorizationService: authorizationService,
 		matchingService:      matchingService,
 		matchingValidator:    matchingValidator,
-		presenceService:      presenceService,
+		presenceClient:       presenceClient,
 	}
 }

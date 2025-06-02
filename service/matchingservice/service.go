@@ -3,7 +3,6 @@ package matchingservice
 import (
 	"context"
 	"errors"
-	"fmt"
 	"golang.project/go-fundamentals/gameapp/entity"
 	"golang.project/go-fundamentals/gameapp/param/matchingparam"
 	"golang.project/go-fundamentals/gameapp/param/presenceparam"
@@ -26,14 +25,24 @@ type PresenceClient interface {
 	GetPresence(ctx context.Context, request presenceparam.GetPresenceRequest) (presenceparam.GetPresenceResponse, error)
 }
 
+type Config struct {
+	WaitingTimeOut          time.Duration `mapstructure:"waiting_time_out"`
+	ContextTimeOut          time.Duration `mapstructure:"context_time_out"`
+	OnlineThresholdDuration time.Duration `mapstructure:"online_threshold_duration"`
+}
+
 type Service struct {
 	config         Config
 	repo           Repository
 	presenceClient PresenceClient
 }
 
-type Config struct {
-	WaitingTimeOut time.Duration `mapstructure:"waiting_time_out"`
+func (s *Service) GetConfig() Config {
+	if s != nil {
+		return s.config
+	}
+
+	return Config{}
 }
 
 func NewService(config Config, repo Repository, presenceClient PresenceClient) Service {
@@ -89,15 +98,13 @@ func (s *Service) MatchWaitedUsers(ctx context.Context) error {
 				return
 			}
 
-			fmt.Println(operation)
-			fmt.Println("getPresenceResponse: ", getPresenceResponse)
-
 			waitedUsersId = sort.NewQuickSort(waitedUsersId).Sort()
 
 			// merge getPresenceResponse and waitedUsers to create finalListWaitedUsers
 			var finalListWaitedUsers = make([]matchingparam.WaitedUser, 0)
 			for _, item := range getPresenceResponse.Items {
-				if item.Timestamp > timestamp.Add(-20*time.Second) && search.BinarySearch(waitedUsersId, item.UserId) {
+
+				if item.Timestamp > timestamp.Add(-1*s.config.OnlineThresholdDuration) && search.BinarySearch(waitedUsersId, item.UserId) {
 					finalListWaitedUsers = append(finalListWaitedUsers, matchingparam.NewWaitedUser(item.Timestamp, item.UserId, category))
 
 					continue
@@ -113,11 +120,10 @@ func (s *Service) MatchWaitedUsers(ctx context.Context) error {
 				}
 			}
 
-			fmt.Println(operation)
-			fmt.Println("finalListWaitedUsers: ", finalListWaitedUsers)
 			for j := 0; j+1 < len(finalListWaitedUsers); j += 2 {
 				mu := entity.NewMatchedUsers(category, []uint{finalListWaitedUsers[j].UserId, finalListWaitedUsers[j+1].UserId})
-				fmt.Println(mu)
+
+				log.Printf("user_id: [%d], user_id: [%d], for category: [%s] is matched.\n", mu.UserIds[0], mu.UserIds[1], mu.Category)
 				//now published a new event for mu and send to message broker
 
 				for _, userId := range mu.UserIds {

@@ -41,7 +41,7 @@ func main() {
 	}
 
 	// definition presence grpc client
-	grpcConnectionClient, err := grpc.Dial(":8086", grpc.WithInsecure())
+	grpcConnectionClient, err := grpc.Dial("127.0.0.1:8086", grpc.WithInsecure())
 	if err != nil {
 		panic(err)
 	}
@@ -60,7 +60,7 @@ func main() {
 		setupSvc.UserValidator,
 		setupSvc.MatchingSvc,
 		setupSvc.MatchingValidator,
-		setupSvc.PresenceSvc,
+		setupSvc.PresenceClient,
 	)
 	go server.Serve()
 

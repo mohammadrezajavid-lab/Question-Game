@@ -13,7 +13,7 @@ func (m *Middleware) PresenceUpsert() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			claims := claim.GetClaimsFromEchoContext(c)
-			_, uErr := m.presenceService.Upsert(c.Request().Context(), presenceparam.NewUpsertPresenceRequest(claims.UserId, timestamp.Now()))
+			_, uErr := m.presenceClient.Upsert(c.Request().Context(), presenceparam.NewUpsertPresenceRequest(claims.UserId, timestamp.Now()))
 			if uErr != nil {
 
 				return c.JSON(http.StatusInternalServerError, echo.Map{

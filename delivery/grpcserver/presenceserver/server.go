@@ -7,9 +7,12 @@ import (
 	"golang.project/go-fundamentals/gameapp/contract/golang/presence"
 	"golang.project/go-fundamentals/gameapp/param/presenceparam"
 	"golang.project/go-fundamentals/gameapp/pkg/protobufmapper"
+	"golang.project/go-fundamentals/gameapp/pkg/richerror"
 	"golang.project/go-fundamentals/gameapp/pkg/slice"
 	"golang.project/go-fundamentals/gameapp/service/presenceservice"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"log"
 	"net"
 )
@@ -43,7 +46,17 @@ func (s *PresenceGrpcServer) GetPresence(ctx context.Context, req *presence.GetP
 	res, err := s.presenceSvc.GetPresence(ctx, presenceparam.NewGetPresenceRequest(slice.MapFromUint64ToUint(req.GetUserIds())))
 
 	if err != nil {
-		return nil, err
+
+		richErr, ok := err.(*richerror.RichError)
+		if ok {
+			if richErr.GetKind() == richerror.KindNotFound {
+				return nil, status.Errorf(codes.NotFound, richErr.Error())
+			}
+
+			return nil, status.Errorf(codes.Internal, "An internal error occurred: %s", richErr.Error())
+		}
+
+		return nil, status.Errorf(codes.Internal, "An unexpected error occurred: %s", err.Error())
 	}
 
 	return protobufmapper.MapGetPresenceResponseToProtobuf(res), nil
@@ -66,7 +79,7 @@ func (s *PresenceGrpcServer) Start() {
 	// presence service register to grpc server
 	presence.RegisterPresenceServiceServer(grpcSrv, presenceSvcSrv)
 
-	// server grpcServer by lisin
+	// server grpcServer by listen
 	log.Printf("presence grpc server started on %s/n", addr)
 	if sErr := grpcSrv.Serve(listener); sErr != nil {
 		log.Fatal("couldn't server presence grpc server")

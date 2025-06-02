@@ -13,8 +13,8 @@ type PresenceItem struct {
 	Timestamp int64
 }
 
-func NewPresenceItem() PresenceItem {
-	return PresenceItem{}
+func NewPresenceItem(userId uint, timestamp int64) PresenceItem {
+	return PresenceItem{UserId: userId, Timestamp: timestamp}
 }
 
 type GetPresenceResponse struct {

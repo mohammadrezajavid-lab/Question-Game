@@ -69,7 +69,7 @@ func (s Scheduler) newJobMatchWaitedUser() {
 
 func (s Scheduler) matchWaitedUserTask() {
 
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), s.matchingSvc.GetConfig().ContextTimeOut)
 	defer cancel()
 	err := s.matchingSvc.MatchWaitedUsers(ctx)
 	if err != nil {

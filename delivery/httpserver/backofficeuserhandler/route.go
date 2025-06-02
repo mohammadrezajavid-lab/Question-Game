@@ -8,7 +8,7 @@ import (
 
 func (h *BackOfficeUserHandler) SetRoute(e *echo.Echo) {
 
-	newMiddleware := middleware.NewMiddleware(h.authService, h.authorizationService, h.presenceService)
+	newMiddleware := middleware.NewMiddleware(h.authService, h.authorizationService, h.presenceClient)
 
 	userGroup := e.Group("/backoffice/users")
 

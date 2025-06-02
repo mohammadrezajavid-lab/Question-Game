@@ -12,7 +12,6 @@ import (
 	"golang.project/go-fundamentals/gameapp/scheduler"
 	"golang.project/go-fundamentals/gameapp/service/authenticationservice"
 	"golang.project/go-fundamentals/gameapp/service/matchingservice"
-	"golang.project/go-fundamentals/gameapp/service/presenceservice"
 	"log"
 	"strings"
 	"time"
@@ -34,7 +33,6 @@ type Config struct {
 	AuthCfg         authenticationservice.Config `mapstructure:"auth_cfg"`
 	MatchingCfg     matchingservice.Config       `mapstructure:"matching_cfg"`
 	RedisCfg        redis.Config                 `mapstructure:"redis_cfg"`
-	PresenceCfg     presenceservice.Config       `mapstructure:"presence_cfg"`
 	SchedulerCfg    scheduler.Config             `mapstructure:"scheduler_cfg"`
 	MatchingRepoCfg redismatching.Config         `mapstructure:"matching_repo_cfg"`
 }
@@ -50,7 +48,6 @@ func NewConfig(host string, port int) Config {
 		AuthCfg:         cfg.AuthCfg,
 		MatchingCfg:     cfg.MatchingCfg,
 		RedisCfg:        cfg.RedisCfg,
-		PresenceCfg:     cfg.PresenceCfg,
 		SchedulerCfg:    cfg.SchedulerCfg,
 		MatchingRepoCfg: cfg.MatchingRepoCfg,
 	}
@@ -92,9 +89,6 @@ func loadConfig(host string, port int) Config {
 		if uErr := viper.Sub("app_cfg").Unmarshal(&cfg.AppCfg); uErr != nil {
 			log.Fatalf("can't unmarshal application config: %v", uErr)
 		}
-		if uErr := viper.Sub("presence_cfg").Unmarshal(&cfg.PresenceCfg); uErr != nil {
-			log.Fatalf("can't unmarshal presence config: %v", uErr)
-		}
 		if uErr := viper.Sub("scheduler_cfg").Unmarshal(&cfg.SchedulerCfg); uErr != nil {
 			log.Fatalf("can't unmarshal scheduler config: %v", uErr)
 		}
@@ -119,7 +113,7 @@ func loadConfig(host string, port int) Config {
 	return cfg
 }
 
-func (c *Config) Migrate(migrationCommand string) {
+func (c Config) Migrate(migrationCommand string) {
 
 	if migrationCommand != "up" && migrationCommand != "down" && migrationCommand != "skip" && migrationCommand != "status" {
 		panic(fmt.Sprintf("invalid migration-command: %s", migrationCommand))
@@ -130,7 +124,7 @@ func (c *Config) Migrate(migrationCommand string) {
 
 }
 
-func (c *Config) migrate(dbConnection *sql.DB, dialect string, migrationCommand string) {
+func (c Config) migrate(dbConnection *sql.DB, dialect string, migrationCommand string) {
 
 	mgt := migrator.NewMigrator(dbConnection, dialect)
 

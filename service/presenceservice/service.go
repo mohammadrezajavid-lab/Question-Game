@@ -6,12 +6,13 @@ import (
 	"golang.project/go-fundamentals/gameapp/entity"
 	"golang.project/go-fundamentals/gameapp/param/presenceparam"
 	"golang.project/go-fundamentals/gameapp/pkg/richerror"
+	"log"
 	"time"
 )
 
 type Repository interface {
 	Upsert(ctx context.Context, key string, timestamp int64, expirationTime time.Duration) error
-	GetPresence(ctx context.Context, key string) (entity.Presence, error)
+	GetPresences(ctx context.Context, keys []string) ([]entity.Presence, error)
 }
 type Config struct {
 	ExpirationTime time.Duration `mapstructure:"expiration_time"`
@@ -30,7 +31,7 @@ func New(repo Repository, config Config) *Service {
 func (s Service) Upsert(ctx context.Context, req presenceparam.UpsertPresenceRequest) (presenceparam.UpsertPresenceResponse, error) {
 	const operation = "presenceservice.Upsert"
 
-	key := s.GetKey(req.UserId)
+	key := s.getKey(req.UserId)
 	if err := s.Repo.Upsert(ctx, key, req.TimeStamp, s.Config.ExpirationTime); err != nil {
 
 		return presenceparam.UpsertPresenceResponse{}, richerror.NewRichError(operation).WithError(err)
@@ -43,28 +44,30 @@ func (s Service) GetPresence(ctx context.Context, request presenceparam.GetPrese
 
 	const operation = "presenceservice.GetPresence"
 
-	tmpPresenceItem := presenceparam.NewPresenceItem()
-	presenceItems := make([]presenceparam.PresenceItem, 0)
-
-	for _, userId := range request.UserIds {
-		key := s.GetKey(userId)
-
-		presence, err := s.Repo.GetPresence(ctx, key)
-		if err != nil {
-
-			return presenceparam.GetPresenceResponse{}, richerror.NewRichError(operation).WithError(err)
-		}
-		presence.UserId = userId
-
-		tmpPresenceItem.UserId = presence.UserId
-		tmpPresenceItem.Timestamp = presence.Timestamp
-
-		presenceItems = append(presenceItems, tmpPresenceItem)
+	keys := s.generateAllKey(request.UserIds)
+	usersPresence, err := s.Repo.GetPresences(ctx, keys)
+	if err != nil {
+		log.Println(operation, ": ", err.Error())
+		return presenceparam.GetPresenceResponse{}, richerror.NewRichError(operation).WithError(err)
 	}
 
-	return presenceparam.NewGetPresenceResponse(presenceItems), nil
+	items := make([]presenceparam.PresenceItem, 0, len(usersPresence)/2)
+	for _, pre := range usersPresence {
+		items = append(items, presenceparam.NewPresenceItem(pre.UserId, pre.Timestamp))
+	}
+
+	return presenceparam.NewGetPresenceResponse(items), nil
 }
 
-func (s Service) GetKey(userId uint) string {
+func (s Service) generateAllKey(userIds []uint) []string {
+	keys := make([]string, 0, len(userIds))
+
+	for _, id := range userIds {
+		keys = append(keys, s.getKey(id))
+	}
+
+	return keys
+}
+func (s Service) getKey(userId uint) string {
 	return fmt.Sprintf("%s:%d", s.Config.Prefix, userId)
 }

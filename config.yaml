@@ -1,6 +1,7 @@
 grpc_server_cfg:
   host: "127.0.0.1"
   port: 8086
+  network: "tcp"
 
 httpserver_cfg:
   host: "127.0.0.1"
@@ -32,10 +33,12 @@ app_cfg:
   gracefully_shutdown_timeout: 5s # 5 second
 
 matching_cfg:
-  waiting_time_out: 2m # 2 min
+  context_time_out: 3m
+  online_threshold_duration: 3m
+  waiting_time_out: 5m
 
 presence_cfg:
-  expiration_time: 60m
+  expiration_time: 30m
   prefix: "presence"
 
 scheduler_cfg:

@@ -16,20 +16,20 @@ type GrpcServerConfig struct {
 }
 
 type Config struct {
-	GrpcCfg     *GrpcServerConfig       `mapstructure:"grpc_server_cfg"`
-	RedisCfg    *redis.Config           `mapstructure:"redis_cfg"`
-	PresenceCfg *presenceservice.Config `mapstructure:"presence_cfg"`
+	GrpcCfg     GrpcServerConfig       `mapstructure:"grpc_server_cfg"`
+	RedisCfg    redis.Config           `mapstructure:"redis_cfg"`
+	PresenceCfg presenceservice.Config `mapstructure:"presence_cfg"`
 }
 
-func NewConfig() *Config {
-	return &Config{
-		GrpcCfg:     &GrpcServerConfig{},
-		RedisCfg:    &redis.Config{},
-		PresenceCfg: &presenceservice.Config{},
+func NewConfig() Config {
+	return Config{
+		GrpcCfg:     GrpcServerConfig{},
+		RedisCfg:    redis.Config{},
+		PresenceCfg: presenceservice.Config{},
 	}
 }
 
-func (c *Config) LoadConfig(host string, port int) *Config {
+func (c Config) LoadConfig(host string, port int) Config {
 
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
@@ -69,5 +69,5 @@ func (c *Config) LoadConfig(host string, port int) *Config {
 		cfg.GrpcCfg.Port = port
 	}
 
-	return &cfg
+	return cfg
 }
