@@ -2,14 +2,18 @@ package matchingservice
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
+	"golang.project/go-fundamentals/gameapp/adapter/publisher"
+	"golang.project/go-fundamentals/gameapp/contract/golang/matching"
 	"golang.project/go-fundamentals/gameapp/entity"
 	"golang.project/go-fundamentals/gameapp/param/matchingparam"
 	"golang.project/go-fundamentals/gameapp/param/presenceparam"
 	"golang.project/go-fundamentals/gameapp/pkg/richerror"
 	"golang.project/go-fundamentals/gameapp/pkg/search"
-	"golang.project/go-fundamentals/gameapp/pkg/sort"
+	"golang.project/go-fundamentals/gameapp/pkg/slice"
 	"golang.project/go-fundamentals/gameapp/pkg/timestamp"
+	"google.golang.org/protobuf/proto"
 	"log"
 	"sync"
 	"time"
@@ -18,11 +22,15 @@ import (
 type Repository interface {
 	AddToWaitingList(ctx context.Context, userId uint, category entity.Category) error
 	GetWaitedUserByCategory(ctx context.Context, category entity.Category) ([]matchingparam.WaitedUser, error)
-	RemoveUserFromWaitedList(ctx context.Context, userId uint, category entity.Category) error
+	RemoveUserFromWaitingList(userIds []uint, category entity.Category)
 }
 
 type PresenceClient interface {
 	GetPresence(ctx context.Context, request presenceparam.GetPresenceRequest) (presenceparam.GetPresenceResponse, error)
+}
+
+type Published interface {
+	PublishEvent(ctx context.Context, topic string, payload interface{}) error
 }
 
 type Config struct {
@@ -35,6 +43,7 @@ type Service struct {
 	config         Config
 	repo           Repository
 	presenceClient PresenceClient
+	publisher      publisher.Publish
 }
 
 func (s *Service) GetConfig() Config {
@@ -45,14 +54,18 @@ func (s *Service) GetConfig() Config {
 	return Config{}
 }
 
-func NewService(config Config, repo Repository, presenceClient PresenceClient) Service {
-	return Service{config: config, repo: repo, presenceClient: presenceClient}
+func NewService(config Config, repo Repository, presenceClient PresenceClient, publisher publisher.Publish) Service {
+	return Service{
+		config:         config,
+		repo:           repo,
+		presenceClient: presenceClient,
+		publisher:      publisher,
+	}
 }
 
 func (s *Service) AddToWaitingList(ctx context.Context, req *matchingparam.AddToWaitingListRequest) (*matchingparam.AddToWaitingListResponse, error) {
 	const operation = richerror.Operation("matchingservice.AddToWaitingList")
 
-	// req.Category should be sanitized before sent to service layer
 	err := s.repo.AddToWaitingList(ctx, req.UserId, req.Category)
 	if err != nil {
 		return nil, richerror.NewRichError(operation).WithError(err)
@@ -63,6 +76,7 @@ func (s *Service) AddToWaitingList(ctx context.Context, req *matchingparam.AddTo
 
 func (s *Service) MatchWaitedUsers(ctx context.Context) error {
 	const operation = "matchingservice.MatchWaitedUsers"
+	const topic = "matchingservice.matched_users" // "serviceName.eventName"
 
 	log.Println("Executing matchWaitedUser job at:", time.Now())
 
@@ -78,19 +92,19 @@ func (s *Service) MatchWaitedUsers(ctx context.Context) error {
 		go func(category entity.Category) {
 			defer wg.Done()
 
-			waitingList, err := s.getWaitingListByCategory(ctx, matchingparam.NewMatchWaitedUserRequest(category))
+			waitingListByCategory, err := s.getWaitingListByCategory(ctx, matchingparam.NewMatchWaitedUserRequest(category))
 			if err != nil {
 				errCh <- richerror.NewRichError(operation).WithError(err).WithMeta(map[string]interface{}{"category": category})
 				return
 			}
 
-			waitedUsers := waitingList.WaitedUsers
-			var waitedUsersId = make([]uint, 0, len(waitedUsers))
+			waitedUsers := waitingListByCategory.WaitedUsers
+			var waitedUserIds = make([]uint, 0, len(waitedUsers))
 			for _, wu := range waitedUsers {
-				waitedUsersId = append(waitedUsersId, wu.UserId)
+				waitedUserIds = append(waitedUserIds, wu.UserId)
 			}
 
-			getPresenceResponse, pErr := s.presenceClient.GetPresence(ctx, presenceparam.NewGetPresenceRequest(waitedUsersId))
+			presenceResponse, pErr := s.presenceClient.GetPresence(ctx, presenceparam.NewGetPresenceRequest(waitedUserIds))
 			if pErr != nil {
 				// TODO - update metrics
 				// TODO - log error
@@ -98,45 +112,52 @@ func (s *Service) MatchWaitedUsers(ctx context.Context) error {
 				return
 			}
 
-			waitedUsersId = sort.NewQuickSort(waitedUsersId).Sort()
-
-			// merge getPresenceResponse and waitedUsers to create finalListWaitedUsers
 			var finalListWaitedUsers = make([]matchingparam.WaitedUser, 0)
-			for _, item := range getPresenceResponse.Items {
+			var toBeRemoveUsers = make([]uint, 0)
+			for _, waitedUser := range waitingListByCategory.WaitedUsers {
 
-				if item.Timestamp > timestamp.Add(-1*s.config.OnlineThresholdDuration) && search.BinarySearch(waitedUsersId, item.UserId) {
-					finalListWaitedUsers = append(finalListWaitedUsers, matchingparam.NewWaitedUser(item.Timestamp, item.UserId, category))
+				userPresence, ok := search.BinarySearch(presenceResponse.Items, waitedUser.UserId)
 
+				if ok && userPresence.Timestamp > timestamp.Add(-1*s.config.OnlineThresholdDuration) &&
+					waitedUser.Timestamp > timestamp.Add(-1*s.config.WaitingTimeOut) {
+
+					finalListWaitedUsers = append(finalListWaitedUsers, waitedUser)
 					continue
 				}
 
-				if rErr := s.repo.RemoveUserFromWaitedList(ctx, item.UserId, category); rErr != nil {
-					errCh <- richerror.NewRichError(operation).WithError(rErr)
-
-					// TODO - update metrics
-					// TODO - log error
-
-					continue
-				}
+				toBeRemoveUsers = append(toBeRemoveUsers, waitedUser.UserId)
 			}
 
 			for j := 0; j+1 < len(finalListWaitedUsers); j += 2 {
 				mu := entity.NewMatchedUsers(category, []uint{finalListWaitedUsers[j].UserId, finalListWaitedUsers[j+1].UserId})
 
-				log.Printf("user_id: [%d], user_id: [%d], for category: [%s] is matched.\n", mu.UserIds[0], mu.UserIds[1], mu.Category)
-				//now published a new event for mu and send to message broker
+				log.Printf("user_id: [%d], user_id: [%d], for category: [%s] is matched\n", mu.UserIds[0], mu.UserIds[1], mu.Category)
 
-				for _, userId := range mu.UserIds {
-					if rErr := s.repo.RemoveUserFromWaitedList(ctx, userId, category); rErr != nil {
-						errCh <- richerror.NewRichError(operation).WithError(rErr)
-
-						// TODO - update metrics
-						// TODO - log error
-
-						continue
-					}
+				pbMu := matching.MatchedUsers{
+					Category: string(mu.Category),
+					UserIds:  slice.MapFromUintToUint64(mu.UserIds),
 				}
+				payload, mErr := proto.Marshal(&pbMu)
+				if mErr != nil {
+
+				}
+
+				var payloadStr = base64.StdEncoding.EncodeToString(payload)
+
+				if pubErr := s.publisher.PublishEvent(ctx, topic, payloadStr); pubErr != nil {
+					// TODO - update metrics
+					// TODO - log error
+					log.Printf("Error publishing Event: %v", err.Error())
+
+					continue
+				}
+
+				log.Printf("user_id: [%d], user_id: [%d], for category: [%s] is matched and published.\n", mu.UserIds[0], mu.UserIds[1], mu.Category)
+
+				toBeRemoveUsers = append(toBeRemoveUsers, mu.UserIds...)
 			}
+
+			s.repo.RemoveUserFromWaitingList(toBeRemoveUsers, category)
 		}(cat)
 	}
 

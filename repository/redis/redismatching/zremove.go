@@ -3,22 +3,32 @@ package redismatching
 import (
 	"context"
 	"golang.project/go-fundamentals/gameapp/entity"
-	"golang.project/go-fundamentals/gameapp/pkg/richerror"
+	"log"
 	"strconv"
 )
 
-func (r *RedisDb) RemoveUserFromWaitedList(ctx context.Context, userId uint, category entity.Category) error {
+func (r *RedisDb) RemoveUserFromWaitingList(userIds []uint, category entity.Category) {
 
 	const operation = "redismatching.RemoveUserFromWaitedList"
 
+	ctx, cancel := context.WithTimeout(context.Background(), r.config.ContextTimeOutForZRem)
+	defer cancel()
+
 	var key = r.GetKey(category)
-	_, err := r.redisAdapter.GetClient().ZRem(ctx, key, strconv.Itoa(int(userId))).Result()
-	if err != nil {
-		return richerror.NewRichError(operation).
-			WithError(err).
-			WithKind(richerror.KindUnexpected).
-			WithMeta(map[string]interface{}{"userId": userId, "category": category})
+
+	members := make([]any, 0, len(userIds))
+	for _, userId := range userIds {
+		members = append(members, strconv.Itoa(int(userId)))
 	}
 
-	return nil
+	numberOfRemovedMember, err := r.redisAdapter.GetClient().ZRem(ctx, key, members...).Result()
+	if err != nil {
+		// TODO - update metrics
+		// TODO - log error
+		log.Printf("%s: Error ZRem from waiting list: %v\n", operation, err)
+	}
+
+	// TODO - update metrics
+	// TODO - log error
+	log.Printf("%d items removed from %s", numberOfRemovedMember, key)
 }

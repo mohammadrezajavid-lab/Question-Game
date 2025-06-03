@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package matching;
+option go_package = "golang.project/go-fundamentals/gameapp/contract/golang/matching";
+
+message MatchedUsers {
+  string Category = 1;
+  repeated uint64 user_ids = 2;
+}
+

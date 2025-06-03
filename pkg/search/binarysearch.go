@@ -1,28 +1,31 @@
 package search
 
-func BinarySearch(list []uint, item uint) bool {
-	if index := search(list, item); index != -1 {
-		return true
+import "golang.project/go-fundamentals/gameapp/param/presenceparam"
+
+func BinarySearch(list []presenceparam.PresenceItem, userId uint) (presenceparam.PresenceItem, bool) {
+	if index := search(list, userId); index != -1 {
+		return list[index], true
 	}
-	return false
+
+	return presenceparam.PresenceItem{}, false
 }
-func search(list []uint, target uint) int {
+func search(list []presenceparam.PresenceItem, userId uint) int {
 	low := 0
 	high := len(list) - 1
 
 	for low <= high {
 		mid := (low + high) / 2
 
-		if list[mid] == target {
+		if list[mid].UserId == userId {
 			return mid
 		}
 
-		if list[mid] < target {
+		if list[mid].UserId < userId {
 			low = mid + 1
 			continue
 		}
 
-		if list[mid] > target {
+		if list[mid].UserId > userId {
 			high = mid - 1
 		}
 	}

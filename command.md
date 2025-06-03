@@ -1,5 +1,7 @@
 ```bash
 protoc --proto_path=contract/presence --go_out=contract/golang/presence --go_opt=paths=source_relative .\contract\presence\presence.proto
+
+protoc --proto_path=contract/matching --go_out=contract/golang/matching --go_opt=paths=source_relative .\contract\matching\matching.proto
 ```
 
 #### --proto_path=[مسیر فایل های proto]

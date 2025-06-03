@@ -2,6 +2,7 @@ package setupservices
 
 import (
 	"golang.project/go-fundamentals/gameapp/adapter/presenceclient"
+	"golang.project/go-fundamentals/gameapp/adapter/publisher"
 	"golang.project/go-fundamentals/gameapp/adapter/redis"
 	"golang.project/go-fundamentals/gameapp/config/httpservercfg"
 	"golang.project/go-fundamentals/gameapp/repository/mysql"
@@ -53,11 +54,13 @@ func New(config httpservercfg.Config) *SetupServices {
 	redisAdapter := redis.New(config.RedisCfg)
 
 	presenceClient := presenceclient.NewClient(config.GrpcPresenceClientCfg)
+	redisPublisher := publisher.NewPublish(redisAdapter)
 
 	matchingSvc := matchingservice.NewService(
 		config.MatchingCfg,
 		redismatching.NewRedisDb(redisAdapter, config.MatchingRepoCfg),
 		presenceClient,
+		redisPublisher,
 	)
 	matchingValidator := matchingvalidator.NewValidator()
 

@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"golang.project/go-fundamentals/gameapp/adapter/redis"
 	"golang.project/go-fundamentals/gameapp/entity"
+	"time"
 )
 
 type Config struct {
-	WaitingListPrefix string `mapstructure:"waiting_list_prefix"`
+	WaitingListPrefix     string        `mapstructure:"waiting_list_prefix"`
+	ContextTimeOutForZRem time.Duration `mapstructure:"context_timeout_ZRem"`
 }
 
 type RedisDb struct {

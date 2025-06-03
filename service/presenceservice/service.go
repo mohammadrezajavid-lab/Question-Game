@@ -7,6 +7,7 @@ import (
 	"golang.project/go-fundamentals/gameapp/param/presenceparam"
 	"golang.project/go-fundamentals/gameapp/pkg/richerror"
 	"log"
+	"sort"
 	"time"
 )
 
@@ -55,6 +56,10 @@ func (s Service) GetPresence(ctx context.Context, request presenceparam.GetPrese
 	for _, pre := range usersPresence {
 		items = append(items, presenceparam.NewPresenceItem(pre.UserId, pre.Timestamp))
 	}
+
+	sort.Slice(items, func(i, j int) bool {
+		return items[i].UserId < items[j].UserId
+	})
 
 	return presenceparam.NewGetPresenceResponse(items), nil
 }
