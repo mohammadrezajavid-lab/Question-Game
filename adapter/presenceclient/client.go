@@ -3,7 +3,7 @@ package presenceclient
 import (
 	"context"
 	"fmt"
-	"golang.project/go-fundamentals/gameapp/contract/golang/presence"
+	"golang.project/go-fundamentals/gameapp/contract/goprotobuf/presence"
 	"golang.project/go-fundamentals/gameapp/param/presenceparam"
 	"golang.project/go-fundamentals/gameapp/pkg/protobufmapper"
 	"golang.project/go-fundamentals/gameapp/pkg/slice"
@@ -28,6 +28,8 @@ func NewClient(config Config) Client {
 
 func (c Client) GetPresence(ctx context.Context, request presenceparam.GetPresenceRequest) (presenceparam.GetPresenceResponse, error) {
 
+	// TODO - what's the best practice for reliable communication - Retry for connection time out?!
+	// TODO - is it okay to create new connection for every method call?
 	client, grpcClientConn := c.definitionGrpcClient()
 	defer grpcClientConn.Close()
 
@@ -43,6 +45,8 @@ func (c Client) GetPresence(ctx context.Context, request presenceparam.GetPresen
 
 func (c Client) Upsert(ctx context.Context, request presenceparam.UpsertPresenceRequest) (presenceparam.UpsertPresenceResponse, error) {
 
+	// TODO - what's the best practice for reliable communication - Retry for connection time out?!
+	// TODO - is it okay to create new connection for every method call?
 	client, grpcClientConn := c.definitionGrpcClient()
 	defer grpcClientConn.Close()
 
@@ -58,12 +62,12 @@ func (c Client) Upsert(ctx context.Context, request presenceparam.UpsertPresence
 
 func (c Client) definitionGrpcClient() (presence.PresenceServiceClient, *grpc.ClientConn) {
 	target := fmt.Sprintf("%s:%d", c.config.Host, c.config.Port)
-	grpcConnectionClient, err := grpc.Dial(target, grpc.WithInsecure())
+	grpcConnection, err := grpc.Dial(target, grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
 
-	client := presence.NewPresenceServiceClient(grpcConnectionClient)
+	client := presence.NewPresenceServiceClient(grpcConnection)
 
-	return client, grpcConnectionClient
+	return client, grpcConnection
 }

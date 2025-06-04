@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package presence;
-option go_package = "golang.project/go-fundamentals/gameapp/contract/golang/presence";
+option go_package = "golang.project/go-fundamentals/gameapp/contract/goprotobuf/presence";
 
 message GetPresenceRequest {
   repeated uint64 user_ids = 1;

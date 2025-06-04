@@ -3,7 +3,7 @@ package matchingservice
 import (
 	"context"
 	"errors"
-	"golang.project/go-fundamentals/gameapp/adapter/publisher"
+	"golang.project/go-fundamentals/gameapp/contract/broker"
 	"golang.project/go-fundamentals/gameapp/entity"
 	"golang.project/go-fundamentals/gameapp/param/matchingparam"
 	"golang.project/go-fundamentals/gameapp/param/presenceparam"
@@ -26,10 +26,6 @@ type PresenceClient interface {
 	GetPresence(ctx context.Context, request presenceparam.GetPresenceRequest) (presenceparam.GetPresenceResponse, error)
 }
 
-type Published interface {
-	PublishEvent(event string, payload interface{}) error
-}
-
 type Config struct {
 	WaitingTimeOut          time.Duration `mapstructure:"waiting_time_out"`
 	ContextTimeOut          time.Duration `mapstructure:"context_time_out"`
@@ -40,7 +36,7 @@ type Service struct {
 	config         Config
 	repo           Repository
 	presenceClient PresenceClient
-	publisher      publisher.Publish
+	publisher      broker.Published
 }
 
 func (s *Service) GetConfig() Config {
@@ -51,7 +47,7 @@ func (s *Service) GetConfig() Config {
 	return Config{}
 }
 
-func NewService(config Config, repo Repository, presenceClient PresenceClient, publisher publisher.Publish) Service {
+func NewService(config Config, repo Repository, presenceClient PresenceClient, publisher broker.Published) Service {
 	return Service{
 		config:         config,
 		repo:           repo,
@@ -105,11 +101,12 @@ func (s *Service) MatchWaitedUsers(ctx context.Context) error {
 				// TODO - update metrics
 				// TODO - log error
 				log.Println(pErr.Error())
+				errCh <- richerror.NewRichError(operation).WithError(pErr).WithMeta(map[string]interface{}{"category": category, "step": "get_presence"})
 				return
 			}
 
 			var finalListWaitedUsers = make([]matchingparam.WaitedUser, 0)
-			var toBeRemoveUsers = make([]uint, 0)
+			var allUsersToRemoved = make([]uint, 0)
 			for _, waitedUser := range waitingListByCategory.WaitedUsers {
 
 				userPresence, ok := search.BinarySearch(presenceResponse.Items, waitedUser.UserId)
@@ -121,7 +118,7 @@ func (s *Service) MatchWaitedUsers(ctx context.Context) error {
 					continue
 				}
 
-				toBeRemoveUsers = append(toBeRemoveUsers, waitedUser.UserId)
+				allUsersToRemoved = append(allUsersToRemoved, waitedUser.UserId)
 			}
 
 			for j := 0; j+1 < len(finalListWaitedUsers); j += 2 {
@@ -134,10 +131,10 @@ func (s *Service) MatchWaitedUsers(ctx context.Context) error {
 
 				log.Printf("user_id: [%d], user_id: [%d], for category: [%s] is matched and published.\n", mu.UserIds[0], mu.UserIds[1], mu.Category)
 
-				toBeRemoveUsers = append(toBeRemoveUsers, mu.UserIds...)
+				allUsersToRemoved = append(allUsersToRemoved, mu.UserIds...)
 			}
 
-			go s.repo.RemoveUserFromWaitingList(toBeRemoveUsers, category)
+			go s.repo.RemoveUserFromWaitingList(allUsersToRemoved, category)
 		}(cat)
 	}
 

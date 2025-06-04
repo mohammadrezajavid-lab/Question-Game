@@ -52,3 +52,6 @@ grpc_presence_client_cfg:
   host: "127.0.0.1"
   port: 8086
   network: "tcp"
+
+publisher_cfg:
+  context_timeout_redis_pub: 3s

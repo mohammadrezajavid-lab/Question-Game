@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/spf13/viper"
 	"golang.project/go-fundamentals/gameapp/adapter/presenceclient"
+	"golang.project/go-fundamentals/gameapp/adapter/publisher"
 	"golang.project/go-fundamentals/gameapp/adapter/redis"
 	"golang.project/go-fundamentals/gameapp/config/httpservercfg/constant"
 	"golang.project/go-fundamentals/gameapp/repository/migrator"
@@ -37,6 +38,7 @@ type Config struct {
 	SchedulerCfg          scheduler.Config             `mapstructure:"scheduler_cfg"`
 	MatchingRepoCfg       redismatching.Config         `mapstructure:"matching_repo_cfg"`
 	GrpcPresenceClientCfg presenceclient.Config        `mapstructure:"grpc_presence_client_cfg"`
+	PublisherCfg          publisher.Config             `mapstructure:"publisher_cfg"`
 }
 
 func NewConfig(host string, port int) Config {
@@ -53,6 +55,7 @@ func NewConfig(host string, port int) Config {
 		SchedulerCfg:          cfg.SchedulerCfg,
 		MatchingRepoCfg:       cfg.MatchingRepoCfg,
 		GrpcPresenceClientCfg: cfg.GrpcPresenceClientCfg,
+		PublisherCfg:          cfg.PublisherCfg,
 	}
 }
 
@@ -100,6 +103,9 @@ func loadConfig(host string, port int) Config {
 		}
 		if uErr := viper.Sub("grpc_presence_client_cfg").Unmarshal(&cfg.GrpcPresenceClientCfg); uErr != nil {
 			log.Fatalf("can't unmarshal grpc_presence_client_cfg config: %v", uErr)
+		}
+		if uErr := viper.Sub("publisher_cfg").Unmarshal(&cfg.GrpcPresenceClientCfg); uErr != nil {
+			log.Fatalf("can't unmarshal publisher_cfg config: %v", uErr)
 		}
 	} else {
 

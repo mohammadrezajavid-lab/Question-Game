@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"golang.project/go-fundamentals/gameapp/config/grpcconfig"
-	"golang.project/go-fundamentals/gameapp/contract/golang/presence"
+	"golang.project/go-fundamentals/gameapp/contract/goprotobuf/presence"
 	"golang.project/go-fundamentals/gameapp/param/presenceparam"
 	"golang.project/go-fundamentals/gameapp/pkg/protobufmapper"
 	"golang.project/go-fundamentals/gameapp/pkg/richerror"

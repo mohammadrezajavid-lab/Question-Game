@@ -11,6 +11,11 @@ func (r *RedisDb) RemoveUserFromWaitingList(userIds []uint, category entity.Cate
 
 	const operation = "redismatching.RemoveUserFromWaitedList"
 
+	if len(userIds) < 1 {
+		log.Printf("%s: No user IDs provided to remove. Skipping ZRem.", operation)
+		return
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), r.config.ContextTimeOutForZRem)
 	defer cancel()
 

@@ -2,7 +2,7 @@ package protobufencodedecode
 
 import (
 	"encoding/base64"
-	"golang.project/go-fundamentals/gameapp/contract/golang/matching"
+	"golang.project/go-fundamentals/gameapp/contract/goprotobuf/matching"
 	"golang.project/go-fundamentals/gameapp/entity"
 	"golang.project/go-fundamentals/gameapp/pkg/slice"
 	"google.golang.org/protobuf/proto"

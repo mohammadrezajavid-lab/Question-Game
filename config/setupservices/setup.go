@@ -54,7 +54,7 @@ func New(config httpservercfg.Config) *SetupServices {
 	redisAdapter := redis.New(config.RedisCfg)
 
 	presenceClient := presenceclient.NewClient(config.GrpcPresenceClientCfg)
-	redisPublisher := publisher.NewPublish(redisAdapter)
+	redisPublisher := publisher.NewPublish(config.PublisherCfg, redisAdapter)
 
 	matchingSvc := matchingservice.NewService(
 		config.MatchingCfg,

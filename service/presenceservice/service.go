@@ -34,7 +34,8 @@ func (s Service) Upsert(ctx context.Context, req presenceparam.UpsertPresenceReq
 
 	key := s.getKey(req.UserId)
 	if err := s.Repo.Upsert(ctx, key, req.TimeStamp, s.Config.ExpirationTime); err != nil {
-
+		// TODO - update metrics
+		// TODO - log error
 		return presenceparam.UpsertPresenceResponse{}, richerror.NewRichError(operation).WithError(err)
 	}
 
@@ -48,6 +49,8 @@ func (s Service) GetPresence(ctx context.Context, request presenceparam.GetPrese
 	keys := s.generateAllKey(request.UserIds)
 	usersPresence, err := s.Repo.GetPresences(ctx, keys)
 	if err != nil {
+		// TODO - update metrics
+		// TODO - log error
 		log.Println(operation, ": ", err.Error())
 		return presenceparam.GetPresenceResponse{}, richerror.NewRichError(operation).WithError(err)
 	}
