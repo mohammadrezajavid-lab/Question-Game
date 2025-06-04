@@ -2,18 +2,15 @@ package matchingservice
 
 import (
 	"context"
-	"encoding/base64"
 	"errors"
 	"golang.project/go-fundamentals/gameapp/adapter/publisher"
-	"golang.project/go-fundamentals/gameapp/contract/golang/matching"
 	"golang.project/go-fundamentals/gameapp/entity"
 	"golang.project/go-fundamentals/gameapp/param/matchingparam"
 	"golang.project/go-fundamentals/gameapp/param/presenceparam"
+	"golang.project/go-fundamentals/gameapp/pkg/protobufencodedecode"
 	"golang.project/go-fundamentals/gameapp/pkg/richerror"
 	"golang.project/go-fundamentals/gameapp/pkg/search"
-	"golang.project/go-fundamentals/gameapp/pkg/slice"
 	"golang.project/go-fundamentals/gameapp/pkg/timestamp"
-	"google.golang.org/protobuf/proto"
 	"log"
 	"sync"
 	"time"
@@ -30,7 +27,7 @@ type PresenceClient interface {
 }
 
 type Published interface {
-	PublishEvent(ctx context.Context, topic string, payload interface{}) error
+	PublishEvent(event string, payload interface{}) error
 }
 
 type Config struct {
@@ -76,7 +73,6 @@ func (s *Service) AddToWaitingList(ctx context.Context, req *matchingparam.AddTo
 
 func (s *Service) MatchWaitedUsers(ctx context.Context) error {
 	const operation = "matchingservice.MatchWaitedUsers"
-	const topic = "matchingservice.matched_users" // "serviceName.eventName"
 
 	log.Println("Executing matchWaitedUser job at:", time.Now())
 
@@ -133,31 +129,15 @@ func (s *Service) MatchWaitedUsers(ctx context.Context) error {
 
 				log.Printf("user_id: [%d], user_id: [%d], for category: [%s] is matched\n", mu.UserIds[0], mu.UserIds[1], mu.Category)
 
-				pbMu := matching.MatchedUsers{
-					Category: string(mu.Category),
-					UserIds:  slice.MapFromUintToUint64(mu.UserIds),
-				}
-				payload, mErr := proto.Marshal(&pbMu)
-				if mErr != nil {
-
-				}
-
-				var payloadStr = base64.StdEncoding.EncodeToString(payload)
-
-				if pubErr := s.publisher.PublishEvent(ctx, topic, payloadStr); pubErr != nil {
-					// TODO - update metrics
-					// TODO - log error
-					log.Printf("Error publishing Event: %v", err.Error())
-
-					continue
-				}
+				payload := protobufencodedecode.EncodeMatchingWaitedUsersEvent(mu)
+				go s.publisher.PublishEvent(entity.MatchingUsersMatchedEvent, payload)
 
 				log.Printf("user_id: [%d], user_id: [%d], for category: [%s] is matched and published.\n", mu.UserIds[0], mu.UserIds[1], mu.Category)
 
 				toBeRemoveUsers = append(toBeRemoveUsers, mu.UserIds...)
 			}
 
-			s.repo.RemoveUserFromWaitingList(toBeRemoveUsers, category)
+			go s.repo.RemoveUserFromWaitingList(toBeRemoveUsers, category)
 		}(cat)
 	}
 
