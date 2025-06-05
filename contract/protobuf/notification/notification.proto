@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package notification;
+option go_package = "golang.project/go-fundamentals/gameapp/contract/goprotobuf/notification";
+
+message Notification {
+  string type = 1;
+  string payload = 2;
+}

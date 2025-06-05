@@ -31,7 +31,6 @@ func main() {
 
 	// setup http server config
 	config := httpservercfg.NewConfig(host, port)
-	fmt.Println("config project: ", config)
 
 	// run migrations
 	config.Migrate(migrationCommand)

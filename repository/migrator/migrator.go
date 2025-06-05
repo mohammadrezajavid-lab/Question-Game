@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"github.com/olekukonko/tablewriter"
 	migrate "github.com/rubenv/sql-migrate"
+	"go.uber.org/zap"
+	"golang.project/go-fundamentals/gameapp/logger"
 	"os"
 )
 
@@ -32,7 +34,7 @@ func (m Migrator) Up() {
 		panic(fmt.Sprintf("Migration error: %v", err))
 	}
 
-	fmt.Printf("Applied %d migrations!\n", n)
+	zap.L().Named(logger.GetPackageFuncName(1)).Info("Applied migrations!", zap.Int("migrate_num", n))
 }
 
 func (m Migrator) Down() {
@@ -43,7 +45,7 @@ func (m Migrator) Down() {
 		panic(fmt.Sprintf("Migration error: %v", err))
 	}
 
-	fmt.Printf("Rollbacked %d migrations!\n", n)
+	zap.L().Named(logger.GetPackageFuncName(1)).Info("Rolled back migrations!", zap.Int("rolled_back_num", n))
 }
 
 func (m Migrator) Status() {

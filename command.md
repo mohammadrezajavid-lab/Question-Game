@@ -2,6 +2,8 @@
 protoc --proto_path=contract/protobuf/presence --go_out=contract/goprotobuf/presence --go_opt=paths=source_relative ./contract/protobuf/presence/presence.proto
 
 protoc --proto_path=contract/protobuf/matching --go_out=contract/goprotobuf/matching --go_opt=paths=source_relative ./contract/protobuf/matching/matching.proto
+
+protoc --proto_path=contract/protobuf/notification --go_out=contract/goprotobuf/notification --go_opt=paths=source_relative ./contract/protobuf/notification/notification.proto
 ```
 
 #### --proto_path=[مسیر فایل های proto]
