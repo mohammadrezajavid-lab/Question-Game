@@ -10,17 +10,29 @@ import (
 	"time"
 )
 
-func init() {
+type Config struct {
+	FileName               string        `mapstructure:"file_name"`
+	MaxSize                int           `mapstructure:"max_size"`
+	MaxAge                 int           `mapstructure:"max_age"`
+	MaxBackups             int           `mapstructure:"max_backups"`
+	Compress               bool          `mapstructure:"compress"`
+	SimplingCoreTick       time.Duration `mapstructure:"simpling_core_tick"`
+	SimplingCoreFirst      int           `mapstructure:"simpling_core_first"`
+	SimplingCoreThereafter int           `mapstructure:"simpling_core_thereafter"`
+}
+
+func InitLogger(cfg Config) {
 
 	stdout := zapcore.AddSync(os.Stdout)
 
+	// TODO - add to config file Filename, MasSize, MaxAge, MaxBackups, Compress, LocalTime
 	file := zapcore.AddSync(&lumberjack.Logger{
-		Filename:   "logs/app.log",
-		MaxSize:    30,
-		MaxAge:     7,
-		MaxBackups: 3,
+		Filename:   cfg.FileName,
+		MaxSize:    cfg.MaxSize,
+		MaxAge:     cfg.MaxAge,
+		MaxBackups: cfg.MaxBackups,
 		LocalTime:  false,
-		Compress:   true,
+		Compress:   cfg.Compress,
 	})
 
 	level := zap.NewAtomicLevelAt(zap.InfoLevel)
@@ -40,10 +52,28 @@ func init() {
 		zapcore.NewCore(fileEncoder, file, level),
 	)
 
-	samplingCore := zapcore.NewSamplerWithOptions(core, time.Minute, 100, 100)
+	samplingCore := zapcore.NewSamplerWithOptions(core, cfg.SimplingCoreTick, cfg.SimplingCoreFirst, cfg.SimplingCoreThereafter)
 
 	logger := zap.New(samplingCore)
 	zap.ReplaceGlobals(logger)
+}
+
+func GetPackageFuncName(skip int) string {
+	pc, _, _, ok := runtime.Caller(skip)
+	if !ok {
+		return "unknown"
+	}
+
+	fn := runtime.FuncForPC(pc)
+	if fn == nil {
+		return "unknown"
+	}
+
+	fullFuncName := fn.Name() // github.com/user/project/pkg/module.Func
+	parts := strings.Split(fullFuncName, "/")
+	last := parts[len(parts)-1] // module.Func
+
+	return last
 }
 
 func GetPackageName(skip int) string {
@@ -66,22 +96,4 @@ func GetPackageName(skip int) string {
 	}
 
 	return "unknown"
-}
-
-func GetPackageFuncName(skip int) string {
-	pc, _, _, ok := runtime.Caller(skip)
-	if !ok {
-		return "unknown"
-	}
-
-	fn := runtime.FuncForPC(pc)
-	if fn == nil {
-		return "unknown"
-	}
-
-	fullFuncName := fn.Name() // github.com/user/project/pkg/module.Func
-	parts := strings.Split(fullFuncName, "/")
-	last := parts[len(parts)-1] // module.Func
-
-	return last
 }

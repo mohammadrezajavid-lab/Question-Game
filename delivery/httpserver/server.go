@@ -9,6 +9,7 @@ import (
 	"golang.project/go-fundamentals/gameapp/config/httpservercfg"
 	"golang.project/go-fundamentals/gameapp/delivery/httpserver/backofficeuserhandler"
 	"golang.project/go-fundamentals/gameapp/delivery/httpserver/matchinghandler"
+	middleware2 "golang.project/go-fundamentals/gameapp/delivery/httpserver/middleware"
 	"golang.project/go-fundamentals/gameapp/delivery/httpserver/userhandler"
 	"golang.project/go-fundamentals/gameapp/service/authenticationservice"
 	"golang.project/go-fundamentals/gameapp/service/authorizationservice"
@@ -56,8 +57,8 @@ func (s *Server) GetRouter() *echo.Echo {
 
 func (s *Server) Serve() {
 
-	// Middleware
-	s.router.Use(middleware.Logger())
+	s.router.Use(middleware.RequestID())
+	s.router.Use(middleware2.ZapLogger())
 	s.router.Use(middleware.Recover())
 
 	s.router.GET("/health-check", s.HealthCheckHandler)

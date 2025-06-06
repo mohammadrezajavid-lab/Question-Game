@@ -8,6 +8,7 @@ import (
 	"golang.project/go-fundamentals/gameapp/adapter/publisher"
 	"golang.project/go-fundamentals/gameapp/adapter/redis"
 	"golang.project/go-fundamentals/gameapp/config/httpservercfg/constant"
+	"golang.project/go-fundamentals/gameapp/logger"
 	"golang.project/go-fundamentals/gameapp/repository/migrator"
 	"golang.project/go-fundamentals/gameapp/repository/mysql"
 	"golang.project/go-fundamentals/gameapp/repository/redis/redismatching"
@@ -39,6 +40,7 @@ type Config struct {
 	MatchingRepoCfg       redismatching.Config         `mapstructure:"matching_repo_cfg"`
 	GrpcPresenceClientCfg presenceclient.Config        `mapstructure:"grpc_presence_client_cfg"`
 	PublisherCfg          publisher.Config             `mapstructure:"publisher_cfg"`
+	LoggerCfg             logger.Config                `mapstructure:"logger_cfg"`
 }
 
 func NewConfig(host string, port int) Config {
@@ -56,6 +58,7 @@ func NewConfig(host string, port int) Config {
 		MatchingRepoCfg:       cfg.MatchingRepoCfg,
 		GrpcPresenceClientCfg: cfg.GrpcPresenceClientCfg,
 		PublisherCfg:          cfg.PublisherCfg,
+		LoggerCfg:             cfg.LoggerCfg,
 	}
 }
 
@@ -106,6 +109,9 @@ func loadConfig(host string, port int) Config {
 		}
 		if uErr := viper.Sub("publisher_cfg").Unmarshal(&cfg.GrpcPresenceClientCfg); uErr != nil {
 			log.Fatalf("can't unmarshal publisher_cfg config: %v", uErr)
+		}
+		if uErr := viper.Sub("logger_cfg").Unmarshal(&cfg.GrpcPresenceClientCfg); uErr != nil {
+			log.Fatalf("can't unmarshal logger_cfg config: %v", uErr)
 		}
 	} else {
 

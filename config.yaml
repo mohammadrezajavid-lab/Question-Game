@@ -55,3 +55,13 @@ grpc_presence_client_cfg:
 
 publisher_cfg:
   context_timeout_redis_pub: 3s
+
+logger_cfg:
+  file_name: "logs/app.log"
+  max_size: 30
+  max_age: 7
+  max_backups: 3
+  compress: true
+  simpling_core_tick: 1m
+  simpling_core_first: 100
+  simpling_core_thereafter: 100

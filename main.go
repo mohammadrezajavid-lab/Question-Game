@@ -7,6 +7,7 @@ import (
 	"golang.project/go-fundamentals/gameapp/config/httpservercfg"
 	"golang.project/go-fundamentals/gameapp/config/setupservices"
 	"golang.project/go-fundamentals/gameapp/delivery/httpserver"
+	"golang.project/go-fundamentals/gameapp/logger"
 	"golang.project/go-fundamentals/gameapp/scheduler"
 	"os"
 	"os/signal"
@@ -15,7 +16,6 @@ import (
 
 func main() {
 
-	// get command
 	var host string
 	var port int
 	var migrationCommand string
@@ -29,19 +29,19 @@ func main() {
 	)
 	flag.Parse()
 
-	// setup http server config
 	config := httpservercfg.NewConfig(host, port)
 
-	// run migrations
+	logger.InitLogger(config.LoggerCfg)
+
+	//zap.L().Named(logger.GetPackageName(1)).Info("all config", zap.Any("config", config))
+
 	config.Migrate(migrationCommand)
 	if migrationCommand == "down" || migrationCommand == "status" {
 		os.Exit(0)
 	}
 
-	// setup services
 	setupSvc := setupservices.New(config)
 
-	// start http server goroutine
 	server := httpserver.New(
 		config,
 		setupSvc.AuthSvc,
