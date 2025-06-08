@@ -8,6 +8,10 @@ httpserver_cfg:
   port: 8080
 
 database_cfg:
+  database_driver_name: "mysql"
+  database_conn_max_lifetime: 3m
+  database_max_open_connections: 10
+  database_max_idle_connections: 10
   database_user_name: "game_app"
   database_password: "game_app_pass"
   database_name: "game_app_db"

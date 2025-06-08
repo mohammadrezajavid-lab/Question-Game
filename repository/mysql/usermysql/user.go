@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"golang.project/go-fundamentals/gameapp/entity"
+	"golang.project/go-fundamentals/gameapp/logger"
+	"golang.project/go-fundamentals/gameapp/pkg/errormessage"
 	"golang.project/go-fundamentals/gameapp/pkg/richerror"
 	"golang.project/go-fundamentals/gameapp/repository/mysql"
 	"time"
@@ -46,6 +48,7 @@ func (d *DataBase) RegisterUser(user *entity.User) (*entity.User, error) {
 		user.Role.String(),
 	)
 	if eErr != nil {
+		logger.Warn(eErr, errormessage.ErrorMsgFailedExecuteQuery)
 
 		return nil, richerror.NewRichError(operation).
 			WithError(eErr).

@@ -11,6 +11,8 @@ import (
 	"golang.project/go-fundamentals/gameapp/delivery/httpserver/matchinghandler"
 	middleware2 "golang.project/go-fundamentals/gameapp/delivery/httpserver/middleware"
 	"golang.project/go-fundamentals/gameapp/delivery/httpserver/userhandler"
+	"golang.project/go-fundamentals/gameapp/logger"
+	"golang.project/go-fundamentals/gameapp/pkg/errormessage"
 	"golang.project/go-fundamentals/gameapp/service/authenticationservice"
 	"golang.project/go-fundamentals/gameapp/service/authorizationservice"
 	"golang.project/go-fundamentals/gameapp/service/backofficeuserservice"
@@ -18,7 +20,6 @@ import (
 	"golang.project/go-fundamentals/gameapp/service/userservice"
 	"golang.project/go-fundamentals/gameapp/validator/matchingvalidator"
 	"golang.project/go-fundamentals/gameapp/validator/uservalidator"
-	"log"
 	"net/http"
 )
 
@@ -69,6 +70,6 @@ func (s *Server) Serve() {
 
 	serverAddress := fmt.Sprintf("%s:%d", s.config.ServerCfg.Host, s.config.ServerCfg.Port)
 	if err := s.router.Start(serverAddress); err != nil && errors.Is(err, http.ErrServerClosed) {
-		log.Printf("failed to start server, error: %v\n", err)
+		logger.Warn(err, errormessage.ErrorMsgFailedStartServer)
 	}
 }

@@ -35,6 +35,7 @@ func ZapLogger() echo.MiddlewareFunc {
 				zap.String("remote_ip", v.RemoteIP),
 				zap.String("content_length", v.ContentLength),
 				zap.Int64("response_size", v.ResponseSize),
+				zap.String("user_agent", v.UserAgent),
 			}
 
 			statusCode := v.Status

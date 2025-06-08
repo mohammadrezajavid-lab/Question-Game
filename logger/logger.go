@@ -97,3 +97,40 @@ func GetPackageName(skip int) string {
 
 	return "unknown"
 }
+
+func Warn(err error, msg string) {
+	fields := []zapcore.Field{
+		zap.String("warning", err.Error()),
+	}
+
+	zap.L().Named(GetPackageFuncName(2)).Warn(msg, fields...)
+}
+
+func Panic(err error, msg string) {
+	fields := []zapcore.Field{
+		zap.String("panic", err.Error()),
+	}
+
+	zap.L().Named(GetPackageFuncName(2)).Panic(msg, fields...)
+}
+
+func Fatal(err error, msg string) {
+	fields := []zapcore.Field{
+		zap.String("fatal", err.Error()),
+	}
+
+	zap.L().Named(GetPackageFuncName(2)).Fatal(msg, fields...)
+}
+
+func Info(msg string) {
+
+	zap.L().Named(GetPackageFuncName(2)).Info(msg)
+}
+
+func Error(err error, msg string) {
+	fields := []zapcore.Field{
+		zap.String("error", err.Error()),
+	}
+
+	zap.L().Named(GetPackageFuncName(2)).Error(msg, fields...)
+}

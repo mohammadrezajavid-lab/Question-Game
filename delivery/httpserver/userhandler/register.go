@@ -25,7 +25,6 @@ func (h *UserHandler) userRegisterHandler(ctx echo.Context) error {
 	}
 	requestUser.PhoneNumber = phoneNumber
 
-	// validate register request
 	if validateErr, fieldErrors := h.userValidator.ValidateRegisterRequest(requestUser); validateErr != nil {
 
 		message, statusCode := parsericherror.New().ParseRichError(validateErr)

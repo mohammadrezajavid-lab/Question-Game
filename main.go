@@ -2,13 +2,17 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
-	"fmt"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"golang.project/go-fundamentals/gameapp/config/httpservercfg"
 	"golang.project/go-fundamentals/gameapp/config/setupservices"
 	"golang.project/go-fundamentals/gameapp/delivery/httpserver"
 	"golang.project/go-fundamentals/gameapp/logger"
+	"golang.project/go-fundamentals/gameapp/pkg/errormessage"
+	"golang.project/go-fundamentals/gameapp/pkg/infomessage"
 	"golang.project/go-fundamentals/gameapp/scheduler"
+	"net/http"
 	"os"
 	"os/signal"
 	"sync"
@@ -33,14 +37,17 @@ func main() {
 
 	logger.InitLogger(config.LoggerCfg)
 
-	//zap.L().Named(logger.GetPackageName(1)).Info("all config", zap.Any("config", config))
-
 	config.Migrate(migrationCommand)
 	if migrationCommand == "down" || migrationCommand == "status" {
 		os.Exit(0)
 	}
 
 	setupSvc := setupservices.New(config)
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+
+	var wg sync.WaitGroup
 
 	server := httpserver.New(
 		config,
@@ -55,34 +62,51 @@ func main() {
 	)
 	go server.Serve()
 
+	metricsServer := &http.Server{
+		Addr:    ":2112",
+		Handler: promhttp.Handler(),
+	}
+	go func() {
+		logger.Info("Starting metrics server on :2112")
+		if err := metricsServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			logger.Error(err, "Metrics server failed to start")
+		}
+	}()
+
 	// start scheduler goroutine
-	done := make(chan bool)
-	var wg sync.WaitGroup
 	wg.Add(1)
 	sch := scheduler.New(setupSvc.MatchingSvc, config.SchedulerCfg)
-	go sch.Start(done, &wg)
+	go sch.Start(ctx, &wg)
 
-	// waiting for interrupt signal
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt)
-	<-quit // blocked main in this line
-	fmt.Println("received interrupt signal, shutting down gracefully...")
+	<-ctx.Done()
+
+	logger.Info(infomessage.InfoMsgShuttingDownGracefully)
 
 	// create one context, this context use for shutting down echo engine
-	ctx := context.Background()
-	ctxWithTimeout, cancel := context.WithTimeout(ctx, config.AppCfg.GracefullyShutdownTimeout)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), config.AppCfg.GracefullyShutdownTimeout)
 	defer cancel()
 
-	// shutdown echo engine
-	if sErr := server.GetRouter().Shutdown(ctxWithTimeout); sErr != nil {
-		fmt.Printf("\nhttp server shutdown error: %v\n", sErr)
-	}
+	var shutdownWg sync.WaitGroup
 
-	// stopping scheduler
-	done <- true
+	shutdownWg.Add(1)
+	go func() {
+		defer shutdownWg.Done()
+		if err := server.GetRouter().Shutdown(shutdownCtx); err != nil {
+			logger.Error(err, errormessage.ErrorMsgHttpServerShutdown)
+		}
+	}()
 
-	// waiting for stop scheduler
+	shutdownWg.Add(1)
+	go func() {
+		defer shutdownWg.Done()
+		if err := metricsServer.Shutdown(shutdownCtx); err != nil {
+			logger.Error(err, "Failed to shutdown metrics server")
+		}
+	}()
+
+	shutdownWg.Wait()
+
 	wg.Wait()
 
-	<-ctxWithTimeout.Done()
+	logger.Info("All services have been shut down gracefully")
 }

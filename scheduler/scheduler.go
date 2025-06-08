@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-co-op/gocron/v2"
+	"golang.project/go-fundamentals/gameapp/logger"
+	"golang.project/go-fundamentals/gameapp/pkg/errormessage"
+	"golang.project/go-fundamentals/gameapp/pkg/infomessage"
 	"golang.project/go-fundamentals/gameapp/service/matchingservice"
 	"log"
 	"sync"
@@ -22,10 +25,10 @@ type Scheduler struct {
 
 func New(matchingSvc matchingservice.Service, config Config) Scheduler {
 
-	// TODO - we can set location timezone in config.yaml file and use this for scheduler
 	sch, err := gocron.NewScheduler(gocron.WithLocation(time.Local))
 	if err != nil {
-		log.Fatalf("Failed to create scheduler: %v", err)
+		// TODO - add metric
+		logger.Fatal(err, errormessage.ErrorMsgFailedCreateSch)
 	}
 
 	return Scheduler{
@@ -36,19 +39,25 @@ func New(matchingSvc matchingservice.Service, config Config) Scheduler {
 }
 
 // Start Start() is a long running process
-func (s Scheduler) Start(done <-chan bool, wg *sync.WaitGroup) {
-	log.Println("scheduler started.")
+func (s *Scheduler) Start(ctx context.Context, wg *sync.WaitGroup) {
+
+	defer wg.Done()
+	// TODO - add metric
+	logger.Info(infomessage.InfoMsgSchStart)
 
 	s.newJobMatchWaitedUser()
 	s.sch.Start()
 
-	<-done
-	fmt.Printf("Scheduler exiting...\n")
-	time.Sleep(15 * time.Second)
-	wg.Done()
+	<-ctx.Done()
+
+	logger.Info(infomessage.InfoMsgSchExiting)
+
+	if sErr := s.sch.Shutdown(); sErr != nil {
+		logger.Warn(sErr, errormessage.ErrorMsgShutdownSch)
+	}
 }
 
-func (s Scheduler) newJobMatchWaitedUser() {
+func (s *Scheduler) newJobMatchWaitedUser() {
 	matchWaitedUsersJob, nErr := s.sch.NewJob(
 		gocron.CronJob(s.config.Crontab, false),
 		gocron.NewTask(s.matchWaitedUserTask),
@@ -67,7 +76,7 @@ func (s Scheduler) newJobMatchWaitedUser() {
 	log.Printf("✅ matchWaitedUser job created, %s\n", matchWaitedUsersJobInfo)
 }
 
-func (s Scheduler) matchWaitedUserTask() {
+func (s *Scheduler) matchWaitedUserTask() {
 
 	ctx, cancel := context.WithTimeout(context.Background(), s.matchingSvc.GetConfig().ContextTimeOut)
 	defer cancel()

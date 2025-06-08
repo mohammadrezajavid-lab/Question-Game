@@ -22,9 +22,7 @@ func (s *Service) Register(req *userparam.RegisterRequest) (*userparam.RegisterR
 			WithKind(richerror.KindUnexpected)
 	}
 
-	// create new user in storage
 	user := entity.NewUser(req.Name, req.PhoneNumber, hashedPassword)
-	//TODO - user.Role = entity.AdminRole // for change default user Role
 	newUser, cErr := s.userRepository.RegisterUser(user)
 	if cErr != nil {
 
@@ -35,6 +33,5 @@ func (s *Service) Register(req *userparam.RegisterRequest) (*userparam.RegisterR
 			WithMeta(map[string]interface{}{"request": req})
 	}
 
-	// return created user
 	return userparam.NewRegisterResponse(newUser), nil
 }
