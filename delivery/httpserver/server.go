@@ -60,6 +60,7 @@ func (s *Server) Serve() {
 
 	s.router.Use(middleware.RequestID())
 	s.router.Use(middleware2.ZapLogger())
+	s.router.Use(middleware2.PrometheusMiddleware())
 	s.router.Use(middleware.Recover())
 
 	s.router.GET("/health-check", s.HealthCheckHandler)

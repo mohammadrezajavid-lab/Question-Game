@@ -34,7 +34,7 @@ auth_cfg:
   refresh_subject: "rt"  # refresh token
 
 app_cfg:
-  gracefully_shutdown_timeout: 5s # 5 second
+  gracefully_shutdown_timeout: 10s # 5 second
 
 matching_cfg:
   context_time_out: 3m

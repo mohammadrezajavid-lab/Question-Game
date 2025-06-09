@@ -7,6 +7,7 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"golang.project/go-fundamentals/gameapp/logger"
+	"golang.project/go-fundamentals/gameapp/metrics"
 	"net/http"
 	"sync/atomic"
 	"time"
@@ -35,17 +36,20 @@ func (w *responseWriterInterceptor) Write(b []byte) (int, error) {
 }
 
 type MetricsServer struct {
-	config    Config
-	Server    *http.Server
-	requestId int64
+	config Config
+	Server *http.Server
 }
 
 func NewMetricsServer(cfg Config) *MetricsServer {
+
+	//metrics.Registry.MustRegister(metrics.HttpRequestCounter)
+	handler := promhttp.HandlerFor(metrics.Registry, promhttp.HandlerOpts{})
+
 	return &MetricsServer{
 		config: cfg,
 		Server: &http.Server{
 			Addr:    fmt.Sprintf("%s:%d", cfg.Host, cfg.Port),
-			Handler: logRequest(promhttp.Handler()),
+			Handler: logRequest(handler),
 		},
 	}
 }

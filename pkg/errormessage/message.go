@@ -16,5 +16,6 @@ const (
 	ErrorMsgFailedStartServer      = "failed to start server error"
 	ErrorMsgFailedCreateSch        = "failed to create scheduler"
 	ErrorMsgHttpServerShutdown     = "http server shutdown error"
+	ErrorMsgMetricsServerShutdown  = "metrics server shutdown error"
 	ErrorMsgShutdownSch            = "not successfully shutdown scheduler"
 )

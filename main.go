@@ -55,10 +55,9 @@ func main() {
 	)
 	metricServer := metricsserver.NewMetricsServer(config.MetricsCfg)
 
+	var wg sync.WaitGroup
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
-
-	var wg sync.WaitGroup
 
 	go server.Serve()
 	go metricServer.Serve()
@@ -90,7 +89,7 @@ func main() {
 	go func() {
 		defer shutdownWg.Done()
 		if err := metricServer.Server.Shutdown(shutdownCtx); err != nil {
-			logger.Error(err, "Failed to shutdown metrics server")
+			logger.Error(err, errormessage.ErrorMsgMetricsServerShutdown)
 		}
 	}()
 

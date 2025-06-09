@@ -2,137 +2,78 @@ package main
 
 import (
 	"log"
-	"math/rand"
+	"net/http"
+	"os"
 	"strconv"
-	"sync"
-	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
+var httpRequestCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
+	Name: "http_requests_total",
+	Help: "Total number of HTTP requests received",
+}, []string{"status", "path", "method"})
+
+// Middleware to count HTTP requests
+func prometheusMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Wrap the ResponseWriter to capture the status code
+		recorder := &statusRecorder{
+			ResponseWriter: w,
+			statusCode:     http.StatusOK,
+		}
+
+		// Process the request
+		next.ServeHTTP(recorder, r)
+
+		method := r.Method
+		path := r.URL.Path // Path can be adjusted for aggregation (e.g., `/users/:id` → `/users/{id}`)
+		status := strconv.Itoa(recorder.statusCode)
+
+		// Increment the counter
+		httpRequestCounter.WithLabelValues(status, path, method).Inc()
+	})
+}
+
 func main() {
-	rand.Seed(time.Now().UnixNano()) // needed before Go 1.20
-	log.SetFlags(0)
+	mux := http.NewServeMux()
 
-	// ...
-	const Max = 100000
-	const NumReceivers = 10
-	const NumSenders = 1000
+	reg := prometheus.NewRegistry()
 
-	wgReceivers := sync.WaitGroup{}
-	wgReceivers.Add(NumReceivers)
+	reg.MustRegister(httpRequestCounter)
 
-	// ...
-	dataCh := make(chan int)
-	stopCh := make(chan struct{})
-	// stopCh is an additional signal channel.
-	// Its sender is the moderator goroutine shown
-	// below, and its receivers are all senders
-	// and receivers of dataCh.
-	toStop := make(chan string, 1)
-	// The channel toStop is used to notify the
-	// moderator to close the additional signal
-	// channel (stopCh). Its senders are any senders
-	// and receivers of dataCh, and its receiver is
-	// the moderator goroutine shown below.
-	// It must be a buffered channel.
+	handler := promhttp.HandlerFor(
+		reg,
+		promhttp.HandlerOpts{})
 
-	var stoppedBy string
+	mux.Handle("/metrics", handler)
 
-	// moderator
-	go func() {
-		stoppedBy = <-toStop
-		close(stopCh)
-	}()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("Hello world!"))
+	})
 
-	// senders
-	for i := 0; i < NumSenders; i++ {
-		go func(id string) {
-			for {
-				value := rand.Intn(Max)
-				if value == 0 {
-					// Here, the try-send operation is
-					// to notify the moderator to close
-					// the additional signal channel.
-					select {
-					case toStop <- "sender#" + id:
-					default:
-					}
-					return
-				}
-
-				// The try-receive operation here is to
-				// try to exit the sender goroutine as
-				// early as possible. Try-receive and
-				// try-send select blocks are specially
-				// optimized by the standard Go
-				// compiler, so they are very efficient.
-				select {
-				case <-stopCh:
-					return
-				default:
-				}
-
-				// Even if stopCh is closed, the first
-				// branch in this select block might be
-				// still not selected for some loops
-				// (and for ever in theory) if the send
-				// to dataCh is also non-blocking. If
-				// this is unacceptable, then the above
-				// try-receive operation is essential.
-				select {
-				case <-stopCh:
-					return
-				case dataCh <- value:
-				}
-			}
-		}(strconv.Itoa(i))
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8000"
 	}
 
-	// receivers
-	for i := 0; i < NumReceivers; i++ {
-		go func(id string) {
-			defer wgReceivers.Done()
+	promHandler := prometheusMiddleware(mux)
 
-			for {
-				// Same as the sender goroutine, the
-				// try-receive operation here is to
-				// try to exit the receiver goroutine
-				// as early as possible.
-				select {
-				case <-stopCh:
-					return
-				default:
-				}
+	log.Println("Starting HTTP server on port", port)
 
-				// Even if stopCh is closed, the first
-				// branch in this select block might be
-				// still not selected for some loops
-				// (and forever in theory) if the receive
-				// from dataCh is also non-blocking. If
-				// this is not acceptable, then the above
-				// try-receive operation is essential.
-				select {
-				case <-stopCh:
-					return
-				case value := <-dataCh:
-					if value == Max-1 {
-						// Here, the same trick is
-						// used to notify the moderator
-						// to close the additional
-						// signal channel.
-						select {
-						case toStop <- "receiver#" + id:
-						default:
-						}
-						return
-					}
-
-					log.Println(value)
-				}
-			}
-		}(strconv.Itoa(i))
+	if err := http.ListenAndServe(":"+port, promHandler); err != nil {
+		log.Fatal("Server failed to start:", err)
 	}
+}
 
-	// ...
-	wgReceivers.Wait()
-	log.Println("stopped by", stoppedBy)
+// Helper to capture HTTP status codes
+type statusRecorder struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+func (rec *statusRecorder) WriteHeader(code int) {
+	rec.statusCode = code
+	rec.ResponseWriter.WriteHeader(code)
 }
