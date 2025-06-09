@@ -2,17 +2,15 @@ package main
 
 import (
 	"context"
-	"errors"
 	"flag"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"golang.project/go-fundamentals/gameapp/config/httpservercfg"
 	"golang.project/go-fundamentals/gameapp/config/setupservices"
 	"golang.project/go-fundamentals/gameapp/delivery/httpserver"
+	"golang.project/go-fundamentals/gameapp/delivery/metricsserver"
 	"golang.project/go-fundamentals/gameapp/logger"
 	"golang.project/go-fundamentals/gameapp/pkg/errormessage"
 	"golang.project/go-fundamentals/gameapp/pkg/infomessage"
 	"golang.project/go-fundamentals/gameapp/scheduler"
-	"net/http"
 	"os"
 	"os/signal"
 	"sync"
@@ -44,11 +42,6 @@ func main() {
 
 	setupSvc := setupservices.New(config)
 
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
-	defer stop()
-
-	var wg sync.WaitGroup
-
 	server := httpserver.New(
 		config,
 		setupSvc.AuthSvc,
@@ -60,22 +53,19 @@ func main() {
 		setupSvc.MatchingValidator,
 		setupSvc.PresenceClient,
 	)
-	go server.Serve()
+	metricServer := metricsserver.NewMetricsServer(config.MetricsCfg)
 
-	metricsServer := &http.Server{
-		Addr:    ":2112",
-		Handler: promhttp.Handler(),
-	}
-	go func() {
-		logger.Info("Starting metrics server on :2112")
-		if err := metricsServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			logger.Error(err, "Metrics server failed to start")
-		}
-	}()
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+
+	var wg sync.WaitGroup
+
+	go server.Serve()
+	go metricServer.Serve()
 
 	// start scheduler goroutine
-	wg.Add(1)
 	sch := scheduler.New(setupSvc.MatchingSvc, config.SchedulerCfg)
+	wg.Add(1)
 	go sch.Start(ctx, &wg)
 
 	<-ctx.Done()
@@ -99,7 +89,7 @@ func main() {
 	shutdownWg.Add(1)
 	go func() {
 		defer shutdownWg.Done()
-		if err := metricsServer.Shutdown(shutdownCtx); err != nil {
+		if err := metricServer.Server.Shutdown(shutdownCtx); err != nil {
 			logger.Error(err, "Failed to shutdown metrics server")
 		}
 	}()

@@ -2,3 +2,5 @@
 *.exe
 test.go
 data
+logs/
+gracefullyshutdownchan.go
