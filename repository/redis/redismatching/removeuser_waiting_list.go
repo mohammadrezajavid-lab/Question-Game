@@ -3,7 +3,8 @@ package redismatching
 import (
 	"context"
 	"golang.project/go-fundamentals/gameapp/entity"
-	"log"
+	"golang.project/go-fundamentals/gameapp/logger"
+	"golang.project/go-fundamentals/gameapp/metrics"
 	"strconv"
 )
 
@@ -12,7 +13,7 @@ func (r *RedisDb) RemoveUserFromWaitingList(userIds []uint, category entity.Cate
 	const operation = "redismatching.RemoveUserFromWaitedList"
 
 	if len(userIds) < 1 {
-		log.Printf("%s: No user IDs provided to remove. Skipping ZRem.", operation)
+		//logger.Info("No user IDs provided to remove. Skipping ZRem.")
 		return
 	}
 
@@ -26,14 +27,9 @@ func (r *RedisDb) RemoveUserFromWaitingList(userIds []uint, category entity.Cate
 		members = append(members, strconv.Itoa(int(userId)))
 	}
 
-	numberOfRemovedMember, err := r.redisAdapter.GetClient().ZRem(ctx, key, members...).Result()
+	_, err := r.redisAdapter.GetClient().ZRem(ctx, key, members...).Result()
 	if err != nil {
-		// TODO - update metrics
-		// TODO - log error
-		log.Printf("%s: Error ZRem from waiting list: %v\n", operation, err)
+		metrics.FailedZRemRedisCounter.Inc()
+		logger.Info("failed_zrem_redis")
 	}
-
-	// TODO - update metrics
-	// TODO - log error
-	log.Printf("%d items removed from %s", numberOfRemovedMember, key)
 }

@@ -27,5 +27,3 @@ func NewService(userRepository Repository, authService AuthGenerator) Service {
 		authService:    authService,
 	}
 }
-
-// All Request Inputs for Interaction/Service Should be Sanitized.

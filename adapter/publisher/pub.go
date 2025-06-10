@@ -3,7 +3,8 @@ package publisher
 import (
 	"context"
 	"golang.project/go-fundamentals/gameapp/adapter/redis"
-	"log"
+	"golang.project/go-fundamentals/gameapp/logger"
+	"golang.project/go-fundamentals/gameapp/metrics"
 	"time"
 )
 
@@ -23,17 +24,14 @@ func NewPublish(config Config, redisAdapter *redis.Adapter) Publish {
 }
 
 func (p Publish) PublishEvent(event string, payload interface{}) {
-	const operation = "publisher.PublishedEvent"
 
 	ctx, cancel := context.WithTimeout(context.Background(), p.config.ContextTimeoutRedisPub)
 	defer cancel()
 	err := p.redisAdapter.GetClient().Publish(ctx, event, payload).Err()
 	if err != nil {
-		// TODO - update metrics
-		// TODO - log error
-		log.Printf("operation[%s], Error publishing Event: %v", operation, err.Error())
+		metrics.FailedPublishedEventCounter.Inc()
+		logger.Warn(err, "failed_published_event")
 	}
 
-	// TODO - update metrics
-	// TODO - log error
+	metrics.PublishedEventCounter.Inc()
 }

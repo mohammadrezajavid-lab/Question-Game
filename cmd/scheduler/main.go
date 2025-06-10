@@ -1,10 +1,16 @@
 package main
 
 import (
-	"fmt"
+	"context"
+	"golang.project/go-fundamentals/gameapp/adapter/presenceclient"
+	"golang.project/go-fundamentals/gameapp/adapter/publisher"
+	"golang.project/go-fundamentals/gameapp/adapter/redis"
 	"golang.project/go-fundamentals/gameapp/config/httpservercfg"
-	"golang.project/go-fundamentals/gameapp/config/setupservices"
+	"golang.project/go-fundamentals/gameapp/logger"
+	"golang.project/go-fundamentals/gameapp/pkg/infomessage"
+	"golang.project/go-fundamentals/gameapp/repository/redis/redismatching"
 	"golang.project/go-fundamentals/gameapp/scheduler"
+	"golang.project/go-fundamentals/gameapp/service/matchingservice"
 	"os"
 	"os/signal"
 	"sync"
@@ -12,27 +18,39 @@ import (
 
 func main() {
 
-	// setup config
 	config := httpservercfg.NewConfig("", 0)
-	fmt.Println("config project: ", config)
 
-	// setup services
-	setupSvc := setupservices.New(config)
+	logger.InitLogger(config.LoggerCfg)
 
-	// start scheduler goroutine
+	matchingSvc := setUpSvc(config)
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
 	var wg sync.WaitGroup
-	done := make(chan bool)
-	sch := scheduler.New(setupSvc.MatchingSvc, config.SchedulerCfg)
 	wg.Add(1)
-	go sch.Start(done, &wg)
 
-	// waiting for interrupt signal
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt)
-	<-quit // blocked main in this line
-	fmt.Println("received interrupt signal, shutting down gracefully...")
+	sch := scheduler.New(matchingSvc, config.SchedulerCfg)
+	go sch.Start(ctx, &wg)
 
-	// stopping scheduler
-	done <- true
+	<-ctx.Done()
+
+	logger.Info(infomessage.InfoMsgShuttingDownGracefully)
+
 	wg.Wait()
+
+	logger.Info("Scheduler shutting down gracefully")
+}
+
+func setUpSvc(config httpservercfg.Config) matchingservice.Service {
+	redisAdapter := redis.New(config.RedisCfg)
+
+	presenceClient := presenceclient.NewClient(config.GrpcPresenceClientCfg)
+	redisPublisher := publisher.NewPublish(config.PublisherCfg, redisAdapter)
+
+	return matchingservice.NewService(
+		config.MatchingCfg,
+		redismatching.NewRedisDb(redisAdapter, config.MatchingRepoCfg),
+		presenceClient,
+		redisPublisher,
+	)
 }

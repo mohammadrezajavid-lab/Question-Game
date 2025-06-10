@@ -1,11 +1,10 @@
 package grpcconfig
 
 import (
-	"fmt"
 	"github.com/spf13/viper"
 	"golang.project/go-fundamentals/gameapp/adapter/redis"
+	"golang.project/go-fundamentals/gameapp/logger"
 	"golang.project/go-fundamentals/gameapp/service/presenceservice"
-	"log"
 	"strings"
 )
 
@@ -19,6 +18,7 @@ type Config struct {
 	GrpcCfg     GrpcServerConfig       `mapstructure:"grpc_server_cfg"`
 	RedisCfg    redis.Config           `mapstructure:"redis_cfg"`
 	PresenceCfg presenceservice.Config `mapstructure:"presence_cfg"`
+	LoggerCfg   logger.Config          `mapstructure:"logger_cfg"`
 }
 
 func NewConfig() Config {
@@ -26,6 +26,7 @@ func NewConfig() Config {
 		GrpcCfg:     GrpcServerConfig{},
 		RedisCfg:    redis.Config{},
 		PresenceCfg: presenceservice.Config{},
+		LoggerCfg:   logger.Config{},
 	}
 }
 
@@ -42,23 +43,26 @@ func (c Config) LoadConfig(host string, port int) Config {
 	var cfg Config
 	if err := viper.ReadInConfig(); err != nil {
 
-		log.Println("⚠️ config file not found, using environment variables")
+		logger.Info("config file not found, using environment variables")
 
 		// get config from env variable
 		if uErr := viper.Sub("grpc_server_cfg").Unmarshal(&cfg.GrpcCfg); uErr != nil {
-			log.Fatalf("can't unmarshal grpc server config: %v", uErr)
+			logger.Fatal(uErr, "can't unmarshal grpc server config")
 		}
 		if uErr := viper.Sub("redis_cfg").Unmarshal(&cfg.RedisCfg); uErr != nil {
-			log.Fatalf("can't unmarshal redis config: %v", uErr)
+			logger.Fatal(uErr, "can't unmarshal redis config")
 		}
 		if uErr := viper.Sub("presence_cfg").Unmarshal(&cfg.PresenceCfg); uErr != nil {
-			log.Fatalf("can't unmarshal presence config: %v", uErr)
+			logger.Fatal(uErr, "can't unmarshal presence config")
+		}
+		if uErr := viper.Sub("logger_cfg").Unmarshal(&cfg.LoggerCfg); uErr != nil {
+			logger.Fatal(uErr, "can't unmarshal logger_cfg config")
 		}
 
 	} else {
 
 		if uErr := viper.Unmarshal(&cfg); uErr != nil {
-			panic(fmt.Errorf("can't Unmarshal config file into struct Config, %w", uErr))
+			logger.Panic(uErr, "can't Unmarshal config file into struct Config")
 		}
 	}
 

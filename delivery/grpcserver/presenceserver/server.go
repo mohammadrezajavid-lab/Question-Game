@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"golang.project/go-fundamentals/gameapp/config/grpcconfig"
 	"golang.project/go-fundamentals/gameapp/contract/goprotobuf/presence"
+	"golang.project/go-fundamentals/gameapp/logger"
 	"golang.project/go-fundamentals/gameapp/param/presenceparam"
 	"golang.project/go-fundamentals/gameapp/pkg/protobufmapper"
 	"golang.project/go-fundamentals/gameapp/pkg/richerror"
@@ -13,7 +14,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"log"
 	"net"
 )
 
@@ -80,9 +80,8 @@ func (s *PresenceGrpcServer) Start() {
 	presence.RegisterPresenceServiceServer(grpcSrv, s)
 
 	// server grpcServer by listen
-	log.Printf("presence grpc server started on %s/n", addr)
+	logger.Info(fmt.Sprintf("presence grpc server started on %s", addr))
 	if sErr := grpcSrv.Serve(listener); sErr != nil {
-		log.Fatal("couldn't server presence grpc server")
+		logger.Fatal(sErr, "couldn't server presence grpc server")
 	}
-
 }

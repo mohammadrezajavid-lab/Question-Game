@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 	"golang.project/go-fundamentals/gameapp/contract/goprotobuf/presence"
+	"golang.project/go-fundamentals/gameapp/logger"
+	"golang.project/go-fundamentals/gameapp/metrics"
 	"golang.project/go-fundamentals/gameapp/param/presenceparam"
 	"golang.project/go-fundamentals/gameapp/pkg/protobufmapper"
 	"golang.project/go-fundamentals/gameapp/pkg/slice"
 	"google.golang.org/grpc"
-	"log"
 )
 
 type Config struct {
@@ -35,8 +36,6 @@ func (c Client) GetPresence(ctx context.Context, request presenceparam.GetPresen
 
 	res, err := client.GetPresence(ctx, &presence.GetPresenceRequest{UserIds: slice.MapFromUintToUint64(request.UserIds)})
 	if err != nil {
-		log.Println(err)
-
 		return presenceparam.GetPresenceResponse{}, err
 	}
 
@@ -52,8 +51,6 @@ func (c Client) Upsert(ctx context.Context, request presenceparam.UpsertPresence
 
 	res, err := client.Upsert(ctx, &presence.UpsertPresenceRequest{UserId: uint64(request.UserId), Timestamp: request.TimeStamp})
 	if err != nil {
-		log.Println(err)
-
 		return presenceparam.UpsertPresenceResponse{}, err
 	}
 
@@ -64,7 +61,8 @@ func (c Client) definitionGrpcClient() (presence.PresenceServiceClient, *grpc.Cl
 	target := fmt.Sprintf("%s:%d", c.config.Host, c.config.Port)
 	grpcConnection, err := grpc.Dial(target, grpc.WithInsecure())
 	if err != nil {
-		log.Fatalf(err.Error())
+		metrics.FailedOpenPresenceClientGRPCConnCounter.Inc()
+		logger.Warn(err, "failed_open_grpc_connection")
 	}
 
 	client := presence.NewPresenceServiceClient(grpcConnection)

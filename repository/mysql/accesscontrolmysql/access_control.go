@@ -3,12 +3,14 @@ package accesscontrolmysql
 import (
 	"database/sql"
 	"fmt"
+	"github.com/prometheus/client_golang/prometheus"
 	"golang.project/go-fundamentals/gameapp/entity"
+	"golang.project/go-fundamentals/gameapp/logger"
+	"golang.project/go-fundamentals/gameapp/metrics"
 	"golang.project/go-fundamentals/gameapp/pkg/errormessage"
 	"golang.project/go-fundamentals/gameapp/pkg/richerror"
 	"golang.project/go-fundamentals/gameapp/pkg/slice"
 	"golang.project/go-fundamentals/gameapp/repository/mysql"
-	"log"
 	"strings"
 	"time"
 )
@@ -16,17 +18,17 @@ import (
 func (d *DataBase) GetUserPermissionsTitle(userId uint, role entity.Role) ([]entity.PermissionTitle, error) {
 
 	const operation = "mysql.accessControl.GetUserPermissionsTitle"
+	const queryType = "select"
 
 	aclRoleRows, rErr := d.dataBase.MysqlConnection.Query(
 		`SELECT * FROM access_controls WHERE functor_type = ? and functor_id = ?`,
 		entity.RoleFunctorType,
 		role,
 	)
-	if rErr != nil {
+	metrics.DBQueryCounter.With(prometheus.Labels{"query_type": queryType}).Inc()
 
-		// log internal server error
-		log.Println("aclRoleRows.Query(SELECT * FROM access_controls WHERE functor_type = ? and functor_id = ?)")
-		log.Println("alcRoleRows, Error: ", rErr)
+	if rErr != nil {
+		metrics.DBFailedQueryCounter.With(prometheus.Labels{"query_type": queryType}).Inc()
 
 		return nil, richerror.NewRichError(operation).
 			WithError(rErr).
@@ -36,7 +38,7 @@ func (d *DataBase) GetUserPermissionsTitle(userId uint, role entity.Role) ([]ent
 	defer func(aclRoleRows *sql.Rows) {
 		cErr := aclRoleRows.Close()
 		if cErr != nil {
-			log.Println("can't close aclRoleRows")
+			logger.Warn(cErr, "can't close aclRoleRows")
 		}
 	}(aclRoleRows)
 
@@ -45,11 +47,10 @@ func (d *DataBase) GetUserPermissionsTitle(userId uint, role entity.Role) ([]ent
 		entity.UserFunctorType,
 		userId,
 	)
-	if uErr != nil {
+	metrics.DBQueryCounter.With(prometheus.Labels{"query_type": queryType}).Inc()
 
-		// log internal server error
-		log.Println("aclUserRows.Query(SELECT * FROM access_controls WHERE functor_type = ? and functor_id = ?)")
-		log.Println("aclUserRows, Error: ", uErr)
+	if uErr != nil {
+		metrics.DBFailedQueryCounter.With(prometheus.Labels{"query_type": queryType}).Inc()
 
 		return nil, richerror.NewRichError(operation).
 			WithError(uErr).
@@ -59,7 +60,7 @@ func (d *DataBase) GetUserPermissionsTitle(userId uint, role entity.Role) ([]ent
 	defer func(aclUserRows *sql.Rows) {
 		cErr := aclUserRows.Close()
 		if cErr != nil {
-			log.Println("can't close aclUserRows")
+			logger.Warn(cErr, "can't close aclUserRows")
 		}
 	}(aclUserRows)
 
@@ -111,7 +112,7 @@ func (d *DataBase) GetUserPermissionsTitle(userId uint, role entity.Role) ([]ent
 		}
 	}
 
-	// query to database for get permissionTitle by (...permissionIds)
+	// query to database for get permissionTitle by (permissionIds...)
 	if len(permissionIds) == 0 {
 		return nil, nil
 	}
@@ -125,11 +126,11 @@ func (d *DataBase) GetUserPermissionsTitle(userId uint, role entity.Role) ([]ent
 	placeHolder := "?" + strings.Repeat(",?", len(permissionIds)-1)
 	var queryStr = fmt.Sprintf(`SELECT * FROM permissions WHERE id IN(%s)`, placeHolder)
 	permissionRows, qErr := d.dataBase.MysqlConnection.Query(queryStr, args...)
-	if qErr != nil {
 
-		// log internal server error
-		log.Println("permissionRows.Query(SELECT * FROM permissions WHERE id IN(? + strings.Repeat(\",?\", len(permissionIds)-1)))")
-		log.Println("permissionRows, Error: ", qErr)
+	metrics.DBQueryCounter.With(prometheus.Labels{"query_type": queryType}).Inc()
+
+	if qErr != nil {
+		metrics.DBFailedQueryCounter.With(prometheus.Labels{"query_type": queryType}).Inc()
 
 		return nil, richerror.NewRichError(operation).
 			WithError(qErr).
@@ -139,7 +140,7 @@ func (d *DataBase) GetUserPermissionsTitle(userId uint, role entity.Role) ([]ent
 	defer func(permissionRows *sql.Rows) {
 		cErr := permissionRows.Close()
 		if cErr != nil {
-			log.Println("can't close permissionTitleRows")
+			logger.Warn(cErr, "can't close permissionTitleRows")
 		}
 	}(permissionRows)
 
@@ -162,6 +163,7 @@ func (d *DataBase) GetUserPermissionsTitle(userId uint, role entity.Role) ([]ent
 			WithMessage(errormessage.ErrorMsgScanQuery).
 			WithKind(richerror.KindUnexpected)
 	}
+
 	return permissionTitles, nil
 }
 

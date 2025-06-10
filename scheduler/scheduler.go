@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"github.com/go-co-op/gocron/v2"
 	"golang.project/go-fundamentals/gameapp/logger"
+	"golang.project/go-fundamentals/gameapp/metrics"
 	"golang.project/go-fundamentals/gameapp/pkg/errormessage"
 	"golang.project/go-fundamentals/gameapp/pkg/infomessage"
 	"golang.project/go-fundamentals/gameapp/service/matchingservice"
-	"log"
 	"sync"
 	"time"
 )
@@ -27,7 +27,7 @@ func New(matchingSvc matchingservice.Service, config Config) Scheduler {
 
 	sch, err := gocron.NewScheduler(gocron.WithLocation(time.Local))
 	if err != nil {
-		// TODO - add metric
+		metrics.FailedCreateSchCounter.Inc()
 		logger.Fatal(err, errormessage.ErrorMsgFailedCreateSch)
 	}
 
@@ -42,7 +42,8 @@ func New(matchingSvc matchingservice.Service, config Config) Scheduler {
 func (s *Scheduler) Start(ctx context.Context, wg *sync.WaitGroup) {
 
 	defer wg.Done()
-	// TODO - add metric
+
+	metrics.StartSchCounter.Inc()
 	logger.Info(infomessage.InfoMsgSchStart)
 
 	s.newJobMatchWaitedUser()
@@ -66,14 +67,16 @@ func (s *Scheduler) newJobMatchWaitedUser() {
 		gocron.WithTags("matching-service"),
 	)
 
+	if nErr != nil {
+		metrics.FailedCreateMatchWaitedUserJobCounter.Inc()
+		logger.Fatal(nErr, errormessage.ErrorMsgFailedStartMatchWaitedUserJob)
+	}
+
 	matchWaitedUsersJobInfo := fmt.Sprintf("job info: name[%s], uuid[%v], tags[%v]",
 		matchWaitedUsersJob.Name(), matchWaitedUsersJob.ID(), matchWaitedUsersJob.Tags())
 
-	if nErr != nil {
-		log.Fatalf("Failed to create matchWaitedUser job, %s\n", matchWaitedUsersJobInfo)
-	}
-
-	log.Printf("✅ matchWaitedUser job created, %s\n", matchWaitedUsersJobInfo)
+	metrics.CreateMatchWaitedUserJobCounter.Inc()
+	logger.Info(fmt.Sprintf("matchWaitedUser job created, %s", matchWaitedUsersJobInfo))
 }
 
 func (s *Scheduler) matchWaitedUserTask() {
@@ -82,10 +85,10 @@ func (s *Scheduler) matchWaitedUserTask() {
 	defer cancel()
 	err := s.matchingSvc.MatchWaitedUsers(ctx)
 	if err != nil {
-		log.Printf("🚨 MatchWaitedUsers failed: %v", err)
-		// TODO - update metrics
+		metrics.MatchWaitedUserFailedJobCounter.Inc()
+		logger.Info(fmt.Sprintf("matchWaitedUsers_failed, %v", err))
 	} else {
-		log.Println("✅ MatchWaitedUsers ran successfully.")
-		// TODO - update metrics
+		metrics.MatchWaitedUserRunSuccessfullyJobCounter.Inc()
+		logger.Info("matchWaitedUsers_successfully")
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"golang.project/go-fundamentals/gameapp/adapter/redis"
 	"golang.project/go-fundamentals/gameapp/config/grpcconfig"
 	"golang.project/go-fundamentals/gameapp/delivery/grpcserver/presenceserver"
+	"golang.project/go-fundamentals/gameapp/logger"
 	"golang.project/go-fundamentals/gameapp/repository/redis/redispresence"
 	"golang.project/go-fundamentals/gameapp/service/presenceservice"
 )
@@ -21,7 +22,9 @@ func main() {
 
 	grpcCfg := grpcconfig.NewConfig().LoadConfig(host, port)
 
-	fmt.Println("grpc config: ", grpcCfg)
+	logger.InitLogger(grpcCfg.LoggerCfg)
+
+	logger.Info(fmt.Sprintf("grpc config: %v", grpcCfg))
 
 	redisAdapter := redis.New(grpcCfg.RedisCfg)
 	presenceSvc := presenceservice.New(redispresence.NewRedisDb(redisAdapter), grpcCfg.PresenceCfg)

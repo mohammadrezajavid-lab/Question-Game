@@ -4,6 +4,7 @@ import (
 	"errors"
 	validation "github.com/go-ozzo/ozzo-validation"
 	"golang.project/go-fundamentals/gameapp/entity"
+	"golang.project/go-fundamentals/gameapp/pkg/errormessage"
 	"regexp"
 )
 
@@ -25,7 +26,7 @@ func checkPasswordRegex() validation.RuleFunc {
 	return func(value interface{}) error {
 		password, ok := value.(string)
 		if !ok {
-			return errors.New("invalid password type")
+			return errors.New(errormessage.ErrorMsgInvalidPhoneType)
 		}
 
 		var (
@@ -47,7 +48,7 @@ func checkPhoneNumberRegex() validation.RuleFunc {
 	return func(value interface{}) error {
 		phoneNumber, ok := value.(string)
 		if !ok {
-			return errors.New("invalid phone number type")
+			return errors.New(errormessage.ErrorMsgInvalidPhoneType)
 		}
 
 		var (
@@ -56,12 +57,10 @@ func checkPhoneNumberRegex() validation.RuleFunc {
 		)
 
 		if !hasValidPrefix {
-
 			return errors.New("phone number must start with +989, 09 or 9")
 		}
 
 		if !hasNineDigitsAfter {
-
 			return errors.New("phone number must have exactly 9 digits after the prefix")
 		}
 

@@ -42,14 +42,13 @@ type MetricsServer struct {
 
 func NewMetricsServer(cfg Config) *MetricsServer {
 
-	//metrics.Registry.MustRegister(metrics.HttpRequestCounter)
 	handler := promhttp.HandlerFor(metrics.Registry, promhttp.HandlerOpts{})
 
 	return &MetricsServer{
 		config: cfg,
 		Server: &http.Server{
 			Addr:    fmt.Sprintf("%s:%d", cfg.Host, cfg.Port),
-			Handler: logRequest(handler),
+			Handler: logRequestMiddleware(handler),
 		},
 	}
 }
@@ -63,19 +62,19 @@ func (ms *MetricsServer) Serve() {
 	}
 }
 
-func logRequest(next http.Handler) http.Handler {
+func logRequestMiddleware(next http.Handler) http.Handler {
 	var requestCounter int64 = 0
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		startTime := time.Now()
 
-		interceptor := &responseWriterInterceptor{
+		responseWriter := &responseWriterInterceptor{
 			ResponseWriter: w,
 			statusCode:     http.StatusOK,
 		}
 
-		next.ServeHTTP(interceptor, r)
+		next.ServeHTTP(responseWriter, r)
 
 		latency := time.Since(startTime)
 		currentRequestId := atomic.AddInt64(&requestCounter, 1)
@@ -85,12 +84,12 @@ func logRequest(next http.Handler) http.Handler {
 			zap.String("protocol", r.Proto),
 			zap.String("method", r.Method),
 			zap.String("uri", r.RequestURI),
-			zap.Int("status", interceptor.statusCode),
+			zap.Int("status", responseWriter.statusCode),
 			zap.String("latency", latency.String()),
 			zap.String("host", r.Host),
 			zap.String("remote_addr", r.RemoteAddr),
 			zap.Int64("content_length", r.ContentLength),
-			zap.Int64("response_size", interceptor.responseSize),
+			zap.Int64("response_size", responseWriter.responseSize),
 			zap.String("user_agent", r.UserAgent()),
 		}
 

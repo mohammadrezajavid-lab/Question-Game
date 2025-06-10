@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"golang.project/go-fundamentals/gameapp/logger"
+	"golang.project/go-fundamentals/gameapp/metrics"
 	"golang.project/go-fundamentals/gameapp/pkg/errormessage"
 	"time"
 
@@ -43,10 +44,12 @@ func NewDB(dbCfg Config) *DB {
 	db, oErr := sql.Open(dbCfg.DBDriverName, connectionUrl)
 
 	if oErr != nil {
+		metrics.FailedOpenMySQLConnCounter.Inc()
 		logger.Panic(oErr, errormessage.ErrorMsgFailedOpenMysqlConn)
 	}
 
 	if pErr := db.Ping(); pErr != nil {
+		metrics.ConnectionRefusedMySQLCounter.Inc()
 		logger.Warn(pErr, errormessage.ErrorMsgConnectionRefusedMysql)
 	}
 

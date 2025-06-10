@@ -4,8 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"github.com/prometheus/client_golang/prometheus"
 	"golang.project/go-fundamentals/gameapp/entity"
 	"golang.project/go-fundamentals/gameapp/logger"
+	"golang.project/go-fundamentals/gameapp/metrics"
 	"golang.project/go-fundamentals/gameapp/pkg/errormessage"
 	"golang.project/go-fundamentals/gameapp/pkg/richerror"
 	"golang.project/go-fundamentals/gameapp/repository/mysql"
@@ -15,22 +17,26 @@ import (
 func (d *DataBase) IsPhoneNumberUniq(phoneNumber string) (bool, error) {
 
 	const operation = "mysql.user.IsPhoneNumberUniq"
+	const queryType = "select"
 
 	userRow := d.dataBase.MysqlConnection.QueryRow(
 		`SELECT * FROM game_app_db.users WHERE phone_number = ?`,
 		phoneNumber,
 	)
 
+	metrics.DBQueryCounter.With(prometheus.Labels{"query_type": queryType}).Inc()
+
 	_, err := scanUser(userRow)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-
 			return true, nil
 		}
 
+		metrics.DBFailedQueryCounter.With(prometheus.Labels{"query_type": queryType}).Inc()
+
 		return false, richerror.NewRichError(operation).
 			WithError(err).
-			WithMessage("unexpected error").
+			WithMessage(errormessage.ErrorMsgUnexpected).
 			WithKind(richerror.KindUnexpected)
 	}
 
@@ -40,6 +46,8 @@ func (d *DataBase) IsPhoneNumberUniq(phoneNumber string) (bool, error) {
 func (d *DataBase) RegisterUser(user *entity.User) (*entity.User, error) {
 
 	const operation = "mysql.user.RegisterUser"
+	const queryType = "insert"
+
 	var result, eErr = d.dataBase.MysqlConnection.Exec(
 		`INSERT INTO game_app_db.users(name, phone_number, hashed_password, role) VALUES(?, ?, ?, ?)`,
 		user.Name,
@@ -47,12 +55,17 @@ func (d *DataBase) RegisterUser(user *entity.User) (*entity.User, error) {
 		user.HashedPassword,
 		user.Role.String(),
 	)
+
+	metrics.DBQueryCounter.With(prometheus.Labels{"query_type": queryType}).Inc()
+
 	if eErr != nil {
 		logger.Warn(eErr, errormessage.ErrorMsgFailedExecuteQuery)
 
+		metrics.DBFailedQueryCounter.With(prometheus.Labels{"query_type": queryType}).Inc()
+
 		return nil, richerror.NewRichError(operation).
 			WithError(eErr).
-			WithMessage("unexpected error: can't execute command").
+			WithMessage(errormessage.ErrorMsgUnexpected).
 			WithKind(richerror.KindUnexpected)
 	}
 
@@ -66,11 +79,14 @@ func (d *DataBase) RegisterUser(user *entity.User) (*entity.User, error) {
 func (d *DataBase) GetUserByPhoneNumber(phoneNumber string) (*entity.User, error) {
 
 	const operation = "mysql.user.GetUserByPhoneNumber"
+	const queryType = "select"
 
 	var userRow = d.dataBase.MysqlConnection.QueryRow(
 		`SELECT * FROM game_app_db.users WHERE phone_number = ?`,
 		phoneNumber,
 	)
+
+	metrics.DBQueryCounter.With(prometheus.Labels{"query_type": queryType}).Inc()
 
 	user, err := scanUser(userRow)
 	if err != nil {
@@ -79,14 +95,16 @@ func (d *DataBase) GetUserByPhoneNumber(phoneNumber string) (*entity.User, error
 			// in this case, user record in database not found
 			return nil, richerror.NewRichError(operation).
 				WithError(err).
-				WithMessage("record not found").
+				WithMessage(errormessage.ErrorMsgRecordNotFound).
 				WithKind(richerror.KindNotFound)
 		}
 
 		// in this case can't scan query from database
+		metrics.DBFailedQueryCounter.With(prometheus.Labels{"query_type": queryType}).Inc()
+
 		return nil, richerror.NewRichError(operation).
 			WithError(err).
-			WithMessage("unexpected error: can't scan query result").
+			WithMessage(errormessage.ErrorMsgUnexpected).
 			WithKind(richerror.KindUnexpected)
 	}
 
@@ -96,11 +114,15 @@ func (d *DataBase) GetUserByPhoneNumber(phoneNumber string) (*entity.User, error
 func (d *DataBase) GetUserById(ctx context.Context, userId uint) (*entity.User, error) {
 
 	const operation = "mysql.user.GetUserById"
+	const queryType = "select"
+
 	userRow := d.dataBase.MysqlConnection.QueryRowContext(
 		ctx,
 		`SELECT * FROM game_app_db.users WHERE id=?`,
 		userId,
 	)
+
+	metrics.DBQueryCounter.With(prometheus.Labels{"query_type": queryType}).Inc()
 
 	user, err := scanUser(userRow)
 	if err != nil {
@@ -108,14 +130,16 @@ func (d *DataBase) GetUserById(ctx context.Context, userId uint) (*entity.User, 
 
 			return nil, richerror.NewRichError(operation).
 				WithError(err).
-				WithMessage("record not found").
+				WithMessage(errormessage.ErrorMsgRecordNotFound).
 				WithKind(richerror.KindNotFound).
 				WithMeta(map[string]interface{}{"user_id": userId})
 		}
 
+		metrics.DBFailedQueryCounter.With(prometheus.Labels{"query_type": queryType}).Inc()
+
 		return nil, richerror.NewRichError(operation).
 			WithError(err).
-			WithMessage("unexpected error: can't scan query result").
+			WithMessage(errormessage.ErrorMsgUnexpected).
 			WithKind(richerror.KindUnexpected)
 	}
 
@@ -134,7 +158,7 @@ func scanUser(scanner mysql.Scanner) (*entity.User, error) {
 		role := entity.MapToRoleEntity(roleStr)
 		if role == 0 {
 
-			return user, errors.New("can't scan data from database")
+			return user, errors.New(errormessage.ErrorMsgScanQuery)
 		}
 		user.Role = role
 	}

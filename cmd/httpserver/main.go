@@ -3,17 +3,19 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"golang.project/go-fundamentals/gameapp/config/httpservercfg"
 	"golang.project/go-fundamentals/gameapp/config/setupservices"
 	"golang.project/go-fundamentals/gameapp/delivery/httpserver"
+	"golang.project/go-fundamentals/gameapp/delivery/metricsserver"
+	"golang.project/go-fundamentals/gameapp/logger"
+	"golang.project/go-fundamentals/gameapp/pkg/errormessage"
+	"golang.project/go-fundamentals/gameapp/pkg/infomessage"
 	"os"
-	"os/signal"
+	"sync"
 )
 
 func main() {
 
-	// get command
 	var host string
 	var port int
 	var migrationCommand string
@@ -27,20 +29,17 @@ func main() {
 	)
 	flag.Parse()
 
-	// setup config
 	config := httpservercfg.NewConfig(host, port)
-	fmt.Println("config project: ", config)
 
-	// run migrations
+	logger.InitLogger(config.LoggerCfg)
+
 	config.Migrate(migrationCommand)
 	if migrationCommand == "down" || migrationCommand == "status" {
 		os.Exit(0)
 	}
 
-	// setup services
 	setupSvc := setupservices.New(config)
 
-	// start http server goroutine
 	server := httpserver.New(
 		config,
 		setupSvc.AuthSvc,
@@ -50,25 +49,38 @@ func main() {
 		setupSvc.UserValidator,
 		setupSvc.MatchingSvc,
 		setupSvc.MatchingValidator,
-		setupSvc.PresenceSvc,
+		setupSvc.PresenceClient,
 	)
-	go server.Serve()
+	metricServer := metricsserver.NewMetricsServer(config.MetricsCfg)
 
-	// waiting for interrupt signal
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt)
-	<-quit // blocked main in this line
-	fmt.Println("received interrupt signal, shutting down gracefully...")
+	go server.Serve()
+	go metricServer.Serve()
+
+	logger.Info(infomessage.InfoMsgShuttingDownGracefully)
 
 	// create one context, this context use for shutting down echo engine
-	ctx := context.Background()
-	ctxWithTimeout, cancel := context.WithTimeout(ctx, config.AppCfg.GracefullyShutdownTimeout)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), config.AppCfg.GracefullyShutdownTimeout)
 	defer cancel()
 
-	// shutdown echo engine
-	if sErr := server.GetRouter().Shutdown(ctxWithTimeout); sErr != nil {
-		fmt.Printf("\nhttp server shutdown error: %v\n", sErr)
-	}
+	var shutdownWg sync.WaitGroup
 
-	<-ctxWithTimeout.Done()
+	shutdownWg.Add(1)
+	go func() {
+		defer shutdownWg.Done()
+		if err := server.GetRouter().Shutdown(shutdownCtx); err != nil {
+			logger.Error(err, errormessage.ErrorMsgHttpServerShutdown)
+		}
+	}()
+
+	shutdownWg.Add(1)
+	go func() {
+		defer shutdownWg.Done()
+		if err := metricServer.Server.Shutdown(shutdownCtx); err != nil {
+			logger.Error(err, errormessage.ErrorMsgMetricsServerShutdown)
+		}
+	}()
+
+	shutdownWg.Wait()
+
+	logger.Info("All services have been shut down gracefully")
 }

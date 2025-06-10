@@ -31,7 +31,6 @@ func (n Normalize) NormalizePhoneNumber(phoneNumber string) (string, error) {
 		return fmt.Sprintf("+98%s", phoneNumber), nil
 
 	default:
-		fmt.Println("default:", phoneNumber)
 		return "", errors.New("invalid phone number format")
 	}
 }

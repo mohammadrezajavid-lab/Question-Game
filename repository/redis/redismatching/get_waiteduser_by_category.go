@@ -28,5 +28,6 @@ func (r *RedisDb) GetWaitedUserByCategory(ctx context.Context, category entity.C
 		userId, _ := strconv.Atoi(z.Member.(string))
 		waitedUsersList = append(waitedUsersList, matchingparam.NewWaitedUser(int64(z.Score), uint(userId), category))
 	}
+
 	return waitedUsersList, nil
 }

@@ -5,13 +5,14 @@ import (
 	"errors"
 	"golang.project/go-fundamentals/gameapp/contract/broker"
 	"golang.project/go-fundamentals/gameapp/entity"
+	"golang.project/go-fundamentals/gameapp/logger"
+	"golang.project/go-fundamentals/gameapp/metrics"
 	"golang.project/go-fundamentals/gameapp/param/matchingparam"
 	"golang.project/go-fundamentals/gameapp/param/presenceparam"
 	"golang.project/go-fundamentals/gameapp/pkg/protobufencodedecode"
 	"golang.project/go-fundamentals/gameapp/pkg/richerror"
 	"golang.project/go-fundamentals/gameapp/pkg/search"
 	"golang.project/go-fundamentals/gameapp/pkg/timestamp"
-	"log"
 	"sync"
 	"time"
 )
@@ -61,6 +62,8 @@ func (s *Service) AddToWaitingList(ctx context.Context, req *matchingparam.AddTo
 
 	err := s.repo.AddToWaitingList(ctx, req.UserId, req.Category)
 	if err != nil {
+		metrics.FailedAddToWaitingListCounter.Inc()
+
 		return nil, richerror.NewRichError(operation).WithError(err)
 	}
 
@@ -69,8 +72,6 @@ func (s *Service) AddToWaitingList(ctx context.Context, req *matchingparam.AddTo
 
 func (s *Service) MatchWaitedUsers(ctx context.Context) error {
 	const operation = "matchingservice.MatchWaitedUsers"
-
-	log.Println("Executing matchWaitedUser job at:", time.Now())
 
 	categories := entity.Category("all_categories").GetCategories()
 
@@ -98,9 +99,9 @@ func (s *Service) MatchWaitedUsers(ctx context.Context) error {
 
 			presenceResponse, pErr := s.presenceClient.GetPresence(ctx, presenceparam.NewGetPresenceRequest(waitedUserIds))
 			if pErr != nil {
-				// TODO - update metrics
-				// TODO - log error
-				log.Println(pErr.Error())
+				metrics.FailedGetPresenceClientCounter.Inc()
+				logger.Warn(pErr, "failed_get_presence")
+
 				errCh <- richerror.NewRichError(operation).WithError(pErr).WithMeta(map[string]interface{}{"category": category, "step": "get_presence"})
 				return
 			}
@@ -124,12 +125,12 @@ func (s *Service) MatchWaitedUsers(ctx context.Context) error {
 			for j := 0; j+1 < len(finalListWaitedUsers); j += 2 {
 				mu := entity.NewMatchedUsers(category, []uint{finalListWaitedUsers[j].UserId, finalListWaitedUsers[j+1].UserId})
 
-				log.Printf("user_id: [%d], user_id: [%d], for category: [%s] is matched\n", mu.UserIds[0], mu.UserIds[1], mu.Category)
+				//log.Printf("user_id: [%d], user_id: [%d], for category: [%s] is matched\n", mu.UserIds[0], mu.UserIds[1], mu.Category)
 
 				payload := protobufencodedecode.EncodeMatchingWaitedUsersEvent(mu)
 				go s.publisher.PublishEvent(entity.MatchingUsersMatchedEvent, payload)
 
-				log.Printf("user_id: [%d], user_id: [%d], for category: [%s] is matched and published.\n", mu.UserIds[0], mu.UserIds[1], mu.Category)
+				//log.Printf("user_id: [%d], user_id: [%d], for category: [%s] is matched and published.\n", mu.UserIds[0], mu.UserIds[1], mu.Category)
 
 				allUsersToRemoved = append(allUsersToRemoved, mu.UserIds...)
 			}
