@@ -9,6 +9,7 @@ import (
 	"golang.project/go-fundamentals/gameapp/adapter/redis"
 	"golang.project/go-fundamentals/gameapp/config/httpservercfg/constant"
 	"golang.project/go-fundamentals/gameapp/delivery/metricsserver"
+	"golang.project/go-fundamentals/gameapp/delivery/pprofserver"
 	"golang.project/go-fundamentals/gameapp/logger"
 	"golang.project/go-fundamentals/gameapp/repository/migrator"
 	"golang.project/go-fundamentals/gameapp/repository/mysql"
@@ -22,6 +23,7 @@ import (
 
 type AppConfig struct {
 	GracefullyShutdownTimeout time.Duration `mapstructure:"gracefully_shutdown_timeout"`
+	DebugMod                  bool          `mapstructure:"debug_mod"`
 }
 
 type HttpServerConfig struct {
@@ -42,6 +44,7 @@ type Config struct {
 	PublisherCfg          publisher.Config             `mapstructure:"publisher_cfg"`
 	LoggerCfg             logger.Config                `mapstructure:"logger_cfg"`
 	MetricsCfg            metricsserver.Config         `mapstructure:"metrics_cfg"`
+	PprofCfg              pprofserver.Config           `mapstructure:"pprof_cfg"`
 }
 
 func NewConfig(host string, port int) Config {
@@ -61,6 +64,7 @@ func NewConfig(host string, port int) Config {
 		PublisherCfg:          cfg.PublisherCfg,
 		LoggerCfg:             cfg.LoggerCfg,
 		MetricsCfg:            cfg.MetricsCfg,
+		PprofCfg:              cfg.PprofCfg,
 	}
 }
 
@@ -116,6 +120,9 @@ func loadConfig(host string, port int) Config {
 		}
 		if uErr := viper.Sub("metrics_cfg").Unmarshal(&cfg.MetricsCfg); uErr != nil {
 			logger.Fatal(uErr, "can't unmarshal metrics_cfg config")
+		}
+		if uErr := viper.Sub("pprof_cfg").Unmarshal(&cfg.PprofCfg); uErr != nil {
+			logger.Fatal(uErr, "can't unmarshal pprof_cfg config")
 		}
 	} else {
 

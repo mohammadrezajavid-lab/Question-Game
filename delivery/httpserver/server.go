@@ -21,6 +21,7 @@ import (
 	"golang.project/go-fundamentals/gameapp/validator/matchingvalidator"
 	"golang.project/go-fundamentals/gameapp/validator/uservalidator"
 	"net/http"
+	_ "net/http/pprof"
 )
 
 type Server struct {

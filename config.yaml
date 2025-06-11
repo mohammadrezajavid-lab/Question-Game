@@ -1,3 +1,11 @@
+app_cfg:
+  gracefully_shutdown_timeout: 10s # 5 second
+  debug_mod: true # If debug_mod is true, it means that profiling server is enabled and should be set pprof_cfg.
+
+pprof_cfg:
+  host: "127.0.0.1"
+  port: 2111
+
 grpc_server_cfg:
   host: "127.0.0.1"
   port: 8086
@@ -32,9 +40,6 @@ auth_cfg:
   refresh_expiration_time: 168h  # 7 days
   access_subject: "at" # access token
   refresh_subject: "rt"  # refresh token
-
-app_cfg:
-  gracefully_shutdown_timeout: 10s # 5 second
 
 matching_cfg:
   context_time_out: 3m

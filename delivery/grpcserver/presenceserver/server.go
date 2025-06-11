@@ -64,14 +64,11 @@ func (s *PresenceGrpcServer) GetPresence(ctx context.Context, req *presence.GetP
 
 func (s *PresenceGrpcServer) Start() {
 	addr := fmt.Sprintf("%s:%d", s.grpcCfg.GrpcCfg.Host, s.grpcCfg.GrpcCfg.Port)
-	// tcp port
+
 	listener, lErr := net.Listen(s.grpcCfg.GrpcCfg.Network, addr)
 	if lErr != nil {
 		panic(lErr)
 	}
-
-	// grpc-presence server
-	//presenceSvcSrv := NewPresenceGrpcServer(s.presenceSvc, s.grpcCfg)
 
 	// grpc server
 	grpcSrv := grpc.NewServer()

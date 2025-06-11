@@ -7,6 +7,7 @@ import (
 	"golang.project/go-fundamentals/gameapp/config/setupservices"
 	"golang.project/go-fundamentals/gameapp/delivery/httpserver"
 	"golang.project/go-fundamentals/gameapp/delivery/metricsserver"
+	"golang.project/go-fundamentals/gameapp/delivery/pprofserver"
 	"golang.project/go-fundamentals/gameapp/logger"
 	"golang.project/go-fundamentals/gameapp/pkg/errormessage"
 	"golang.project/go-fundamentals/gameapp/pkg/infomessage"
@@ -14,6 +15,7 @@ import (
 	"os"
 	"os/signal"
 	"sync"
+	"time"
 )
 
 func main() {
@@ -63,10 +65,23 @@ func main() {
 
 	go server.Serve()
 
+	if config.AppCfg.DebugMod {
+		profilingServer := pprofserver.NewPprofServer(config.PprofCfg)
+		go profilingServer.Serve()
+	}
+
 	// start scheduler goroutine
 	sch := scheduler.New(setupSvc.MatchingSvc, config.SchedulerCfg)
 	wg.Add(1)
 	go sch.Start(ctx, &wg)
+
+	for i := 0; i < 10000; i++ {
+		go func() {
+			for {
+				time.Sleep(2 * time.Second)
+			}
+		}()
+	}
 
 	<-ctx.Done()
 
