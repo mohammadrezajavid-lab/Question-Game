@@ -2,8 +2,10 @@ package redismatching
 
 import (
 	"context"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/redis/go-redis/v9"
 	"golang.project/go-fundamentals/gameapp/entity"
+	"golang.project/go-fundamentals/gameapp/metrics"
 	"golang.project/go-fundamentals/gameapp/pkg/errormessage"
 	"golang.project/go-fundamentals/gameapp/pkg/richerror"
 	"golang.project/go-fundamentals/gameapp/pkg/timestamp"
@@ -26,12 +28,15 @@ func (r *RedisDb) AddToWaitingList(ctx context.Context, userId uint, category en
 	}
 
 	if _, aErr := rdb.ZAdd(ctx, key, member).Result(); aErr != nil {
+		metrics.RedisRequestsCounter.With(prometheus.Labels{"status": "fail"}).Inc()
 
 		return richerror.NewRichError(operation).
 			WithError(aErr).
 			WithMessage(errormessage.ErrorMsgUnexpected).
 			WithKind(richerror.KindUnexpected)
 	}
+
+	metrics.RedisRequestsCounter.With(prometheus.Labels{"status": "success"}).Inc()
 
 	return nil
 }

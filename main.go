@@ -35,6 +35,9 @@ func main() {
 
 	logger.InitLogger(config.LoggerCfg)
 
+	metricServer := metricsserver.NewMetricsServer(config.MetricsCfg)
+	go metricServer.Serve()
+
 	config.Migrate(migrationCommand)
 	if migrationCommand == "down" || migrationCommand == "status" {
 		os.Exit(0)
@@ -53,14 +56,12 @@ func main() {
 		setupSvc.MatchingValidator,
 		setupSvc.PresenceClient,
 	)
-	metricServer := metricsserver.NewMetricsServer(config.MetricsCfg)
 
 	var wg sync.WaitGroup
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 
 	go server.Serve()
-	go metricServer.Serve()
 
 	// start scheduler goroutine
 	sch := scheduler.New(setupSvc.MatchingSvc, config.SchedulerCfg)

@@ -23,10 +23,18 @@ var PublishedEventCounter = prometheus.NewCounter(
 	},
 )
 
+var RedisRequestsCounter = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Name: "redis_requests_total",
+		Help: "How many Redis requests processed, partitioned by status",
+	}, []string{"status"},
+)
+
 func init() {
 	Registry.MustRegister(
 		FailedZRemRedisCounter,
 		FailedPublishedEventCounter,
 		PublishedEventCounter,
+		RedisRequestsCounter,
 	)
 }
