@@ -8,7 +8,7 @@ import (
 	"golang.project/go-fundamentals/gameapp/pkg/richerror"
 )
 
-func (v *Validator) ValidateLoginRequest(req *userparam.LoginRequest) (error, map[string]string) {
+func (v *Validator) ValidateLoginRequest(req *userparam.LoginRequest) (map[string]string, error) {
 
 	const operation = "uservalidator.ValidateLoginRequest"
 
@@ -23,11 +23,10 @@ func (v *Validator) ValidateLoginRequest(req *userparam.LoginRequest) (error, ma
 			}
 		}
 
-		return richerror.NewRichError(operation).
-				WithError(err).
-				WithMessage(errormessage.ErrorMsgInvalidRequest).
-				WithKind(richerror.KindInvalid),
-			fieldErrors
+		return fieldErrors, richerror.NewRichError(operation).
+			WithError(err).
+			WithMessage(errormessage.ErrorMsgInvalidRequest).
+			WithKind(richerror.KindInvalid)
 	}
 
 	return nil, nil

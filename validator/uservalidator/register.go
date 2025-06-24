@@ -9,17 +9,17 @@ import (
 	"regexp"
 )
 
-func (v *Validator) ValidateRegisterRequest(req *userparam.RegisterRequest) (error, map[string]string) {
+func (v *Validator) ValidateRegisterRequest(req *userparam.RegisterRequest) (map[string]string, error) {
 
 	const operation = "uservalidator.ValidateRegisterRequest"
 
 	if err := v.validateRegisterRequest(req); err != nil {
 		if internalErr, ok := err.(validation.InternalError); ok {
 
-			return richerror.NewRichError(operation).
+			return nil, richerror.NewRichError(operation).
 				WithError(internalErr).
 				WithMessage(errormessage.ErrorMsgUnexpected).
-				WithKind(richerror.KindUnexpected), nil
+				WithKind(richerror.KindUnexpected)
 		} else {
 
 			fieldErrors := make(map[string]string)
@@ -31,11 +31,10 @@ func (v *Validator) ValidateRegisterRequest(req *userparam.RegisterRequest) (err
 				}
 			}
 
-			return richerror.NewRichError(operation).
-					WithError(err).
-					WithMessage(errormessage.ErrorMsgInvalidRequest).
-					WithKind(richerror.KindInvalid),
-				fieldErrors
+			return fieldErrors, richerror.NewRichError(operation).
+				WithError(err).
+				WithMessage(errormessage.ErrorMsgInvalidRequest).
+				WithKind(richerror.KindInvalid)
 		}
 	}
 

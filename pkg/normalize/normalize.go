@@ -6,14 +6,15 @@ import (
 	"regexp"
 )
 
-type Normalize struct {
+type normalize struct {
 }
 
-func New() Normalize {
-	return Normalize{}
+
+func New() normalize {
+	return normalize{}
 }
 
-func (n Normalize) NormalizePhoneNumber(phoneNumber string) (string, error) {
+func (n normalize) NormalizePhoneNumber(phoneNumber string) (string, error) {
 
 	phoneNumber = regexp.MustCompile(`[^\d\+]`).ReplaceAllString(phoneNumber, "")
 

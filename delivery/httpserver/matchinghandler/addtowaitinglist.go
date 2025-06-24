@@ -20,7 +20,7 @@ func (h *MatchingHandler) addToWaitingList(ctx echo.Context) error {
 	request.UserId = claims.UserId
 
 	// validate request
-	if validateErr, fieldErrors := h.matchingValidator.ValidateAddToWaitingListRequest(request); validateErr != nil {
+	if fieldErrors, validateErr := h.matchingValidator.ValidateAddToWaitingListRequest(request); validateErr != nil {
 
 		message, statusCode := parsericherror.New().ParseRichError(validateErr)
 

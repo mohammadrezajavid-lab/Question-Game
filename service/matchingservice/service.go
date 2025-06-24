@@ -12,7 +12,6 @@ import (
 	"golang.project/go-fundamentals/gameapp/param/presenceparam"
 	"golang.project/go-fundamentals/gameapp/pkg/protobufencodedecode"
 	"golang.project/go-fundamentals/gameapp/pkg/richerror"
-	"golang.project/go-fundamentals/gameapp/pkg/search"
 	"golang.project/go-fundamentals/gameapp/pkg/timestamp"
 	"sync"
 	"time"
@@ -112,11 +111,11 @@ func (s *Service) MatchWaitedUsers(ctx context.Context) error {
 
 			var finalListWaitedUsers = make([]matchingparam.WaitedUser, 0)
 			var allUsersToRemoved = make([]uint, 0)
+			presenceResponse.SortItemsByUserId()
 			for _, waitedUser := range waitingListByCategory.WaitedUsers {
+				userPresence := presenceResponse.FindByUserId(waitedUser.UserId)
 
-				userPresence, ok := search.BinarySearch(presenceResponse.Items, waitedUser.UserId)
-
-				if ok && userPresence.Timestamp > timestamp.Add(-1*s.config.OnlineThresholdDuration) &&
+				if userPresence != nil && userPresence.Timestamp > timestamp.Add(-1*s.config.OnlineThresholdDuration) &&
 					waitedUser.Timestamp > timestamp.Add(-1*s.config.WaitingTimeOut) {
 
 					finalListWaitedUsers = append(finalListWaitedUsers, waitedUser)
@@ -129,8 +128,6 @@ func (s *Service) MatchWaitedUsers(ctx context.Context) error {
 			for j := 0; j+1 < len(finalListWaitedUsers); j += 2 {
 				mu := entity.NewMatchedUsers(category, []uint{finalListWaitedUsers[j].UserId, finalListWaitedUsers[j+1].UserId})
 
-				//log.Printf("user_id: [%d], user_id: [%d], for category: [%s] is matched\n", mu.UserIds[0], mu.UserIds[1], mu.Category)
-
 				payload := protobufencodedecode.EncodeMatchingWaitedUsersEvent(mu)
 
 				metrics.GoActiveGoroutinesServiceGauge.With(prometheus.Labels{"service": "publish_event"}).Inc()
@@ -138,8 +135,6 @@ func (s *Service) MatchWaitedUsers(ctx context.Context) error {
 					defer metrics.GoActiveGoroutinesServiceGauge.With(prometheus.Labels{"service": "publish_event"}).Dec()
 					s.publisher.PublishEvent(entity.MatchingUsersMatchedEvent, payload)
 				}()
-
-				//log.Printf("user_id: [%d], user_id: [%d], for category: [%s] is matched and published.\n", mu.UserIds[0], mu.UserIds[1], mu.Category)
 
 				allUsersToRemoved = append(allUsersToRemoved, mu.UserIds...)
 			}

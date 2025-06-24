@@ -16,8 +16,7 @@ func (h *UserHandler) userLoginHandler(ctx echo.Context) error {
 	}
 
 	// normalized register request
-	norm := normalize.New()
-	phoneNumber, err := norm.NormalizePhoneNumber(requestUser.PhoneNumber)
+	phoneNumber, err := normalize.New().NormalizePhoneNumber(requestUser.PhoneNumber)
 	if err != nil {
 
 		return echo.NewHTTPError(http.StatusUnprocessableEntity, err.Error())
@@ -25,7 +24,7 @@ func (h *UserHandler) userLoginHandler(ctx echo.Context) error {
 	requestUser.PhoneNumber = phoneNumber
 
 	// validate login request
-	if validateErr, fieldErrors := h.userValidator.ValidateLoginRequest(requestUser); validateErr != nil {
+	if fieldErrors, validateErr := h.userValidator.ValidateLoginRequest(requestUser); validateErr != nil {
 
 		message, statusCode := parsericherror.New().ParseRichError(validateErr)
 

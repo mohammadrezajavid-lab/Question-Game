@@ -9,16 +9,16 @@ import (
 	"golang.project/go-fundamentals/gameapp/pkg/richerror"
 )
 
-func (v *Validator) ValidateAddToWaitingListRequest(req *matchingparam.AddToWaitingListRequest) (error, map[string]string) {
-
+func (v *Validator) ValidateAddToWaitingListRequest(req *matchingparam.AddToWaitingListRequest) (map[string]string, error) {
 	const operation = "matchingvalidator.ValidateAddToWaitingListRequest"
+
 	if err := v.validateAddToWaitingListRequest(req); err != nil {
 		if internalErr, ok := err.(validation.InternalError); ok {
 
-			return richerror.NewRichError(operation).
+			return nil, richerror.NewRichError(operation).
 				WithError(internalErr).
-				WithMessage("unexpected error: Try again later.").
-				WithKind(richerror.KindUnexpected), nil
+				WithMessage(errormessage.ErrorMsgUnexpected).
+				WithKind(richerror.KindUnexpected)
 		} else {
 
 			fieldErrors := make(map[string]string)
@@ -30,11 +30,11 @@ func (v *Validator) ValidateAddToWaitingListRequest(req *matchingparam.AddToWait
 				}
 			}
 
-			return richerror.NewRichError(operation).
-					WithError(err).
-					WithMessage(errormessage.ErrorMsgInvalidRequest).
-					WithKind(richerror.KindInvalid),
-				fieldErrors
+			return fieldErrors, richerror.NewRichError(operation).
+				WithError(err).
+				WithMessage(errormessage.ErrorMsgInvalidRequest).
+				WithKind(richerror.KindInvalid)
+
 		}
 	}
 

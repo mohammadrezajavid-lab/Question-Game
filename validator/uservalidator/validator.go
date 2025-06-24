@@ -37,7 +37,7 @@ func checkPasswordRegex() validation.RuleFunc {
 		)
 
 		if !hasUpper || !hasLower || !hasNumber || !hasSpecial {
-			return errors.New("password must contain upper, lower, digit, and special character[@%!%*?&#]")
+			return errors.New(errormessage.ErrorMsgInvalidPasswordRegex)
 		}
 		return nil
 	}
@@ -57,11 +57,11 @@ func checkPhoneNumberRegex() validation.RuleFunc {
 		)
 
 		if !hasValidPrefix {
-			return errors.New("phone number must start with +989, 09 or 9")
+			return errors.New(errormessage.ErrorMsgInvalidPhoneNumberRegex1)
 		}
 
 		if !hasNineDigitsAfter {
-			return errors.New("phone number must have exactly 9 digits after the prefix")
+			return errors.New(errormessage.ErrorMsgInvalidPhoneNumberRegex2)
 		}
 
 		return nil

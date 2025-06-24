@@ -25,7 +25,6 @@ func InitLogger(cfg Config) {
 
 	stdout := zapcore.AddSync(os.Stdout)
 
-	// TODO - add to config file Filename, MasSize, MaxAge, MaxBackups, Compress, LocalTime
 	file := zapcore.AddSync(&lumberjack.Logger{
 		Filename:   cfg.FileName,
 		MaxSize:    cfg.MaxSize,

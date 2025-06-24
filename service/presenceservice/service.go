@@ -8,7 +8,6 @@ import (
 	"golang.project/go-fundamentals/gameapp/metrics"
 	"golang.project/go-fundamentals/gameapp/param/presenceparam"
 	"golang.project/go-fundamentals/gameapp/pkg/richerror"
-	"sort"
 	"time"
 )
 
@@ -45,7 +44,6 @@ func (s Service) Upsert(ctx context.Context, req presenceparam.UpsertPresenceReq
 }
 
 func (s Service) GetPresence(ctx context.Context, request presenceparam.GetPresenceRequest) (presenceparam.GetPresenceResponse, error) {
-
 	const operation = "presenceservice.GetPresence"
 
 	keys := s.generateAllKey(request.UserIds)
@@ -61,10 +59,6 @@ func (s Service) GetPresence(ctx context.Context, request presenceparam.GetPrese
 	for _, pre := range usersPresence {
 		items = append(items, presenceparam.NewPresenceItem(pre.UserId, pre.Timestamp))
 	}
-
-	sort.Slice(items, func(i, j int) bool {
-		return items[i].UserId < items[j].UserId
-	})
 
 	return presenceparam.NewGetPresenceResponse(items), nil
 }

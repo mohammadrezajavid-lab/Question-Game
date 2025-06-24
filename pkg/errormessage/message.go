@@ -11,6 +11,10 @@ const (
 	ErrorMsgInvalidPhoneType              = "invalid phone number type"
 	ErrorMsgPhoneNotUniq                  = "phone number is not uniq"
 	ErrorMsgNotExistPhoneNumber           = "phone number does not exist"
+	ErrorMsgInvalidPhoneNumberRegex1      = "phone number must start with +989, 09 or 9"
+	ErrorMsgStringLength                  = "the length must be between 10 and 13"
+	ErrorMsgInvalidPhoneNumberRegex2      = "phone number must have exactly 9 digits after the prefix"
+	ErrorMsgInvalidPasswordRegex          = "password must contain upper, lower, digit, and special character[@%!%*?&#]"
 	ErrorMsgIncorrectPhoneNumberPassword  = "phoneNumber or password incorrect"
 	ErrorMsgFailedOpenMysqlConn           = "failed to open MySQL connection"
 	ErrorMsgConnectionRefusedMysql        = "connection refused db"
@@ -21,4 +25,5 @@ const (
 	ErrorMsgMetricsServerShutdown         = "metrics server shutdown error"
 	ErrorMsgShutdownSch                   = "not successfully shutdown scheduler"
 	ErrorMsgFailedStartMatchWaitedUserJob = "failed to create matchWaitedUser job"
+	ErrorMsgInvalidJWT                    = "JWT token missing or invalid"
 )
