@@ -9,7 +9,7 @@ import (
 	"strconv"
 )
 
-func PrometheusMiddleware() echo.MiddlewareFunc {
+func Prometheus() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			metrics.ActiveRequestsGauge.Inc()
@@ -33,7 +33,7 @@ func PrometheusMiddleware() echo.MiddlewareFunc {
 			} else {
 				statusCode = c.Response().Status
 			}
-			
+
 			metrics.ActiveRequestsGauge.Dec()
 			metrics.HttpRequestCounter.WithLabelValues(strconv.Itoa(statusCode), requestURI, method).Inc()
 			timer.ObserveDuration()

@@ -11,11 +11,11 @@ import (
 	"golang.project/go-fundamentals/gameapp/delivery/metricsserver"
 	"golang.project/go-fundamentals/gameapp/delivery/pprofserver"
 	"golang.project/go-fundamentals/gameapp/logger"
+	"golang.project/go-fundamentals/gameapp/pkg/jwt"
 	"golang.project/go-fundamentals/gameapp/repository/migrator"
 	"golang.project/go-fundamentals/gameapp/repository/mysql"
 	"golang.project/go-fundamentals/gameapp/repository/redis/redismatching"
 	"golang.project/go-fundamentals/gameapp/scheduler"
-	"golang.project/go-fundamentals/gameapp/service/authenticationservice"
 	"golang.project/go-fundamentals/gameapp/service/matchingservice"
 	"strings"
 	"time"
@@ -32,19 +32,19 @@ type HttpServerConfig struct {
 }
 
 type Config struct {
-	AppCfg                AppConfig                    `mapstructure:"app_cfg"`
-	ServerCfg             HttpServerConfig             `mapstructure:"httpserver_cfg"`
-	DataBaseCfg           mysql.Config                 `mapstructure:"database_cfg"`
-	AuthCfg               authenticationservice.Config `mapstructure:"auth_cfg"`
-	MatchingCfg           matchingservice.Config       `mapstructure:"matching_cfg"`
-	RedisCfg              redis.Config                 `mapstructure:"redis_cfg"`
-	SchedulerCfg          scheduler.Config             `mapstructure:"scheduler_cfg"`
-	MatchingRepoCfg       redismatching.Config         `mapstructure:"matching_repo_cfg"`
-	GrpcPresenceClientCfg presenceclient.Config        `mapstructure:"grpc_presence_client_cfg"`
-	PublisherCfg          publisher.Config             `mapstructure:"publisher_cfg"`
-	LoggerCfg             logger.Config                `mapstructure:"logger_cfg"`
-	MetricsCfg            metricsserver.Config         `mapstructure:"metrics_cfg"`
-	PprofCfg              pprofserver.Config           `mapstructure:"pprof_cfg"`
+	AppCfg                AppConfig              `mapstructure:"app_cfg"`
+	ServerCfg             HttpServerConfig       `mapstructure:"httpserver_cfg"`
+	DataBaseCfg           mysql.Config           `mapstructure:"database_cfg"`
+	JwtCfg                jwt.Config             `mapstructure:"jwt_cfg"`
+	MatchingCfg           matchingservice.Config `mapstructure:"matching_cfg"`
+	RedisCfg              redis.Config           `mapstructure:"redis_cfg"`
+	SchedulerCfg          scheduler.Config       `mapstructure:"scheduler_cfg"`
+	MatchingRepoCfg       redismatching.Config   `mapstructure:"matching_repo_cfg"`
+	GrpcPresenceClientCfg presenceclient.Config  `mapstructure:"grpc_presence_client_cfg"`
+	PublisherCfg          publisher.Config       `mapstructure:"publisher_cfg"`
+	LoggerCfg             logger.Config          `mapstructure:"logger_cfg"`
+	MetricsCfg            metricsserver.Config   `mapstructure:"metrics_cfg"`
+	PprofCfg              pprofserver.Config     `mapstructure:"pprof_cfg"`
 }
 
 func NewConfig(host string, port int) Config {
@@ -55,7 +55,7 @@ func NewConfig(host string, port int) Config {
 		AppCfg:                cfg.AppCfg,
 		ServerCfg:             cfg.ServerCfg,
 		DataBaseCfg:           cfg.DataBaseCfg,
-		AuthCfg:               cfg.AuthCfg,
+		JwtCfg:                cfg.JwtCfg,
 		MatchingCfg:           cfg.MatchingCfg,
 		RedisCfg:              cfg.RedisCfg,
 		SchedulerCfg:          cfg.SchedulerCfg,
@@ -91,8 +91,8 @@ func loadConfig(host string, port int) Config {
 		if uErr := viper.Sub("database_cfg").Unmarshal(&cfg.DataBaseCfg); uErr != nil {
 			logger.Fatal(uErr, "can't unmarshal database config")
 		}
-		if uErr := viper.Sub("auth_cfg").Unmarshal(&cfg.AuthCfg); uErr != nil {
-			logger.Fatal(uErr, "can't unmarshal auth config")
+		if uErr := viper.Sub("jwt_cfg").Unmarshal(&cfg.JwtCfg); uErr != nil {
+			logger.Fatal(uErr, "can't unmarshal JWT config")
 		}
 		if uErr := viper.Sub("matching_cfg").Unmarshal(&cfg.MatchingCfg); uErr != nil {
 			logger.Fatal(uErr, "can't unmarshal matching config")

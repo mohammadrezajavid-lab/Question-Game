@@ -5,6 +5,7 @@ import (
 	"golang.project/go-fundamentals/gameapp/adapter/publisher"
 	"golang.project/go-fundamentals/gameapp/adapter/redis"
 	"golang.project/go-fundamentals/gameapp/config/httpservercfg"
+	"golang.project/go-fundamentals/gameapp/pkg/jwt"
 	"golang.project/go-fundamentals/gameapp/repository/mysql"
 	"golang.project/go-fundamentals/gameapp/repository/mysql/accesscontrolmysql"
 	"golang.project/go-fundamentals/gameapp/repository/mysql/usermysql"
@@ -33,14 +34,7 @@ func New(config httpservercfg.Config) *SetupServices {
 
 	mysqlRepo := mysql.NewDB(config.DataBaseCfg)
 
-	authSvc := authenticationservice.NewService(
-		authenticationservice.NewConfig(
-			config.AuthCfg.SignKey,
-			config.AuthCfg.AccessExpirationTime,
-			config.AuthCfg.RefreshExpirationTime,
-			config.AuthCfg.AccessSubject,
-			config.AuthCfg.RefreshSubject),
-	)
+	authSvc := authenticationservice.NewService(jwt.NewJWT(config.JwtCfg))
 
 	mysqlAccessControl := accesscontrolmysql.NewDataBase(mysqlRepo)
 	authorizationSvc := authorizationservice.NewService(mysqlAccessControl)

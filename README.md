@@ -1,24 +1,35 @@
 # Question-Answer Game Platform
 
-**Question-Answer** is a web-based multiplayer quiz platform built with **Golang**. It allows users to create accounts, choose a topic, and compete live by answering questions against other online players. This project features a RESTful API backend, real-time matchmaking capabilities, a robust user authentication system, and can be run as a monolith or as separate microservices.
+**Question-Answer** is a web-based multiplayer quiz platform built with **Golang**. It allows users to create accounts,
+choose a topic, and compete live by answering questions against other online players. This project features a RESTful
+API backend, real-time matchmaking capabilities, a robust user authentication system, and can be run as a monolith or as
+separate microservices.
 
 ---
 
 ## 🌟 Core Features
 
 * **User Management**: Secure user registration and JWT-based authentication (access and refresh tokens).
-* **Role-Based Access Control (RBAC)**: Differentiates between regular users and administrators with specific permissions for actions like listing users.
-* **Quiz Categories**: Users can select from various quiz categories (e.g., "football", "history", "art") to be matched with others.
-* **Real-time Matchmaking**: Users can join a waiting list for a specific category. A scheduler periodically runs to match online players from the waiting list.
-* **User Presence**: The system tracks user online status using a gRPC-based presence service backed by Redis. Presence is updated on key actions like logging in, viewing a profile, or joining a waiting list.
-* **Backoffice Operations**: Endpoints for administrative tasks like listing all users, accessible only to users with admin privileges.
+* **Role-Based Access Control (RBAC)**: Differentiates between regular users and administrators with specific
+  permissions for actions like listing users.
+* **Quiz Categories**: Users can select from various quiz categories (e.g., "football", "history", "art") to be matched
+  with others.
+* **Real-time Matchmaking**: Users can join a waiting list for a specific category. A scheduler periodically runs to
+  match online players from the waiting list.
+* **User Presence**: The system tracks user online status using a gRPC-based presence service backed by Redis. Presence
+  is updated on key actions like logging in, viewing a profile, or joining a waiting list.
+* **Backoffice Operations**: Endpoints for administrative tasks like listing all users, accessible only to users with
+  admin privileges.
 * **Database Migrations**: Managed using `sql-migrate`. Migrations can be run automatically when the application starts.
-* **Configuration Driven**: Application behavior is controlled via a `config.yaml` file and can be overridden by environment variables.
+* **Configuration Driven**: Application behavior is controlled via a `config.yaml` file and can be overridden by
+  environment variables.
 * **Dockerized Environment**: Comes with a `docker-compose.yml` for easy setup of MySQL and Redis services.
-* **Graceful Shutdown**: The application handles interrupt signals for a clean shutdown of all its components, including the HTTP server, metrics server, and scheduler.
+* **Graceful Shutdown**: The application handles interrupt signals for a clean shutdown of all its components, including
+  the HTTP server, metrics server, and scheduler.
 * **Health Check**: An endpoint to verify the status of the server and its dependencies (Database, Redis).
 * **Metrics**: Exposes Prometheus metrics for monitoring application health and performance.
-* **Microservice Architecture**: The project is structured to be run as a single monolithic service or deployed as individual microservices for the HTTP server, presence server, and scheduler.
+* **Microservice Architecture**: The project is structured to be run as a single monolithic service or deployed as
+  individual microservices for the HTTP server, presence server, and scheduler.
 
 ---
 
@@ -34,54 +45,63 @@
 
 ### Installation & Setup
 
-1.  **Clone the repository:**
-    ```bash
-    git clone [YOUR_REPOSITORY_URL] Question-Game
-    cd Question-Game
-    ```
+1. **Clone the repository:**
+   ```bash
+   git clone [YOUR_REPOSITORY_URL] Question-Game
+   cd Question-Game
+   ```
 
-2.  **Configuration:**
+2. **Configuration:**
     * The main configuration file is `config.yaml` located in the project root.
     * It includes settings for the HTTP server, gRPC server, database, Redis, JWT authentication, and more.
-    * You can override configurations using environment variables. For example, `database_cfg.database_host` in YAML becomes `DATABASE_CFG_DATABASE_HOST` as an environment variable.
-    * The default Docker setup exposes MySQL on port `3308` and Redis on `6380` on the host. Ensure these match your `config.yaml`.
+    * You can override configurations using environment variables. For example, `database_cfg.database_host` in YAML
+      becomes `DATABASE_CFG_DATABASE_HOST` as an environment variable.
+    * The default Docker setup exposes MySQL on port `3308` and Redis on `6380` on the host. Ensure these match your
+      `config.yaml`.
 
-3.  **Start External Services (MySQL & Redis):**
-    Use the provided Docker Compose configuration to start the necessary services:
-    ```bash
-    docker-compose up -d
-    ```
-    This will start:
+3. **Start External Services (MySQL & Redis):**
+   Use the provided Docker Compose configuration to start the necessary services:
+   ```bash
+   docker-compose up -d
+   ```
+   This will start:
     * A MySQL container named `gameapp_db` on host port `3308`.
     * A Redis container named `gameapp_redis` on host port `6380`.
 
-4.  **Database Migrations:**
-    The application can automatically run migrations on startup.
-    To apply migrations (create tables and seed data):
-    ```bash
-    go run main.go -migrate-command=up
-    ```
-    Other migration commands:
+4. **Database Migrations:**
+   The application can automatically run migrations on startup.
+   To apply migrations (create tables and seed data):
+   ```bash
+   go run main.go -migrate-command=up
+   ```
+   Other migration commands:
     * `down`: Rollback the last set of migrations.
     * `status`: Show the status of migrations.
     * `skip` (default): Skip the migration step.
 
-5.  **Install Go Dependencies:**
+5. **Install Go Dependencies:**
+   ```bash
+   go mod tidy
+   ```
+
+6. **Build Protocol Buffers:**
+   If you modify any `.proto` files in the `contract/protobuf` directory, you'll need to regenerate the Go code.
+   ```bash
+   # For presence service
+   protoc --proto_path=contract/protobuf/presence --go_out=contract/goprotobuf/presence --go_opt=paths=source_relative --go-grpc_out=contract/goprotobuf/presence --go-grpc_opt=paths=source_relative ./contract/protobuf/presence/presence.proto
+
+   # For matching service
+   protoc --proto_path=contract/protobuf/matching --go_out=contract/goprotobuf/matching --go_opt=paths=source_relative ./contract/protobuf/matching/matching.proto
+
+   # For notification service
+   protoc --proto_path=contract/protobuf/notification --go_out=contract/goprotobuf/notification --go_opt=paths=source_relative ./contract/protobuf/notification/notification.proto
+   ```
+
+### Testing the Application
+
+* **Run Unit Tests**
     ```bash
-    go mod tidy
-    ```
-
-6.  **Build Protocol Buffers:**
-    If you modify any `.proto` files in the `contract/protobuf` directory, you'll need to regenerate the Go code.
-    ```bash
-    # For presence service
-    protoc --proto_path=contract/protobuf/presence --go_out=contract/goprotobuf/presence --go_opt=paths=source_relative --go-grpc_out=contract/goprotobuf/presence --go-grpc_opt=paths=source_relative ./contract/protobuf/presence/presence.proto
-
-    # For matching service
-    protoc --proto_path=contract/protobuf/matching --go_out=contract/goprotobuf/matching --go_opt=paths=source_relative ./contract/protobuf/matching/matching.proto
-
-    # For notification service
-    protoc --proto_path=contract/protobuf/notification --go_out=contract/goprotobuf/notification --go_opt=paths=source_relative ./contract/protobuf/notification/notification.proto
+    go test -v ./...
     ```
 
 ### Running the Application
@@ -124,7 +144,8 @@ The HTTP server will start on `127.0.0.1:8080` and the metrics server on `127.0.
 
 The project follows a modular structure to separate concerns and support microservices deployment.
 
-* **`/` (root):** Contains the main entry point for the monolithic application (`main.go`), configuration files (`config.yaml`, `docker-compose.yml`), and this `README.md`.
+* **`/` (root):** Contains the main entry point for the monolithic application (`main.go`), configuration files (
+  `config.yaml`, `docker-compose.yml`), and this `README.md`.
 * **`adapter/`:** Wrappers for external clients, such as Redis, gRPC clients, and message publishers.
 * **`cmd/`:** Entry points for different binaries, allowing the application to be run as separate microservices.
 * **`config/`:** Configuration loading and service setup logic.
@@ -154,7 +175,8 @@ The project follows a modular structure to separate concerns and support microse
 * **Backoffice (`/backoffice/users/`)**
     * `GET /`: List all users. Requires admin authentication and the `user-list` permission.
 * **Matchmaking (`/matching-player/`)**
-    * `POST /add-to-waiting-list`: Add the authenticated user to a matchmaking waiting list for a specific category. Updates user presence.
+    * `POST /add-to-waiting-list`: Add the authenticated user to a matchmaking waiting list for a specific category.
+      Updates user presence.
 
 ---
 

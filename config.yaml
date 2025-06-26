@@ -34,12 +34,13 @@ redis_cfg:
   password_cfg: "password1999"
   db_cfg: 0
 
-auth_cfg:
+jwt_cfg:
   sign_key: "jwt_secret_key"
   access_expiration_time: 24h    # 1 day
   refresh_expiration_time: 168h  # 7 days
   access_subject: "at" # access token
   refresh_subject: "rt"  # refresh token
+  sign_method: "HS256"
 
 matching_cfg:
   context_time_out: 3m
