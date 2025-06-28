@@ -65,8 +65,9 @@ func main() {
 
 	go server.Serve()
 
+	var profilingServer *pprofserver.PprofServer
 	if config.AppCfg.DebugMod {
-		profilingServer := pprofserver.NewPprofServer(config.PprofCfg)
+		profilingServer = pprofserver.NewPprofServer(config.PprofCfg)
 		go profilingServer.Serve()
 	}
 
@@ -106,6 +107,15 @@ func main() {
 		defer shutdownWg.Done()
 		if err := metricServer.Server.Shutdown(shutdownCtx); err != nil {
 			logger.Error(err, errormessage.ErrorMsgMetricsServerShutdown)
+		}
+	}()
+
+	shutdownWg.Add(1)
+	go func() {
+		if config.AppCfg.DebugMod {
+			if err := profilingServer.Shutdown(shutdownCtx); err != nil {
+				logger.Error(err, errormessage.ErrorMsgPprofServerShutdown)
+			}
 		}
 	}()
 

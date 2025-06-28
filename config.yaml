@@ -2,19 +2,6 @@ app_cfg:
   gracefully_shutdown_timeout: 10s # 5 second
   debug_mod: true # If debug_mod is true, it means that profiling server is enabled and should be set pprof_cfg.
 
-pprof_cfg:
-  host: "127.0.0.1"
-  port: 2111
-
-grpc_server_cfg:
-  host: "127.0.0.1"
-  port: 8086
-  network: "tcp"
-
-httpserver_cfg:
-  host: "127.0.0.1"
-  port: 8080
-
 database_cfg:
   database_driver_name: "mysql"
   database_conn_max_lifetime: 3m
@@ -58,11 +45,6 @@ matching_repo_cfg:
   waiting_list_prefix: "waiting-list"
   context_timeout_ZRem: 5s
 
-grpc_presence_client_cfg:
-  host: "127.0.0.1"
-  port: 8086
-  network: "tcp"
-
 publisher_cfg:
   context_timeout_redis_pub: 3s
 
@@ -76,6 +58,32 @@ logger_cfg:
   simpling_core_first: 100
   simpling_core_thereafter: 100
 
+httpserver_cfg:
+  host: "127.0.0.1"
+  port: 8080
+
+ws_cfg:
+  host: "127.0.0.1"
+  port: 8090
+  allowed_origins_websocket:
+    - "http://localhost:3000"
+    - "http://127.0.0.1:3000"
+
 metrics_cfg:
   host: "127.0.0.1"
   port: 2112
+
+pprof_cfg:
+  host: "127.0.0.1"
+  port: 2111
+
+grpc_presence_server_cfg:
+  host: "127.0.0.1"
+  port: 8086
+  network: "tcp"
+
+grpc_presence_client_cfg:
+  host: "127.0.0.1"
+  port: 8086
+  network: "tcp"
+

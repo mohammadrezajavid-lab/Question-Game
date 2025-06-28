@@ -9,9 +9,9 @@ import (
 	"golang.project/go-fundamentals/gameapp/config/httpservercfg"
 	"golang.project/go-fundamentals/gameapp/delivery/httpserver/backofficeuserhandler"
 	"golang.project/go-fundamentals/gameapp/delivery/httpserver/matchinghandler"
+	httpServerMiddleware "golang.project/go-fundamentals/gameapp/delivery/httpserver/middleware"
 	"golang.project/go-fundamentals/gameapp/delivery/httpserver/userhandler"
 	"golang.project/go-fundamentals/gameapp/logger"
-	middleware2 "golang.project/go-fundamentals/gameapp/middleware"
 	"golang.project/go-fundamentals/gameapp/pkg/errormessage"
 	"golang.project/go-fundamentals/gameapp/service/authenticationservice"
 	"golang.project/go-fundamentals/gameapp/service/authorizationservice"
@@ -60,8 +60,8 @@ func (s *Server) GetRouter() *echo.Echo {
 func (s *Server) Serve() {
 
 	s.router.Use(middleware.RequestID())
-	s.router.Use(middleware2.ZapLogger())
-	s.router.Use(middleware2.Prometheus())
+	s.router.Use(httpServerMiddleware.ZapLogger())
+	s.router.Use(httpServerMiddleware.Prometheus())
 	s.router.Use(middleware.Recover())
 
 	s.router.GET("/health-check", s.HealthCheckHandler)

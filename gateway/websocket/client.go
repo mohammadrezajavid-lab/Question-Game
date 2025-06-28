@@ -1,4 +1,4 @@
-package main
+package websocket
 
 import (
 	"fmt"
@@ -28,7 +28,6 @@ func (c *Client) readPump() {
 
 		if timestamp.Now() > c.tokenExp {
 			c.conn.WriteMessage(websocket.TextMessage, []byte(`{"type":"token_expired"}`))
-
 			break
 		}
 

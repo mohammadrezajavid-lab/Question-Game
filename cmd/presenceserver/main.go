@@ -28,6 +28,6 @@ func main() {
 
 	redisAdapter := redis.New(grpcCfg.RedisCfg)
 	presenceSvc := presenceservice.New(redispresence.NewRedisDb(redisAdapter), grpcCfg.PresenceCfg)
-	server := presenceserver.NewPresenceGrpcServer(presenceSvc, &grpcCfg)
+	server := presenceserver.NewPresenceGrpcServer(presenceSvc, &grpcCfg.GrpcPresenceCfg)
 	server.Start()
 }

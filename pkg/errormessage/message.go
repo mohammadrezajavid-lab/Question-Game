@@ -23,6 +23,7 @@ const (
 	ErrorMsgFailedCreateSch               = "failed to create scheduler"
 	ErrorMsgHttpServerShutdown            = "http server shutdown error"
 	ErrorMsgMetricsServerShutdown         = "metrics server shutdown error"
+	ErrorMsgPprofServerShutdown           = "failed to gracefully shutdown pprof server"
 	ErrorMsgShutdownSch                   = "not successfully shutdown scheduler"
 	ErrorMsgFailedStartMatchWaitedUserJob = "failed to create matchWaitedUser job"
 	ErrorMsgInvalidJWT                    = "JWT token missing or invalid"

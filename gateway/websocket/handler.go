@@ -1,47 +1,56 @@
-package main
+package websocket
 
 import (
 	"github.com/gorilla/websocket"
+	"golang.project/go-fundamentals/gameapp/logger"
 	"golang.project/go-fundamentals/gameapp/pkg/jwt"
 	"net/http"
 )
 
-var upgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool {
-		return true
-	},
+func (ws *WebSocket) NewUpgrader() websocket.Upgrader {
+	return websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool {
+			origin := r.Header.Get("Origin")
+			for _, allowed := range ws.config.AllowedOrigins {
+				if origin == allowed {
+					return true
+				}
+			}
+			return false
+		},
+	}
 }
 
-func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
+func (ws *WebSocket) SocketHandler(hub *Hub) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		newJwt := jwt.NewJWT(ws.JwtCfg)
+		tokenStr := newJwt.ExtractTokenFromHeader(r.Header.Get("Authorization"))
+		claims, err := newJwt.ParseJWT(tokenStr)
 
-	newJwt := jwt.NewJWT(jwt.Config{
-		SignKey:    "secret",
-		SignMethod: "HS256",
-	})
+		if err != nil {
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
 
-	tokenStr := newJwt.ExtractTokenFromHeader(r.Header.Get("Authorization"))
-	claims, err := newJwt.ParseJWT(tokenStr)
-	
-	if err != nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
-		return
+		upgrader := ws.NewUpgrader()
+		conn, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			logger.Error(err, "WebSocket upgrade failed")
+			http.Error(w, "could not open websocket connection", http.StatusBadRequest)
+			return
+		}
+
+		client := &Client{
+			hub:      hub,
+			conn:     conn,
+			send:     make(chan []byte, 256),
+			userID:   claims.UserId,
+			tokenExp: claims.ExpiresAt.UnixMicro(),
+		}
+
+		hub.register <- client
+
+		go client.writePump()
+		go client.readPump()
 	}
-
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		return
-	}
-
-	client := &Client{
-		hub:      hub,
-		conn:     conn,
-		send:     make(chan []byte, 256),
-		userID:   claims.UserId,
-		tokenExp: claims.ExpiresAt.UnixMicro(),
-	}
-
-	hub.register <- client
-
-	go client.writePump()
-	go client.readPump()
 }

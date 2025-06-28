@@ -1,4 +1,4 @@
-package main
+package websocket
 
 type Hub struct {
 	clients    map[*Client]bool

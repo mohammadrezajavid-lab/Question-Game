@@ -3,7 +3,6 @@ package presenceserver
 import (
 	"context"
 	"fmt"
-	"golang.project/go-fundamentals/gameapp/config/grpcconfig"
 	"golang.project/go-fundamentals/gameapp/contract/goprotobuf/presence"
 	"golang.project/go-fundamentals/gameapp/logger"
 	"golang.project/go-fundamentals/gameapp/param/presenceparam"
@@ -17,13 +16,19 @@ import (
 	"net"
 )
 
+type Config struct {
+	Host    string `mapstructure:"host"`
+	Port    int    `mapstructure:"port"`
+	Network string `mapstructure:"network"`
+}
+
 type PresenceGrpcServer struct {
 	presence.UnimplementedPresenceServiceServer
 	presenceSvc *presenceservice.Service
-	grpcCfg     *grpcconfig.Config
+	grpcCfg     *Config
 }
 
-func NewPresenceGrpcServer(presenceSvc *presenceservice.Service, grpcCfg *grpcconfig.Config) *PresenceGrpcServer {
+func NewPresenceGrpcServer(presenceSvc *presenceservice.Service, grpcCfg *Config) *PresenceGrpcServer {
 	return &PresenceGrpcServer{
 		UnimplementedPresenceServiceServer: presence.UnimplementedPresenceServiceServer{},
 		presenceSvc:                        presenceSvc,
@@ -63,9 +68,9 @@ func (s *PresenceGrpcServer) GetPresence(ctx context.Context, req *presence.GetP
 }
 
 func (s *PresenceGrpcServer) Start() {
-	addr := fmt.Sprintf("%s:%d", s.grpcCfg.GrpcCfg.Host, s.grpcCfg.GrpcCfg.Port)
+	addr := fmt.Sprintf("%s:%d", s.grpcCfg.Host, s.grpcCfg.Port)
 
-	listener, lErr := net.Listen(s.grpcCfg.GrpcCfg.Network, addr)
+	listener, lErr := net.Listen(s.grpcCfg.Network, addr)
 	if lErr != nil {
 		panic(lErr)
 	}

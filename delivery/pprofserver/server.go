@@ -1,12 +1,14 @@
 package pprofserver
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	pprofMiddleware "golang.project/go-fundamentals/gameapp/delivery/pprofserver/middleware"
 	"golang.project/go-fundamentals/gameapp/logger"
 	"net/http"
 	_ "net/http/pprof"
+	"time"
 )
 
 type Config struct {
@@ -23,8 +25,11 @@ func NewPprofServer(cfg Config) *PprofServer {
 	return &PprofServer{
 		config: cfg,
 		Server: &http.Server{
-			Addr:    fmt.Sprintf("%s:%d", cfg.Host, cfg.Port),
-			Handler: pprofMiddleware.LogRequestMiddleware(http.DefaultServeMux),
+			Addr:         fmt.Sprintf("%s:%d", cfg.Host, cfg.Port),
+			Handler:      pprofMiddleware.LogRequestMiddleware(http.DefaultServeMux),
+			ReadTimeout:  5 * time.Second,
+			WriteTimeout: 10 * time.Second,
+			IdleTimeout:  120 * time.Second,
 		},
 	}
 }
@@ -35,4 +40,16 @@ func (ps *PprofServer) Serve() {
 	if err := ps.Server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		logger.Error(err, "Profiling server failed to start")
 	}
+}
+
+func (ps *PprofServer) Shutdown(ctx context.Context) error {
+	logger.Info("Shutting down pprof server...")
+
+	err := ps.Server.Shutdown(ctx)
+	if err != nil {
+		return err
+	}
+
+	logger.Info("Pprof server gracefully stopped")
+	return nil
 }
