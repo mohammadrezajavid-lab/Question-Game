@@ -68,6 +68,8 @@ ws_cfg:
   allowed_origins_websocket:
     - "http://localhost:3000"
     - "http://127.0.0.1:3000"
+  send_buffer_size: 1024
+  gracefully_shutdown_timeout: 10s
 
 metrics_cfg:
   host: "127.0.0.1"

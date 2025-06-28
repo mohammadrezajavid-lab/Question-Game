@@ -1,9 +1,12 @@
 package websocket
 
+import "sync"
+
 type Hub struct {
 	clients    map[*Client]bool
 	register   chan *Client
 	unregister chan *Client
+	quit       chan struct{}
 }
 
 func NewHub() *Hub {
@@ -11,6 +14,7 @@ func NewHub() *Hub {
 		clients:    make(map[*Client]bool),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
+		quit:       make(chan struct{}),
 	}
 }
 
@@ -24,6 +28,26 @@ func (h *Hub) Run() {
 				delete(h.clients, client)
 				close(client.send)
 			}
+		case <-h.quit:
+			return
 		}
 	}
+}
+
+// Close gracefully shuts down the hub by closing all client connections
+// and stopping the hub's run loop.
+func (h *Hub) Close() {
+	close(h.quit)
+
+	var wg sync.WaitGroup
+
+	for client := range h.clients {
+		wg.Add(1)
+		go func(c *Client) {
+			defer wg.Done()
+			c.Close()
+		}(client)
+	}
+
+	wg.Wait()
 }

@@ -26,7 +26,6 @@ func (ws *WebSocket) SocketHandler(hub *Hub) http.HandlerFunc {
 		newJwt := jwt.NewJWT(ws.JwtCfg)
 		tokenStr := newJwt.ExtractTokenFromHeader(r.Header.Get("Authorization"))
 		claims, err := newJwt.ParseJWT(tokenStr)
-
 		if err != nil {
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
@@ -43,7 +42,7 @@ func (ws *WebSocket) SocketHandler(hub *Hub) http.HandlerFunc {
 		client := &Client{
 			hub:      hub,
 			conn:     conn,
-			send:     make(chan []byte, 256),
+			send:     make(chan []byte, ws.config.SendBufferSize),
 			userID:   claims.UserId,
 			tokenExp: claims.ExpiresAt.UnixMicro(),
 		}
@@ -52,5 +51,6 @@ func (ws *WebSocket) SocketHandler(hub *Hub) http.HandlerFunc {
 
 		go client.writePump()
 		go client.readPump()
+		go client.monitorTokenExpiry()
 	}
 }

@@ -15,7 +15,6 @@ import (
 	"os"
 	"os/signal"
 	"sync"
-	"time"
 )
 
 func main() {
@@ -59,10 +58,6 @@ func main() {
 		setupSvc.PresenceClient,
 	)
 
-	var wg sync.WaitGroup
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
-	defer stop()
-
 	go server.Serve()
 
 	var profilingServer *pprofserver.PprofServer
@@ -72,17 +67,12 @@ func main() {
 	}
 
 	// start scheduler goroutine
+	var wg sync.WaitGroup
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
 	sch := scheduler.New(setupSvc.MatchingSvc, config.SchedulerCfg)
 	wg.Add(1)
 	go sch.Start(ctx, &wg)
-
-	for i := 0; i < 10000; i++ {
-		go func() {
-			for {
-				time.Sleep(2 * time.Second)
-			}
-		}()
-	}
 
 	<-ctx.Done()
 
