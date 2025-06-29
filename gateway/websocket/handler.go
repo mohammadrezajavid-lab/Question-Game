@@ -2,6 +2,7 @@ package websocket
 
 import (
 	"github.com/gorilla/websocket"
+	"golang.project/go-fundamentals/gameapp/adapter/presenceclient"
 	"golang.project/go-fundamentals/gameapp/logger"
 	"golang.project/go-fundamentals/gameapp/pkg/jwt"
 	"net/http"
@@ -39,12 +40,18 @@ func (ws *WebSocket) SocketHandler(hub *Hub) http.HandlerFunc {
 			return
 		}
 
+		grpcPresenceClient, gErr := presenceclient.NewClient(ws.presenceClientConfig)
+		if gErr != nil {
+			logger.Error(gErr, "failed_open_grpc_presence_connection")
+		}
+
 		client := &Client{
-			hub:      hub,
-			conn:     conn,
-			send:     make(chan []byte, ws.config.SendBufferSize),
-			userID:   claims.UserId,
-			tokenExp: claims.ExpiresAt.UnixMicro(),
+			hub:            hub,
+			conn:           conn,
+			send:           make(chan []byte, ws.config.SendBufferSize),
+			userID:         claims.UserId,
+			tokenExp:       claims.ExpiresAt.UnixMicro(),
+			presenceClient: grpcPresenceClient,
 		}
 
 		hub.register <- client

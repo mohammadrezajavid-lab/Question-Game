@@ -1,21 +1,25 @@
 package websocket
 
 import (
+	"context"
 	"fmt"
 	"github.com/gorilla/websocket"
+	"golang.project/go-fundamentals/gameapp/adapter/presenceclient"
 	"golang.project/go-fundamentals/gameapp/logger"
+	"golang.project/go-fundamentals/gameapp/param/presenceparam"
 	"golang.project/go-fundamentals/gameapp/pkg/timestamp"
 	"sync"
 	"time"
 )
 
 type Client struct {
-	hub       *Hub
-	conn      *websocket.Conn
-	send      chan []byte
-	userID    uint
-	tokenExp  int64
-	closeOnce sync.Once
+	hub            *Hub
+	conn           *websocket.Conn
+	send           chan []byte
+	userID         uint
+	tokenExp       int64
+	closeOnce      sync.Once
+	presenceClient presenceclient.Client
 }
 
 func (c *Client) readPump() {
@@ -23,6 +27,9 @@ func (c *Client) readPump() {
 
 	for {
 		_, msg, err := c.conn.ReadMessage()
+		// TODO - fix msg
+		fmt.Println(string(msg))
+
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				logger.Warn(err, "read data from websocket error")
@@ -31,12 +38,14 @@ func (c *Client) readPump() {
 		}
 
 		if timestamp.Now() > c.tokenExp {
-			_ = c.conn.WriteMessage(websocket.TextMessage, []byte(`{"type":"token_expired"}`))
+			_ = c.conn.WriteMessage(websocket.TextMessage, []byte(`{"info":"token_expired"}`))
 			break
 		}
 
-		// TODO - grpc call to presence upsert
-		fmt.Println(string(msg))
+		ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+		if _, uErr := c.presenceClient.Upsert(ctx, presenceparam.NewUpsertPresenceRequest(c.userID, timestamp.Now())); uErr != nil {
+			logger.Warn(uErr, fmt.Sprintf("failed to upsert presence for user user_id: %d", c.userID))
+		}
 	}
 }
 
@@ -56,8 +65,8 @@ func (c *Client) Close() {
 	c.closeOnce.Do(func() {
 		logger.Info(fmt.Sprintf("Closing connection for user: %d", c.userID))
 		c.hub.unregister <- c
-		_ = c.conn.Close()
 		close(c.send)
+		_ = c.conn.Close()
 	})
 }
 
@@ -69,7 +78,7 @@ func (c *Client) monitorTokenExpiry() {
 		select {
 		case <-ticker.C:
 			if timestamp.Now() > c.tokenExp {
-				_ = c.conn.WriteMessage(websocket.TextMessage, []byte(`{"type":"token_expired"}`))
+				_ = c.conn.WriteMessage(websocket.TextMessage, []byte(`{"info":"token_expired"}`))
 				c.Close()
 				return
 			}

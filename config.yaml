@@ -70,6 +70,7 @@ ws_cfg:
     - "http://127.0.0.1:3000"
   send_buffer_size: 1024
   gracefully_shutdown_timeout: 10s
+  websocket_pattern: "/ws"
 
 metrics_cfg:
   host: "127.0.0.1"

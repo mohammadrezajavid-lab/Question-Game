@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"golang.project/go-fundamentals/gameapp/adapter/presenceclient"
 	"golang.project/go-fundamentals/gameapp/logger"
 	"golang.project/go-fundamentals/gameapp/pkg/jwt"
 	"net/http"
@@ -16,16 +17,18 @@ type Config struct {
 	AllowedOrigins            []string      `mapstructure:"allowed_origins_websocket"`
 	SendBufferSize            int           `mapstructure:"send_buffer_size"`
 	GracefullyShutdownTimeout time.Duration `mapstructure:"gracefully_shutdown_timeout"`
+	WebSocketPattern          string        `mapstructure:"websocket_pattern"`
 }
 
 type WebSocket struct {
-	config Config
-	Hub    *Hub
-	JwtCfg jwt.Config
-	Server *http.Server
+	config               Config
+	Hub                  *Hub
+	JwtCfg               jwt.Config
+	Server               *http.Server
+	presenceClientConfig presenceclient.Config
 }
 
-func NewWebSocket(cfg Config, jwtCfg jwt.Config) *WebSocket {
+func NewWebSocket(cfg Config, jwtCfg jwt.Config, presenceClientConfig presenceclient.Config) *WebSocket {
 	return &WebSocket{
 		config: cfg,
 		Hub:    NewHub(),
@@ -33,12 +36,13 @@ func NewWebSocket(cfg Config, jwtCfg jwt.Config) *WebSocket {
 		Server: &http.Server{
 			Addr: fmt.Sprintf("%s:%d", cfg.Host, cfg.Port),
 		},
+		presenceClientConfig: presenceClientConfig,
 	}
 }
 
 func (ws *WebSocket) ServeWs() {
 	router := http.NewServeMux()
-	router.HandleFunc("/ws", ws.SocketHandler(ws.Hub))
+	router.HandleFunc(ws.config.WebSocketPattern, ws.SocketHandler(ws.Hub))
 	ws.Server.Handler = router
 
 	go ws.Hub.Run()

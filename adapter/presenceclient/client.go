@@ -19,53 +19,48 @@ type Config struct {
 }
 type Client struct {
 	config Config
+	conn   *grpc.ClientConn
+	client presence.PresenceServiceClient
 }
 
-func NewClient(config Config) Client {
-	return Client{
-		config: config,
-	}
-}
-
-func (c Client) GetPresence(ctx context.Context, request presenceparam.GetPresenceRequest) (presenceparam.GetPresenceResponse, error) {
-
-	// TODO - what's the best practice for reliable communication - Retry for connection time out?!
-	// TODO - is it okay to create new connection for every method call?
-	client, grpcClientConn := c.definitionGrpcClient()
-	defer grpcClientConn.Close()
-
-	res, err := client.GetPresence(ctx, &presence.GetPresenceRequest{UserIds: slice.MapFromUintToUint64(request.UserIds)})
-	if err != nil {
-		return presenceparam.GetPresenceResponse{}, err
-	}
-
-	return protobufmapper.MapProtobufToGetPresenceResponse(res), nil
-}
-
-func (c Client) Upsert(ctx context.Context, request presenceparam.UpsertPresenceRequest) (presenceparam.UpsertPresenceResponse, error) {
-
-	// TODO - what's the best practice for reliable communication - Retry for connection time out?!
-	// TODO - is it okay to create new connection for every method call?
-	client, grpcClientConn := c.definitionGrpcClient()
-	defer grpcClientConn.Close()
-
-	res, err := client.Upsert(ctx, &presence.UpsertPresenceRequest{UserId: uint64(request.UserId), Timestamp: request.TimeStamp})
-	if err != nil {
-		return presenceparam.UpsertPresenceResponse{}, err
-	}
-
-	return presenceparam.NewUpsertPresenceResponse(res.Timestamp), nil
-}
-
-func (c Client) definitionGrpcClient() (presence.PresenceServiceClient, *grpc.ClientConn) {
-	target := fmt.Sprintf("%s:%d", c.config.Host, c.config.Port)
-	grpcConnection, err := grpc.Dial(target, grpc.WithInsecure())
+func NewClient(config Config) (Client, error) {
+	target := fmt.Sprintf("%s:%d", config.Host, config.Port)
+	// Establish the connection once.
+	grpcConnection, err := grpc.Dial(target, grpc.WithInsecure()) // Note: grpc.WithInsecure() is deprecated. Use credentials.NewTLS(&tls.Config{InsecureSkipVerify: true}) for testing if needed.
 	if err != nil {
 		metrics.FailedOpenPresenceClientGRPCConnCounter.Inc()
 		logger.Warn(err, "failed_open_grpc_connection")
+		return Client{}, err
 	}
 
 	client := presence.NewPresenceServiceClient(grpcConnection)
 
-	return client, grpcConnection
+	return Client{
+		config: config,
+		conn:   grpcConnection,
+		client: client,
+	}, nil
+}
+
+// Close Add a method to close the connection during shutdown
+func (c *Client) Close() {
+	if c.conn != nil {
+		c.conn.Close()
+	}
+}
+
+func (c *Client) Upsert(ctx context.Context, request presenceparam.UpsertPresenceRequest) (presenceparam.UpsertPresenceResponse, error) {
+	res, err := c.client.Upsert(ctx, &presence.UpsertPresenceRequest{UserId: uint64(request.UserId), Timestamp: request.TimeStamp})
+	if err != nil {
+		return presenceparam.UpsertPresenceResponse{}, err
+	}
+	return presenceparam.NewUpsertPresenceResponse(res.Timestamp), nil
+}
+
+func (c *Client) GetPresence(ctx context.Context, request presenceparam.GetPresenceRequest) (presenceparam.GetPresenceResponse, error) {
+	res, err := c.client.GetPresence(ctx, &presence.GetPresenceRequest{UserIds: slice.MapFromUintToUint64(request.UserIds)})
+	if err != nil {
+		return presenceparam.GetPresenceResponse{}, err
+	}
+	return protobufmapper.MapProtobufToGetPresenceResponse(res), err
 }

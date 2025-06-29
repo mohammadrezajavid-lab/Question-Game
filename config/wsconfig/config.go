@@ -2,6 +2,7 @@ package wsconfig
 
 import (
 	"github.com/spf13/viper"
+	"golang.project/go-fundamentals/gameapp/adapter/presenceclient"
 	"golang.project/go-fundamentals/gameapp/gateway/websocket"
 	"golang.project/go-fundamentals/gameapp/logger"
 	"golang.project/go-fundamentals/gameapp/pkg/jwt"
@@ -9,16 +10,18 @@ import (
 )
 
 type Config struct {
-	WSCfg     websocket.Config `mapstructure:"ws_cfg"`
-	JwtCfg    jwt.Config       `mapstructure:"jwt_cfg"`
-	LoggerCfg logger.Config    `mapstructure:"logger_cfg"`
+	WSCfg                 websocket.Config      `mapstructure:"ws_cfg"`
+	JwtCfg                jwt.Config            `mapstructure:"jwt_cfg"`
+	LoggerCfg             logger.Config         `mapstructure:"logger_cfg"`
+	GrpcPresenceClientCfg presenceclient.Config `mapstructure:"grpc_presence_client_cfg"`
 }
 
 func NewConfig() *Config {
 	return &Config{
-		JwtCfg:    jwt.Config{},
-		WSCfg:     websocket.Config{},
-		LoggerCfg: logger.Config{},
+		JwtCfg:                jwt.Config{},
+		WSCfg:                 websocket.Config{},
+		LoggerCfg:             logger.Config{},
+		GrpcPresenceClientCfg: presenceclient.Config{},
 	}
 }
 
@@ -44,6 +47,9 @@ func (c *Config) LoadConfig(host string, port int) *Config {
 		}
 		if uErr := viper.Sub("logger_cfg").Unmarshal(&c.LoggerCfg); uErr != nil {
 			logger.Fatal(uErr, "can't unmarshal logger_cfg config")
+		}
+		if uErr := viper.Sub("grpc_presence_client_cfg").Unmarshal(&c.GrpcPresenceClientCfg); uErr != nil {
+			logger.Fatal(uErr, "can't unmarshal grpc_presence_client_cfg config")
 		}
 	} else {
 		if uErr := viper.Unmarshal(c); uErr != nil {

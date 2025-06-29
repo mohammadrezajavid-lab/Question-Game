@@ -8,6 +8,7 @@ import (
 	"golang.project/go-fundamentals/gameapp/gateway/websocket"
 	"golang.project/go-fundamentals/gameapp/logger"
 	"golang.project/go-fundamentals/gameapp/pkg/infomessage"
+	"os"
 	"os/signal"
 	"sync"
 )
@@ -20,22 +21,22 @@ func main() {
 	flag.IntVar(&port, "port", 0, "webSocket http server port")
 	flag.Parse()
 
-	wsCfg := wsconfig.NewConfig().LoadConfig(host, port)
+	allConfig := wsconfig.NewConfig().LoadConfig(host, port)
 
-	logger.InitLogger(wsCfg.LoggerCfg)
+	logger.InitLogger(allConfig.LoggerCfg)
 
-	logger.Info(fmt.Sprintf("webSocket config: %v", wsCfg))
+	logger.Info(fmt.Sprintf("webSocket config: %v", allConfig))
 
-	ws := websocket.NewWebSocket(wsCfg.WSCfg, wsCfg.JwtCfg)
+	ws := websocket.NewWebSocket(allConfig.WSCfg, allConfig.JwtCfg, allConfig.GrpcPresenceClientCfg)
 	go ws.ServeWs()
 
-	ctx, stop := signal.NotifyContext(context.Background())
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
 	defer stop()
 	<-ctx.Done()
 
 	logger.Info(infomessage.InfoMsgShuttingDownGracefully)
 
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), wsCfg.WSCfg.GracefullyShutdownTimeout)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), allConfig.WSCfg.GracefullyShutdownTimeout)
 	defer cancel()
 
 	var shutdownWG sync.WaitGroup

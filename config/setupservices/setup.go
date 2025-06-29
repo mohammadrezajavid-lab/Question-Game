@@ -47,13 +47,13 @@ func New(config httpservercfg.Config) *SetupServices {
 
 	redisAdapter := redis.New(config.RedisCfg)
 
-	presenceClient := presenceclient.NewClient(config.GrpcPresenceClientCfg)
+	presenceClient, _ := presenceclient.NewClient(config.GrpcPresenceClientCfg)
 	redisPublisher := publisher.NewPublish(config.PublisherCfg, redisAdapter)
 
 	matchingSvc := matchingservice.NewService(
 		config.MatchingCfg,
 		redismatching.NewRedisDb(redisAdapter, config.MatchingRepoCfg),
-		presenceClient,
+		&presenceClient,
 		redisPublisher,
 	)
 	matchingValidator := matchingvalidator.NewValidator()
