@@ -1,0 +1,20 @@
+{
+  "methodConfig": [
+    {
+      "name": [
+        {
+          "service": "presence.PresenceService"
+        }
+      ],
+      "retryPolicy": {
+        "MaxAttempts": 4,
+        "InitialBackoff": "0.1s",
+        "MaxBackoff": "1s",
+        "BackoffMultiplier": 2.0,
+        "RetryableStatusCodes": [
+          "UNAVAILABLE"
+        ]
+      }
+    }
+  ]
+}

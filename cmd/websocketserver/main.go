@@ -27,7 +27,10 @@ func main() {
 
 	logger.Info(fmt.Sprintf("webSocket config: %v", allConfig))
 
-	ws := websocket.NewWebSocket(allConfig.WSCfg, allConfig.JwtCfg, allConfig.GrpcPresenceClientCfg)
+	ws, sErr := websocket.NewWebSocket(allConfig.WSCfg, allConfig.JwtCfg, allConfig.GrpcPresenceClientCfg)
+	if sErr != nil {
+		logger.Fatal(sErr, "")
+	}
 	go ws.ServeWs()
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)

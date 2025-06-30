@@ -21,14 +21,20 @@ type Config struct {
 }
 
 type WebSocket struct {
-	config               Config
-	Hub                  *Hub
-	JwtCfg               jwt.Config
-	Server               *http.Server
-	presenceClientConfig presenceclient.Config
+	config         Config
+	Hub            *Hub
+	JwtCfg         jwt.Config
+	Server         *http.Server
+	presenceClient presenceclient.Client
 }
 
-func NewWebSocket(cfg Config, jwtCfg jwt.Config, presenceClientConfig presenceclient.Config) *WebSocket {
+func NewWebSocket(cfg Config, jwtCfg jwt.Config, presenceClientConfig presenceclient.Config) (*WebSocket, error) {
+
+	pClient, err := presenceclient.NewClient(presenceClientConfig)
+	if err != nil {
+		return nil, fmt.Errorf("could not create presence client: %w", err)
+	}
+
 	return &WebSocket{
 		config: cfg,
 		Hub:    NewHub(),
@@ -36,8 +42,8 @@ func NewWebSocket(cfg Config, jwtCfg jwt.Config, presenceClientConfig presencecl
 		Server: &http.Server{
 			Addr: fmt.Sprintf("%s:%d", cfg.Host, cfg.Port),
 		},
-		presenceClientConfig: presenceClientConfig,
-	}
+		presenceClient: pClient,
+	}, nil
 }
 
 func (ws *WebSocket) ServeWs() {
@@ -56,6 +62,9 @@ func (ws *WebSocket) ServeWs() {
 
 func (ws *WebSocket) Shutdown(ctx context.Context) error {
 	logger.Info("Shutting down WebSocket Gateway start...")
+
+	ws.presenceClient.Close()
+	logger.Info("Presence client connection closed")
 
 	ws.Hub.Close()
 	logger.Info("WebSocket Hub has been shut down")

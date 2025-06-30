@@ -10,6 +10,7 @@ import (
 	"golang.project/go-fundamentals/gameapp/pkg/protobufmapper"
 	"golang.project/go-fundamentals/gameapp/pkg/slice"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 type Config struct {
@@ -25,19 +26,38 @@ type Client struct {
 
 func NewClient(config Config) (Client, error) {
 	target := fmt.Sprintf("%s:%d", config.Host, config.Port)
-	// Establish the connection once.
-	grpcConnection, err := grpc.Dial(target, grpc.WithInsecure()) // Note: grpc.WithInsecure() is deprecated. Use credentials.NewTLS(&tls.Config{InsecureSkipVerify: true}) for testing if needed.
+
+	// --- Retry Policy Definition ---
+	retryPolicy := `{
+	  "methodConfig": [{
+	    "name": [{"service": "presence.PresenceService"}],
+	    "retryPolicy": {
+	      "MaxAttempts": 4,
+	      "InitialBackoff": "0.1s",
+	      "MaxBackoff": "1s",
+	      "BackoffMultiplier": 2.0,
+	      "RetryableStatusCodes": [ "UNAVAILABLE" ]
+	    }
+	  }]
+	}`
+
+	conn, err := grpc.Dial(
+		target,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithDefaultServiceConfig(retryPolicy),
+	)
+
 	if err != nil {
 		metrics.FailedOpenPresenceClientGRPCConnCounter.Inc()
-		logger.Warn(err, "failed_open_grpc_connection")
+		logger.Error(err, "failed to dial gRPC server")
 		return Client{}, err
 	}
 
-	client := presence.NewPresenceServiceClient(grpcConnection)
+	client := presence.NewPresenceServiceClient(conn)
 
 	return Client{
 		config: config,
-		conn:   grpcConnection,
+		conn:   conn,
 		client: client,
 	}, nil
 }
