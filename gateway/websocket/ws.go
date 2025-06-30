@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"golang.project/go-fundamentals/gameapp/adapter/presenceclient"
+	"golang.project/go-fundamentals/gameapp/gateway/websocket/middleware"
 	"golang.project/go-fundamentals/gameapp/logger"
 	"golang.project/go-fundamentals/gameapp/pkg/jwt"
 	"net/http"
@@ -49,7 +50,7 @@ func NewWebSocket(cfg Config, jwtCfg jwt.Config, presenceClientConfig presencecl
 func (ws *WebSocket) ServeWs() {
 	router := http.NewServeMux()
 	router.HandleFunc(ws.config.WebSocketPattern, ws.SocketHandler(ws.Hub))
-	ws.Server.Handler = router
+	ws.Server.Handler = middleware.LoggerMiddleware(router)
 
 	go ws.Hub.Run()
 
