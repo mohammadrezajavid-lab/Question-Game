@@ -5,8 +5,6 @@ const (
 	DefaultConfigFileType = "yaml"
 	DefaultConfigFilePath = "."
 
-	DefaultSignMethod = "HS256"
-
 	MigrateDialect           = "mysql"
 	AuthMiddlewareContextKey = "claims"
 )

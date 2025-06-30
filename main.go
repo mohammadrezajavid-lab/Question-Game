@@ -103,6 +103,7 @@ func main() {
 	shutdownWg.Add(1)
 	go func() {
 		if config.AppCfg.DebugMod {
+			defer shutdownWg.Done()
 			if err := profilingServer.Shutdown(shutdownCtx); err != nil {
 				logger.Error(err, errormessage.ErrorMsgPprofServerShutdown)
 			}

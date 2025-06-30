@@ -24,10 +24,11 @@ func (ws *WebSocket) NewUpgrader() websocket.Upgrader {
 func (ws *WebSocket) SocketHandler(hub *Hub) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		newJwt := jwt.NewJWT(ws.JwtCfg)
-		tokenStr := newJwt.ExtractTokenFromHeader(r.Header.Get("Authorization"))
+		tokenStr := r.Header.Get("Authorization")
+
 		claims, err := newJwt.ParseJWT(tokenStr)
 		if err != nil {
-			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
 			return
 		}
 
@@ -35,7 +36,7 @@ func (ws *WebSocket) SocketHandler(hub *Hub) http.HandlerFunc {
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
 			logger.Error(err, "WebSocket upgrade failed")
-			http.Error(w, "could not open websocket connection", http.StatusBadRequest)
+			http.Error(w, `{"error":"could not open websocket connection"}`, http.StatusBadRequest)
 			return
 		}
 

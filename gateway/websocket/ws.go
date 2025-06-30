@@ -75,6 +75,8 @@ func (ws *WebSocket) Shutdown(ctx context.Context) error {
 		return err
 	}
 
+	close(ws.Hub.quit)
+	
 	logger.Info("WebSocket Gateway gracefully stopped")
 	return nil
 }

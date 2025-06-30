@@ -63,7 +63,7 @@ httpserver_cfg:
   port: 8080
 
 ws_cfg:
-  host: "127.0.0.1"
+  host: ""
   port: 8090
   allowed_origins_websocket:
     - "http://localhost:3000"

@@ -2,7 +2,6 @@ package jwt
 
 import (
 	"github.com/golang-jwt/jwt/v4"
-	"golang.project/go-fundamentals/gameapp/config/httpservercfg/constant"
 	"golang.project/go-fundamentals/gameapp/entity"
 	"strings"
 	"time"
@@ -40,14 +39,8 @@ func NewJWT(config Config) *JWT {
 	return &JWT{Config: config}
 }
 
-func (j *JWT) ExtractTokenFromHeader(authHeader string) string {
-	if strings.HasPrefix(authHeader, "Bearer ") {
-		return strings.TrimPrefix(authHeader, "Bearer ")
-	}
-	return ""
-}
-
 func (j *JWT) ParseJWT(tokenString string) (*Claims, error) {
+	tokenString = strings.Replace(tokenString, `Bearer `, "", 1)
 
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(j.Config.SignKey), nil
@@ -65,10 +58,8 @@ func (j *JWT) ParseJWT(tokenString string) (*Claims, error) {
 
 func (j *JWT) CreateAccessToken(userId uint, role entity.Role) (string, error) {
 
-	// create a new jwt and set signer SHA 256 in jwt Header
-	t := jwt.New(jwt.GetSigningMethod(constant.DefaultSignMethod))
+	t := jwt.New(jwt.GetSigningMethod(j.Config.SignMethod))
 
-	// set our claims
 	t.Claims = NewClaims(
 		jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(j.Config.AccessExpirationTime))},
 		j.Config.AccessSubject,
@@ -81,10 +72,8 @@ func (j *JWT) CreateAccessToken(userId uint, role entity.Role) (string, error) {
 
 func (j *JWT) CreateRefreshToken(userId uint, role entity.Role) (string, error) {
 
-	// create a new jwt and set signer SHA 256 in jwt Header
-	t := jwt.New(jwt.GetSigningMethod(constant.DefaultSignMethod))
+	t := jwt.New(jwt.GetSigningMethod(j.Config.SignMethod))
 
-	// set our claims
 	t.Claims = NewClaims(
 		jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(j.Config.RefreshExpirationTime))},
 		j.Config.RefreshSubject,
@@ -93,5 +82,4 @@ func (j *JWT) CreateRefreshToken(userId uint, role entity.Role) (string, error) 
 	)
 
 	return t.SignedString([]byte(j.Config.SignKey))
-
 }

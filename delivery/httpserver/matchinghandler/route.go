@@ -11,5 +11,5 @@ func (h *MatchingHandler) SetRoute(e *echo.Echo) {
 
 	userGroup := e.Group("/matching-player/")
 
-	userGroup.POST("add-to-waiting-list", h.addToWaitingList, newMiddleware.AuthMiddleware(), newMiddleware.PresenceUpsert())
+	userGroup.POST("add-to-waiting-list", h.addToWaitingList, newMiddleware.AuthMiddleware())
 }

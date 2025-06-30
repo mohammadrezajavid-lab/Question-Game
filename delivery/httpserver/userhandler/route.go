@@ -13,5 +13,5 @@ func (h *UserHandler) SetRoute(e *echo.Echo) {
 
 	userGroup.POST("register", h.userRegisterHandler)
 	userGroup.POST("login", h.userLoginHandler)
-	userGroup.GET("profile", h.userProfileHandler, newMiddleware.AuthMiddleware(), newMiddleware.PresenceUpsert())
+	userGroup.GET("profile", h.userProfileHandler, newMiddleware.AuthMiddleware())
 }
