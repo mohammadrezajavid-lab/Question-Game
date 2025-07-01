@@ -27,5 +27,6 @@ const (
 	ErrorMsgShutdownSch                   = "not successfully shutdown scheduler"
 	ErrorMsgFailedStartMatchWaitedUserJob = "failed to create matchWaitedUser job"
 	ErrorMsgInvalidJWT                    = "JWT token missing or invalid"
+	ErrorMsgInvalidRefreshToken           = "Refresh Token missing or invalid"
 	ErrorMsgEmptyJWT                      = "JWT Token is Empty"
 )

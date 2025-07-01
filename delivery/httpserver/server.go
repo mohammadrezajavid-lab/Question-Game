@@ -7,6 +7,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"golang.project/go-fundamentals/gameapp/adapter/presenceclient"
 	"golang.project/go-fundamentals/gameapp/config/httpservercfg"
+	"golang.project/go-fundamentals/gameapp/delivery/httpserver/authhandler"
 	"golang.project/go-fundamentals/gameapp/delivery/httpserver/backofficeuserhandler"
 	"golang.project/go-fundamentals/gameapp/delivery/httpserver/matchinghandler"
 	httpServerMiddleware "golang.project/go-fundamentals/gameapp/delivery/httpserver/middleware"
@@ -29,6 +30,7 @@ type Server struct {
 	userHandler           userhandler.UserHandler
 	backOfficeUserHandler backofficeuserhandler.BackOfficeUserHandler
 	matchingHandler       matchinghandler.MatchingHandler
+	authHandler           authhandler.AuthHandler
 	router                *echo.Echo
 }
 
@@ -42,6 +44,7 @@ func New(
 	matchingSvc matchingservice.Service,
 	matchingValidator matchingvalidator.Validator,
 	presenceClient presenceclient.Client,
+	authHandler authhandler.AuthHandler,
 ) *Server {
 
 	return &Server{
@@ -49,6 +52,7 @@ func New(
 		userHandler:           userhandler.NewHandler(userSvc, authSvc, authorizationSvc, userValidator, presenceClient),
 		backOfficeUserHandler: backofficeuserhandler.NewHandler(backOfficeUserSvc, authSvc, authorizationSvc, userValidator, presenceClient),
 		matchingHandler:       matchinghandler.NewHandler(authSvc, authorizationSvc, matchingSvc, matchingValidator, presenceClient),
+		authHandler:           authHandler,
 		router:                echo.New(),
 	}
 }
@@ -69,6 +73,7 @@ func (s *Server) Serve() {
 	s.userHandler.SetRoute(s.router)
 	s.backOfficeUserHandler.SetRoute(s.router)
 	s.matchingHandler.SetRoute(s.router)
+	s.authHandler.SetRoute(s.router)
 
 	serverAddress := fmt.Sprintf("%s:%d", s.config.ServerCfg.Host, s.config.ServerCfg.Port)
 	if err := s.router.Start(serverAddress); err != nil && errors.Is(err, http.ErrServerClosed) {

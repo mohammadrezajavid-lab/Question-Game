@@ -5,6 +5,7 @@ import (
 	"golang.project/go-fundamentals/gameapp/adapter/publisher"
 	"golang.project/go-fundamentals/gameapp/adapter/redis"
 	"golang.project/go-fundamentals/gameapp/config/httpservercfg"
+	"golang.project/go-fundamentals/gameapp/delivery/httpserver/authhandler"
 	"golang.project/go-fundamentals/gameapp/pkg/jwt"
 	"golang.project/go-fundamentals/gameapp/repository/mysql"
 	"golang.project/go-fundamentals/gameapp/repository/mysql/accesscontrolmysql"
@@ -28,6 +29,7 @@ type SetupServices struct {
 	MatchingSvc       matchingservice.Service
 	MatchingValidator matchingvalidator.Validator
 	PresenceClient    presenceclient.Client
+	AuthHandler       authhandler.AuthHandler
 }
 
 func New(config httpservercfg.Config) *SetupServices {
@@ -58,6 +60,9 @@ func New(config httpservercfg.Config) *SetupServices {
 	)
 	matchingValidator := matchingvalidator.NewValidator()
 
+	jwt := jwt.NewJWT(config.JwtCfg)
+	authHandler := authhandler.New(authSvc, jwt)
+
 	return &SetupServices{
 		AuthSvc:           authSvc,
 		AuthorizationSvc:  authorizationSvc,
@@ -67,5 +72,6 @@ func New(config httpservercfg.Config) *SetupServices {
 		MatchingSvc:       matchingSvc,
 		MatchingValidator: matchingValidator,
 		PresenceClient:    presenceClient,
+		AuthHandler:       authHandler,
 	}
 }

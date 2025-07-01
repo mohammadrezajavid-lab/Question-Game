@@ -50,6 +50,7 @@ func main() {
 		setupSvc.MatchingSvc,
 		setupSvc.MatchingValidator,
 		setupSvc.PresenceClient,
+		setupSvc.AuthHandler,
 	)
 	metricServer := metricsserver.NewMetricsServer(config.MetricsCfg)
 

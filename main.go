@@ -56,6 +56,7 @@ func main() {
 		setupSvc.MatchingSvc,
 		setupSvc.MatchingValidator,
 		setupSvc.PresenceClient,
+		setupSvc.AuthHandler,
 	)
 
 	go server.Serve()
