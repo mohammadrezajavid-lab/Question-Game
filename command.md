@@ -44,3 +44,8 @@ go tool pprof -http=:8090 cpu.prof
 ```bash
 go tool pprof -http=:8090 http://127.0.0.1:2111/debug/pprof/heap
 ```
+
+- Test WebSocket
+```bash
+ websocat --header="Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTE0MzcwMjAsIlN1YmplY3QiOiJhdCIsInVzZXJfaWQiOjIsInJvbGUiOjF9.vwc5RRE_yOhVy-o9n7aSJ5cmCG5sRc9GztByZHUC1q8 --header="Origin: http://127.0.0.1:3000" ws://172.20.10.2:8090/ws
+```

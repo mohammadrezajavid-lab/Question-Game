@@ -37,10 +37,8 @@ func (h *Hub) Run() {
 // Close gracefully shuts down the hub by closing all client connections
 // and stopping the hub's run loop.
 func (h *Hub) Close() {
-	close(h.quit)
 
 	var wg sync.WaitGroup
-
 	for client := range h.clients {
 		wg.Add(1)
 		go func(c *Client) {
@@ -50,4 +48,5 @@ func (h *Hub) Close() {
 	}
 
 	wg.Wait()
+	close(h.quit)
 }

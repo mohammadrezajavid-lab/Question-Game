@@ -8,6 +8,7 @@ import (
 	"golang.project/go-fundamentals/gameapp/logger"
 	"golang.project/go-fundamentals/gameapp/param/presenceparam"
 	"golang.project/go-fundamentals/gameapp/pkg/timestamp"
+	"strings"
 	"sync"
 	"time"
 )
@@ -27,8 +28,6 @@ func (c *Client) readPump() {
 
 	for {
 		_, msg, err := c.conn.ReadMessage()
-		// TODO - fix msg
-		fmt.Println(string(msg))
 
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
@@ -42,10 +41,17 @@ func (c *Client) readPump() {
 			break
 		}
 
+		if strings.TrimSpace(string(msg)) != `{"event":"heartbeat"}` {
+			logger.Info("invalid heartbeat message")
+			continue
+		}
+
 		ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 		if _, uErr := c.presenceClient.Upsert(ctx, presenceparam.NewUpsertPresenceRequest(c.userID, timestamp.Now())); uErr != nil {
 			logger.Warn(uErr, fmt.Sprintf("failed to upsert presence for user user_id: %d", c.userID))
 		}
+
+		logger.Info(fmt.Sprintf("recived heartbeat message as user_id: %d", c.userID))
 	}
 }
 
@@ -65,7 +71,6 @@ func (c *Client) Close() {
 	c.closeOnce.Do(func() {
 		logger.Info(fmt.Sprintf("Closing connection for user: %d", c.userID))
 		c.hub.unregister <- c
-		close(c.send)
 		_ = c.conn.Close()
 	})
 }
