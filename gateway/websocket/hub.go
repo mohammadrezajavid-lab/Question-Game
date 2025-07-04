@@ -1,6 +1,9 @@
 package websocket
 
-import "sync"
+import (
+	"golang.project/go-fundamentals/gameapp/metrics"
+	"sync"
+)
 
 type Hub struct {
 	clients    map[*Client]bool
@@ -23,11 +26,14 @@ func (h *Hub) Run() {
 		select {
 		case client := <-h.register:
 			h.clients[client] = true
+			metrics.UserOnlineCounter.Inc()
 		case client := <-h.unregister:
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)
 				close(client.send)
+				metrics.UserOnlineCounter.Dec()
 			}
+
 		case <-h.quit:
 			return
 		}
@@ -48,5 +54,6 @@ func (h *Hub) Close() {
 	}
 
 	wg.Wait()
+	metrics.UserOnlineCounter.Set(0)
 	close(h.quit)
 }

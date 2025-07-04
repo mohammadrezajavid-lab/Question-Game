@@ -16,11 +16,11 @@ var FailedPublishedEventCounter = prometheus.NewCounter(
 	},
 )
 
-var PublishedEventCounter = prometheus.NewCounter(
+var PublishedEventCounter = prometheus.NewCounterVec(
 	prometheus.CounterOpts{
-		Name: "published_event",
+		Name: "published_event_total",
 		Help: "Total number of succeed published event",
-	},
+	}, []string{"event_name"},
 )
 
 var RedisRequestsCounter = prometheus.NewCounterVec(

@@ -2,6 +2,7 @@ package publisher
 
 import (
 	"context"
+	"github.com/prometheus/client_golang/prometheus"
 	"golang.project/go-fundamentals/gameapp/adapter/redis"
 	"golang.project/go-fundamentals/gameapp/logger"
 	"golang.project/go-fundamentals/gameapp/metrics"
@@ -33,5 +34,5 @@ func (p Publish) PublishEvent(event string, payload interface{}) {
 		logger.Warn(err, "failed_published_event")
 	}
 
-	metrics.PublishedEventCounter.Inc()
+	metrics.PublishedEventCounter.With(prometheus.Labels{"event_name": event}).Inc()
 }

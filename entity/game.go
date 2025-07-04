@@ -15,22 +15,33 @@ type Player struct {
 	Score   uint
 	Answers []PlayerAnswer
 }
-type Game struct {
-	Id         uint
-	Category   Category
-	QuestionId []uint
-	PlayerIds  []uint
-	WinnerId   uint
-	StartTime  time.Time
+
+func NewPlayer(userId uint, gameId uint) Player {
+	return Player{
+		Id:      0,
+		UserId:  userId,
+		GameId:  gameId,
+		Score:   0,
+		Answers: nil,
+	}
 }
 
-func NewGame(id uint, category Category) *Game {
-	return &Game{
-		Id:         id,
-		Category:   category,
-		QuestionId: nil,
-		PlayerIds:  nil,
-		WinnerId:   0,
-		StartTime:  time.Now(),
+type Game struct {
+	Id          uint
+	Category    Category
+	QuestionIds []uint
+	PlayerIds   []uint
+	WinnerId    uint
+	StartTime   time.Time
+}
+
+func NewGame(id uint, category Category) Game {
+	return Game{
+		Id:          id,
+		Category:    category,
+		QuestionIds: nil,
+		PlayerIds:   nil,
+		WinnerId:    0,
+		StartTime:   time.Now(),
 	}
 }

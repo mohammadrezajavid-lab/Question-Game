@@ -12,7 +12,6 @@ const (
 func (p PossibleAnswerChoice) IsValid() bool {
 
 	if p >= A && p <= D {
-
 		return true
 	}
 
@@ -49,7 +48,7 @@ type Question struct {
 	PossibleAnswers []PossibleAnswer
 	CorrectAnswer   uint // id possibleAnswer
 	Difficulty      QuestionDifficulty
-	CategoryId      uint
+	Category        Category
 }
 
 func NewQuestion(id uint, text string) *Question {
@@ -59,6 +58,6 @@ func NewQuestion(id uint, text string) *Question {
 		PossibleAnswers: nil,
 		CorrectAnswer:   0,
 		Difficulty:      0,
-		CategoryId:      0,
+		Category:        "",
 	}
 }
