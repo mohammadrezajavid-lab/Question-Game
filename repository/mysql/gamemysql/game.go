@@ -9,9 +9,9 @@ import (
 	"golang.project/go-fundamentals/gameapp/pkg/richerror"
 )
 
-func (d *DataBase) RegisterGame(game entity.Game) (entity.Game, error) {
+func (d *DataBase) CreateGame(game entity.Game) (entity.Game, error) {
 
-	const operation = "gamemysql.RegisterGame"
+	const operation = "gamemysql.CreateGame"
 	const queryType = "insert"
 
 	var result, eErr = d.dataBase.MysqlConnection.Exec(
@@ -40,9 +40,9 @@ func (d *DataBase) RegisterGame(game entity.Game) (entity.Game, error) {
 	return game, nil
 }
 
-func (d *DataBase) RegisterPlayer(player entity.Player) (entity.Player, error) {
+func (d *DataBase) CreatePlayer(player entity.Player) (entity.Player, error) {
 
-	const operation = "gamemysql.RegisterPlayer"
+	const operation = "gamemysql.CreatePlayer"
 	const queryType = "insert"
 
 	var result, eErr = d.dataBase.MysqlConnection.Exec(

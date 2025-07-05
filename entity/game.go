@@ -35,9 +35,9 @@ type Game struct {
 	StartTime   time.Time
 }
 
-func NewGame(id uint, category Category) Game {
+func NewGame(category Category) Game {
 	return Game{
-		Id:          id,
+		Id:          0,
 		Category:    category,
 		QuestionIds: nil,
 		PlayerIds:   nil,
