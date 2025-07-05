@@ -37,7 +37,7 @@ type Service struct {
 	config         Config
 	repo           Repository
 	presenceClient PresenceClient
-	publisher      broker.Published
+	publisher      broker.Publisher
 }
 
 func (s *Service) GetConfig() Config {
@@ -48,7 +48,7 @@ func (s *Service) GetConfig() Config {
 	return Config{}
 }
 
-func NewService(config Config, repo Repository, presenceClient PresenceClient, publisher broker.Published) Service {
+func NewService(config Config, repo Repository, presenceClient PresenceClient, publisher broker.Publisher) Service {
 	return Service{
 		config:         config,
 		repo:           repo,
@@ -133,7 +133,7 @@ func (s *Service) MatchWaitedUsers(ctx context.Context) error {
 				metrics.GoActiveGoroutinesServiceGauge.With(prometheus.Labels{"service": "publish_event"}).Inc()
 				go func() {
 					defer metrics.GoActiveGoroutinesServiceGauge.With(prometheus.Labels{"service": "publish_event"}).Dec()
-					s.publisher.PublishEvent(entity.MatchingUsersMatchedEvent, payload)
+					s.publisher.Published(entity.MatchingUsersMatchedEvent, payload)
 				}()
 
 				allUsersToRemoved = append(allUsersToRemoved, mu.UserIds...)

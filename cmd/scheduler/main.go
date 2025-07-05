@@ -44,13 +44,13 @@ func main() {
 func setUpSvc(config httpservercfg.Config) matchingservice.Service {
 	redisAdapter := redis.New(config.RedisCfg)
 
-	presenceClient := presenceclient.NewClient(config.GrpcPresenceClientCfg)
+	presenceClient, _ := presenceclient.NewClient(config.GrpcPresenceClientCfg)
 	redisPublisher := publisher.NewPublish(config.PublisherCfg, redisAdapter)
 
 	return matchingservice.NewService(
 		config.MatchingCfg,
 		redismatching.NewRedisDb(redisAdapter, config.MatchingRepoCfg),
-		presenceClient,
+		&presenceClient,
 		redisPublisher,
 	)
 }

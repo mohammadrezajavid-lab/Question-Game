@@ -1,5 +1,11 @@
 package broker
 
-type Published interface {
-	PublishEvent(event string, payload interface{})
+import "context"
+
+type Publisher interface {
+	Published(event string, payload interface{})
+}
+
+type Subscriber interface {
+	Subscribed(ctx context.Context, topic string) (<-chan string, error)
 }

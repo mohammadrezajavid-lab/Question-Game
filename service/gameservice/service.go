@@ -16,42 +16,51 @@ type Repository interface {
 }
 
 type Service struct {
-	rda       redis.Adapter
-	gameRepo  Repository
-	publisher broker.Published
+	rda        redis.Adapter
+	gameRepo   Repository
+	publisher  broker.Publisher
+	subscriber broker.Subscriber
 }
 
 func (s *Service) Start() {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	sub := s.rda.GetClient().Subscribe(ctx, entity.MatchingUsersMatchedEvent)
-	defer sub.Close()
-	//var mu = entity.NewMatchedUsers("", nil)
-	for msg := range sub.Channel() {
-		// decode
-		mu := protobufencodedecode.DecodeMatchingWaitedUsersEvent(msg.Payload)
-
-		// Create newGame
-		newGame, rErr := s.gameRepo.CreateGame(entity.NewGame(mu.Category))
-		if rErr != nil {
-			logger.Error(rErr, rErr.Error())
-		}
-
-		// Create players for game
-		playerIds, pErr := s.createPlayers(mu.UserIds, newGame.Id)
-		if pErr != nil {
-			logger.Error(pErr, pErr.Error())
-		}
-		newGame.PlayerIds = playerIds
-
-		// TODO - انتخاب بک مجموعه سوال مثلا 15 تایی از استخر سوال ها با توجه به دسته و سطح سختی یا آسانی تعیین شده توسط کاربر
-
-		// Published CreatedGameEvent
-		cg := entity.NewCreatedGame(newGame.Id, newGame.PlayerIds, newGame.QuestionIds)
-		payload := protobufencodedecode.EncodeGameSvcCreatedGameEvent(cg)
-		s.publisher.PublishEvent(entity.GameSvcCreatedGameEvent, payload)
+	msgCh, err := s.subscriber.Subscribed(ctx, entity.MatchingUsersMatchedEvent)
+	if err != nil {
+		logger.Fatal(err, "failed to subscribe to broker topic")
 	}
+
+	for msg := range msgCh {
+		go s.handleMatchedUsers(msg)
+	}
+}
+
+func (s *Service) handleMatchedUsers(payload string) {
+	// decode
+	mu := protobufencodedecode.DecodeMatchingWaitedUsersEvent(payload)
+
+	// Create newGame
+	newGame, rErr := s.gameRepo.CreateGame(entity.NewGame(mu.Category))
+	if rErr != nil {
+		logger.Error(rErr, "failed to create game")
+		return
+	}
+
+	// Create players for game
+	playerIds, pErr := s.createPlayers(mu.UserIds, newGame.Id)
+	if pErr != nil {
+		logger.Error(pErr, "failed to create player")
+		return
+	}
+	newGame.PlayerIds = playerIds
+
+	// TODO - انتخاب بک مجموعه سوال مثلا 15 تایی از استخر سوال ها با توجه به دسته و سطح سختی یا آسانی تعیین شده توسط کاربر
+
+	// Published CreatedGameEvent
+	cg := entity.NewCreatedGame(newGame.Id, newGame.PlayerIds, newGame.QuestionIds)
+	payloadCg := protobufencodedecode.EncodeGameSvcCreatedGameEvent(cg)
+	s.publisher.Published(entity.GameSvcCreatedGameEvent, payloadCg)
 }
 
 func (s *Service) createPlayers(userIds []uint, gameId uint) ([]uint, error) {
