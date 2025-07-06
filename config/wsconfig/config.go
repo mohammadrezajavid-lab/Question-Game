@@ -34,7 +34,6 @@ func (c *Config) LoadConfig(host string, port int) *Config {
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(".")
 
-	//var cfg Config
 	if err := viper.ReadInConfig(); err != nil {
 		logger.Warn(err, "config file not found, using environment variables")
 

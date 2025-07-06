@@ -20,14 +20,14 @@ type Config struct {
 }
 
 type Service struct {
-	brokerAdapter redis.Adapter
+	brokerAdapter *redis.Adapter
 	gameRepo      Repository
 	publisher     broker.Publisher
 	subscriber    broker.Subscriber
 	config        Config
 }
 
-func New(brokerAdapter redis.Adapter, gameRepo Repository, publisher broker.Publisher, subscriber broker.Subscriber, config Config) Service {
+func New(brokerAdapter *redis.Adapter, gameRepo Repository, publisher broker.Publisher, subscriber broker.Subscriber, config Config) Service {
 	return Service{
 		brokerAdapter: brokerAdapter,
 		gameRepo:      gameRepo,
@@ -44,8 +44,6 @@ func (s *Service) Start(ctx context.Context, wg *sync.WaitGroup) {
 	s.dispatcher(ctx)
 
 	logger.Info("Shutting down game service...")
-
-	// TODO - implement s.shutdown method
 }
 
 func (s *Service) dispatcher(ctx context.Context) {

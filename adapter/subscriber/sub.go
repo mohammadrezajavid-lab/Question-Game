@@ -14,9 +14,10 @@ type Subscriber struct {
 	config  Config
 }
 
-func NewSubscriber(adapter *redis.Adapter) Subscriber {
+func NewSubscriber(adapter *redis.Adapter, config Config) Subscriber {
 	return Subscriber{
 		adapter: adapter,
+		config:  config,
 	}
 }
 

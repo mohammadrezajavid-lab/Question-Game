@@ -18,7 +18,7 @@ type Publisher struct {
 	adapter *redis.Adapter
 }
 
-func NewPublish(config Config, adapter *redis.Adapter) Publisher {
+func NewPublisher(config Config, adapter *redis.Adapter) Publisher {
 	return Publisher{
 		config:  config,
 		adapter: adapter,

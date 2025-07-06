@@ -45,7 +45,7 @@ func setUpSvc(config httpservercfg.Config) matchingservice.Service {
 	redisAdapter := redis.New(config.RedisCfg)
 
 	presenceClient, _ := presenceclient.NewClient(config.GrpcPresenceClientCfg)
-	redisPublisher := publisher.NewPublish(config.PublisherCfg, redisAdapter)
+	redisPublisher := publisher.NewPublisher(config.PublisherCfg, redisAdapter)
 
 	return matchingservice.NewService(
 		config.MatchingCfg,

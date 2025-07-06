@@ -7,6 +7,7 @@ import (
 	"golang.project/go-fundamentals/gameapp/adapter/presenceclient"
 	"golang.project/go-fundamentals/gameapp/adapter/publisher"
 	"golang.project/go-fundamentals/gameapp/adapter/redis"
+	"golang.project/go-fundamentals/gameapp/adapter/subscriber"
 	"golang.project/go-fundamentals/gameapp/config/httpservercfg/constant"
 	"golang.project/go-fundamentals/gameapp/delivery/metricsserver"
 	"golang.project/go-fundamentals/gameapp/delivery/pprofserver"
@@ -16,6 +17,7 @@ import (
 	"golang.project/go-fundamentals/gameapp/repository/mysql"
 	"golang.project/go-fundamentals/gameapp/repository/redis/redismatching"
 	"golang.project/go-fundamentals/gameapp/scheduler"
+	"golang.project/go-fundamentals/gameapp/service/gameservice"
 	"golang.project/go-fundamentals/gameapp/service/matchingservice"
 	"strings"
 	"time"
@@ -37,11 +39,13 @@ type Config struct {
 	DataBaseCfg           mysql.Config           `mapstructure:"database_cfg"`
 	JwtCfg                jwt.Config             `mapstructure:"jwt_cfg"`
 	MatchingCfg           matchingservice.Config `mapstructure:"matching_cfg"`
+	GameServiceCfg        gameservice.Config     `mapstructure:"game_svc_cfg"`
 	RedisCfg              redis.Config           `mapstructure:"redis_cfg"`
 	SchedulerCfg          scheduler.Config       `mapstructure:"scheduler_cfg"`
 	MatchingRepoCfg       redismatching.Config   `mapstructure:"matching_repo_cfg"`
 	GrpcPresenceClientCfg presenceclient.Config  `mapstructure:"grpc_presence_client_cfg"`
 	PublisherCfg          publisher.Config       `mapstructure:"publisher_cfg"`
+	SubscriberCfg         subscriber.Config      `mapstructure:"subscriber_cfg"`
 	LoggerCfg             logger.Config          `mapstructure:"logger_cfg"`
 	MetricsCfg            metricsserver.Config   `mapstructure:"metrics_cfg"`
 	PprofCfg              pprofserver.Config     `mapstructure:"pprof_cfg"`
@@ -57,11 +61,13 @@ func NewConfig(host string, port int) Config {
 		DataBaseCfg:           cfg.DataBaseCfg,
 		JwtCfg:                cfg.JwtCfg,
 		MatchingCfg:           cfg.MatchingCfg,
+		GameServiceCfg:        cfg.GameServiceCfg,
 		RedisCfg:              cfg.RedisCfg,
 		SchedulerCfg:          cfg.SchedulerCfg,
 		MatchingRepoCfg:       cfg.MatchingRepoCfg,
 		GrpcPresenceClientCfg: cfg.GrpcPresenceClientCfg,
 		PublisherCfg:          cfg.PublisherCfg,
+		SubscriberCfg:         cfg.SubscriberCfg,
 		LoggerCfg:             cfg.LoggerCfg,
 		MetricsCfg:            cfg.MetricsCfg,
 		PprofCfg:              cfg.PprofCfg,
@@ -97,6 +103,9 @@ func loadConfig(host string, port int) Config {
 		if uErr := viper.Sub("matching_cfg").Unmarshal(&cfg.MatchingCfg); uErr != nil {
 			logger.Fatal(uErr, "can't unmarshal matching config")
 		}
+		if uErr := viper.Sub("game_svc_cfg").Unmarshal(&cfg.MatchingCfg); uErr != nil {
+			logger.Fatal(uErr, "can't unmarshal game_svc_cfg config")
+		}
 		if uErr := viper.Sub("redis_cfg").Unmarshal(&cfg.RedisCfg); uErr != nil {
 			logger.Fatal(uErr, "can't unmarshal redis config")
 		}
@@ -114,6 +123,9 @@ func loadConfig(host string, port int) Config {
 		}
 		if uErr := viper.Sub("publisher_cfg").Unmarshal(&cfg.PublisherCfg); uErr != nil {
 			logger.Fatal(uErr, "can't unmarshal publisher_cfg config")
+		}
+		if uErr := viper.Sub("subscriber_cfg").Unmarshal(&cfg.SubscriberCfg); uErr != nil {
+			logger.Fatal(uErr, "can't unmarshal subscriber_cfg config")
 		}
 		if uErr := viper.Sub("logger_cfg").Unmarshal(&cfg.LoggerCfg); uErr != nil {
 			logger.Fatal(uErr, "can't unmarshal logger_cfg config")

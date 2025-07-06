@@ -34,6 +34,9 @@ matching_cfg:
   online_threshold_duration: 3m
   waiting_time_out: 5m
 
+game_svc_cfg:
+  num_workers: 5
+
 presence_cfg:
   expiration_time: 30m
   prefix: "presence"
@@ -47,6 +50,9 @@ matching_repo_cfg:
 
 publisher_cfg:
   context_timeout_redis_pub: 3s
+
+subscriber_cfg:
+  queue_buffer_size: 100
 
 logger_cfg:
   file_name: "logs/app.log"

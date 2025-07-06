@@ -66,13 +66,18 @@ func main() {
 		go profilingServer.Serve()
 	}
 
-	// start scheduler goroutine
-	var wg sync.WaitGroup
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
+	var wg sync.WaitGroup
+
+	// start scheduler goroutine
 	sch := scheduler.New(setupSvc.MatchingSvc, config.SchedulerCfg)
 	wg.Add(1)
 	go sch.Start(ctx, &wg)
+
+	// start game service goroutine
+	wg.Add(1)
+	go setupSvc.GameSvc.Start(ctx, &wg)
 
 	<-ctx.Done()
 
