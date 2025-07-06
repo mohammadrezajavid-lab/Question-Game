@@ -6,31 +6,39 @@ import (
 )
 
 type Config struct {
-}
-type Subscriber struct {
-	config  Config
-	adapter *redis.Adapter
+	QueueBufferSize uint `mapstructure:"queue_buffer_size"`
 }
 
-func NewSubscriber(config Config, adapter *redis.Adapter) Subscriber {
+type Subscriber struct {
+	adapter *redis.Adapter
+	config  Config
+}
+
+func NewSubscriber(adapter *redis.Adapter) Subscriber {
 	return Subscriber{
-		config:  config,
 		adapter: adapter,
 	}
 }
 
-func (s Subscriber) Subscribed(ctx context.Context, topic string) (<-chan string, error) {
-
+func (s Subscriber) SubscribeTopic(ctx context.Context, topic string) (<-chan string, error) {
 	sub := s.adapter.GetClient().Subscribe(ctx, topic)
-
-	ch := make(chan string)
+	ch := make(chan string, s.config.QueueBufferSize)
 
 	go func() {
 		defer sub.Close()
-		for msg := range sub.Channel() {
-			ch <- msg.Payload
+		defer close(ch)
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case msg, ok := <-sub.Channel():
+				if !ok {
+					return
+				}
+				ch <- msg.Payload
+			}
 		}
-		close(ch)
 	}()
 
 	return ch, nil

@@ -35,6 +35,7 @@ func main() {
 	config := httpservercfg.NewConfig(host, port)
 
 	logger.InitLogger(config.LoggerCfg)
+	defer logger.Close()
 
 	metricServer := metricsserver.NewMetricsServer(config.MetricsCfg)
 	go metricServer.Serve()
@@ -45,7 +46,6 @@ func main() {
 	}
 
 	setupSvc := setupservices.New(config)
-
 	server := httpserver.New(
 		config,
 		setupSvc.AuthSvc,
@@ -58,7 +58,6 @@ func main() {
 		setupSvc.PresenceClient,
 		setupSvc.AuthHandler,
 	)
-
 	go server.Serve()
 
 	var profilingServer *pprofserver.PprofServer

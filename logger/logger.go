@@ -19,6 +19,7 @@ type Config struct {
 	SimplingCoreTick       time.Duration `mapstructure:"simpling_core_tick"`
 	SimplingCoreFirst      int           `mapstructure:"simpling_core_first"`
 	SimplingCoreThereafter int           `mapstructure:"simpling_core_thereafter"`
+	Level                  string        `mapstructure:"level"` // e.g. "debug", "info", "warn", "error"
 }
 
 func InitLogger(cfg Config) {
@@ -34,7 +35,13 @@ func InitLogger(cfg Config) {
 		Compress:   cfg.Compress,
 	})
 
-	level := zap.NewAtomicLevelAt(zap.InfoLevel)
+	var level zapcore.Level
+	uErr := level.UnmarshalText([]byte(cfg.Level))
+	if uErr != nil {
+		zap.L().Fatal(uErr.Error())
+	}
+	levelAtom := zap.NewAtomicLevelAt(level)
+	//level := zap.NewAtomicLevelAt(zap.InfoLevel)
 
 	productionCfg := zap.NewProductionEncoderConfig()
 	productionCfg.TimeKey = "timestamp"
@@ -47,8 +54,8 @@ func InitLogger(cfg Config) {
 	fileEncoder := zapcore.NewJSONEncoder(productionCfg)
 
 	core := zapcore.NewTee(
-		zapcore.NewCore(consoleEncoder, stdout, level),
-		zapcore.NewCore(fileEncoder, file, level),
+		zapcore.NewCore(consoleEncoder, stdout, levelAtom),
+		zapcore.NewCore(fileEncoder, file, levelAtom),
 	)
 
 	samplingCore := zapcore.NewSamplerWithOptions(core, cfg.SimplingCoreTick, cfg.SimplingCoreFirst, cfg.SimplingCoreThereafter)
@@ -132,4 +139,8 @@ func Error(err error, msg string) {
 	}
 
 	zap.L().Named(GetPackageFuncName(2)).Error(msg, fields...)
+}
+
+func Close() {
+	_ = zap.L().Sync()
 }

@@ -57,6 +57,7 @@ logger_cfg:
   simpling_core_tick: 1m
   simpling_core_first: 100
   simpling_core_thereafter: 100
+  level: "info" # e.g. "debug", "info", "warn", "error"
 
 httpserver_cfg:
   host: "127.0.0.1"

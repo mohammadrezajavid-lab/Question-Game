@@ -7,7 +7,7 @@ import (
 	"golang.project/go-fundamentals/gameapp/entity"
 	"golang.project/go-fundamentals/gameapp/logger"
 	"golang.project/go-fundamentals/gameapp/pkg/protobufencodedecode"
-	"time"
+	"sync"
 )
 
 type Repository interface {
@@ -15,52 +15,101 @@ type Repository interface {
 	CreateGame(game entity.Game) (entity.Game, error)
 }
 
-type Service struct {
-	rda        redis.Adapter
-	gameRepo   Repository
-	publisher  broker.Publisher
-	subscriber broker.Subscriber
+type Config struct {
+	NumWorkers uint `mapstructure:"num_workers"`
 }
 
-func (s *Service) Start() {
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-	defer cancel()
+type Service struct {
+	brokerAdapter redis.Adapter
+	gameRepo      Repository
+	publisher     broker.Publisher
+	subscriber    broker.Subscriber
+	config        Config
+}
 
-	msgCh, err := s.subscriber.Subscribed(ctx, entity.MatchingUsersMatchedEvent)
+func New(brokerAdapter redis.Adapter, gameRepo Repository, publisher broker.Publisher, subscriber broker.Subscriber, config Config) Service {
+	return Service{
+		brokerAdapter: brokerAdapter,
+		gameRepo:      gameRepo,
+		publisher:     publisher,
+		subscriber:    subscriber,
+		config:        config,
+	}
+}
+
+func (s *Service) Start(ctx context.Context, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	logger.Info("Starting game service dispatcher...")
+	s.dispatcher(ctx)
+
+	logger.Info("Shutting down game service...")
+
+	// TODO - implement s.shutdown method
+}
+
+func (s *Service) dispatcher(ctx context.Context) {
+	jobQueue, err := s.subscriber.SubscribeTopic(ctx, entity.MatchingUsersMatchedEvent)
 	if err != nil {
 		logger.Fatal(err, "failed to subscribe to broker topic")
 	}
 
-	for msg := range msgCh {
-		go s.handleMatchedUsers(msg)
+	var wg sync.WaitGroup
+	for i := 0; i < int(s.config.NumWorkers); i++ {
+		wg.Add(1)
+		go s.worker(ctx, jobQueue, &wg)
+	}
+
+	wg.Wait()
+}
+
+func (s *Service) worker(ctx context.Context, jobs <-chan string, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	for {
+		select {
+		case <-ctx.Done():
+			logger.Info("Worker in GameSvc received shutdown signal")
+			return
+		case job, ok := <-jobs:
+			if !ok {
+				return
+			}
+			s.handleMatchedUsers(ctx, job)
+		}
 	}
 }
 
-func (s *Service) handleMatchedUsers(payload string) {
-	// decode
-	mu := protobufencodedecode.DecodeMatchingWaitedUsersEvent(payload)
-
-	// Create newGame
-	newGame, rErr := s.gameRepo.CreateGame(entity.NewGame(mu.Category))
-	if rErr != nil {
-		logger.Error(rErr, "failed to create game")
+func (s *Service) handleMatchedUsers(ctx context.Context, payload string) {
+	select {
+	case <-ctx.Done():
 		return
+	default:
+		// decode
+		mu := protobufencodedecode.DecodeMatchingWaitedUsersEvent(payload)
+
+		// Create newGame
+		newGame, rErr := s.gameRepo.CreateGame(entity.NewGame(mu.Category))
+		if rErr != nil {
+			logger.Error(rErr, "failed to create game")
+			return
+		}
+
+		// Create players for game
+		playerIds, pErr := s.createPlayers(mu.UserIds, newGame.Id)
+		if pErr != nil {
+			logger.Error(pErr, "failed to create player")
+			return
+		}
+		newGame.PlayerIds = playerIds
+
+		// TODO - انتخاب بک مجموعه سوال مثلا 15 تایی از استخر سوال ها با توجه به دسته و سطح سختی یا آسانی تعیین شده توسط کاربر
+
+		// Published CreatedGameEvent
+		cg := entity.NewCreatedGame(newGame.Id, newGame.PlayerIds, newGame.QuestionIds)
+		payloadCg := protobufencodedecode.EncodeGameSvcCreatedGameEvent(cg)
+		s.publisher.PublishEvent(entity.GameSvcCreatedGameEvent, payloadCg)
 	}
-
-	// Create players for game
-	playerIds, pErr := s.createPlayers(mu.UserIds, newGame.Id)
-	if pErr != nil {
-		logger.Error(pErr, "failed to create player")
-		return
-	}
-	newGame.PlayerIds = playerIds
-
-	// TODO - انتخاب بک مجموعه سوال مثلا 15 تایی از استخر سوال ها با توجه به دسته و سطح سختی یا آسانی تعیین شده توسط کاربر
-
-	// Published CreatedGameEvent
-	cg := entity.NewCreatedGame(newGame.Id, newGame.PlayerIds, newGame.QuestionIds)
-	payloadCg := protobufencodedecode.EncodeGameSvcCreatedGameEvent(cg)
-	s.publisher.Published(entity.GameSvcCreatedGameEvent, payloadCg)
 }
 
 func (s *Service) createPlayers(userIds []uint, gameId uint) ([]uint, error) {
