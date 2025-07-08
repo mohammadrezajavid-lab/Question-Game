@@ -3,6 +3,8 @@ package wsconfig
 import (
 	"github.com/spf13/viper"
 	"golang.project/go-fundamentals/gameapp/adapter/presenceclient"
+	"golang.project/go-fundamentals/gameapp/adapter/redis"
+	"golang.project/go-fundamentals/gameapp/adapter/subscriber"
 	"golang.project/go-fundamentals/gameapp/gateway/websocket"
 	"golang.project/go-fundamentals/gameapp/logger"
 	"golang.project/go-fundamentals/gameapp/pkg/jwt"
@@ -14,6 +16,8 @@ type Config struct {
 	JwtCfg                jwt.Config            `mapstructure:"jwt_cfg"`
 	LoggerCfg             logger.Config         `mapstructure:"logger_cfg"`
 	GrpcPresenceClientCfg presenceclient.Config `mapstructure:"grpc_presence_client_cfg"`
+	RedisCfg              redis.Config          `mapstructure:"redis_cfg"`
+	SubscriberCfg         subscriber.Config     `mapstructure:"subscriber_cfg"`
 }
 
 func NewConfig() *Config {
@@ -22,6 +26,8 @@ func NewConfig() *Config {
 		WSCfg:                 websocket.Config{},
 		LoggerCfg:             logger.Config{},
 		GrpcPresenceClientCfg: presenceclient.Config{},
+		RedisCfg:              redis.Config{},
+		SubscriberCfg:         subscriber.Config{},
 	}
 }
 
@@ -49,6 +55,12 @@ func (c *Config) LoadConfig(host string, port int) *Config {
 		}
 		if uErr := viper.Sub("grpc_presence_client_cfg").Unmarshal(&c.GrpcPresenceClientCfg); uErr != nil {
 			logger.Fatal(uErr, "can't unmarshal grpc_presence_client_cfg config")
+		}
+		if uErr := viper.Sub("redis_cfg").Unmarshal(&c.RedisCfg); uErr != nil {
+			logger.Fatal(uErr, "can't unmarshal redis config")
+		}
+		if uErr := viper.Sub("subscriber_cfg").Unmarshal(&c.SubscriberCfg); uErr != nil {
+			logger.Fatal(uErr, "can't unmarshal subscriber config")
 		}
 	} else {
 		if uErr := viper.Unmarshal(c); uErr != nil {

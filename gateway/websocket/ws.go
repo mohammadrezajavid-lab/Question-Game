@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"golang.project/go-fundamentals/gameapp/adapter/presenceclient"
+	"golang.project/go-fundamentals/gameapp/contract/broker"
 	"golang.project/go-fundamentals/gameapp/gateway/websocket/middleware"
 	"golang.project/go-fundamentals/gameapp/logger"
 	"golang.project/go-fundamentals/gameapp/pkg/jwt"
@@ -16,9 +17,11 @@ type Config struct {
 	Host                      string        `mapstructure:"host"`
 	Port                      int           `mapstructure:"port"`
 	AllowedOrigins            []string      `mapstructure:"allowed_origins_websocket"`
-	SendBufferSize            int           `mapstructure:"send_buffer_size"`
+	SendBufferSize            uint          `mapstructure:"send_buffer_size"`
+	BroadcastBufferSize       uint          `mapstructure:"broadcast_buffer_size"`
 	GracefullyShutdownTimeout time.Duration `mapstructure:"gracefully_shutdown_timeout"`
 	WebSocketPattern          string        `mapstructure:"websocket_pattern"`
+	NumWorkers                uint          `mapstructure:"num_workers"`
 }
 
 type WebSocket struct {
@@ -29,7 +32,7 @@ type WebSocket struct {
 	presenceClient presenceclient.Client
 }
 
-func NewWebSocket(cfg Config, jwtCfg jwt.Config, presenceClientConfig presenceclient.Config) (*WebSocket, error) {
+func NewWebSocket(cfg Config, jwtCfg jwt.Config, presenceClientConfig presenceclient.Config, subscriber broker.Subscriber) (*WebSocket, error) {
 
 	pClient, err := presenceclient.NewClient(presenceClientConfig)
 	if err != nil {
@@ -38,7 +41,7 @@ func NewWebSocket(cfg Config, jwtCfg jwt.Config, presenceClientConfig presencecl
 
 	return &WebSocket{
 		config: cfg,
-		Hub:    NewHub(),
+		Hub:    NewHub(subscriber, cfg.NumWorkers, cfg.BroadcastBufferSize),
 		JwtCfg: jwtCfg,
 		Server: &http.Server{
 			Addr: fmt.Sprintf("%s:%d", cfg.Host, cfg.Port),

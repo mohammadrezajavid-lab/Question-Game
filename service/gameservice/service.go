@@ -42,8 +42,6 @@ func (s *Service) Start(ctx context.Context, wg *sync.WaitGroup) {
 
 	logger.Info("Starting game service dispatcher...")
 	s.dispatcher(ctx)
-
-	logger.Info("Shutting down game service...")
 }
 
 func (s *Service) dispatcher(ctx context.Context) {

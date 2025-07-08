@@ -68,11 +68,13 @@ func (c *Client) writePump() {
 
 // Close safely closes connection and unregisters client
 func (c *Client) Close() {
-	c.closeOnce.Do(func() {
-		logger.Info(fmt.Sprintf("Closing connection for user: %d", c.userID))
-		c.hub.unregister <- c
-		_ = c.conn.Close()
-	})
+	c.closeOnce.Do(
+		func() {
+			logger.Info(fmt.Sprintf("Closing connection for user: %d", c.userID))
+			c.hub.unregister <- c
+			_ = c.conn.Close()
+		},
+	)
 }
 
 func (c *Client) monitorTokenExpiry() {

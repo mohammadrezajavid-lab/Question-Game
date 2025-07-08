@@ -1,49 +1,131 @@
 package websocket
 
 import (
+	"context"
+	"fmt"
+	"golang.project/go-fundamentals/gameapp/contract/broker"
+	"golang.project/go-fundamentals/gameapp/entity"
+	"golang.project/go-fundamentals/gameapp/logger"
 	"golang.project/go-fundamentals/gameapp/metrics"
+	"golang.project/go-fundamentals/gameapp/pkg/protobufencodedecode"
 	"sync"
 )
 
 type Hub struct {
-	clients    map[*Client]bool
-	register   chan *Client
-	unregister chan *Client
-	quit       chan struct{}
+	clients             map[*Client]bool
+	userClient          map[uint]*Client
+	register            chan *Client
+	unregister          chan *Client
+	broadcast           chan BroadcastMessage
+	quit                chan struct{}
+	subscriber          broker.Subscriber
+	numWorkers          uint
+	broadcastBufferSize uint
 }
 
-func NewHub() *Hub {
+type BroadcastMessage struct {
+	UserIds []uint
+	Message []byte
+}
+
+func NewHub(subscriber broker.Subscriber, numWorkers uint, broadcastBufferSize uint) *Hub {
 	return &Hub{
-		clients:    make(map[*Client]bool),
-		register:   make(chan *Client),
-		unregister: make(chan *Client),
-		quit:       make(chan struct{}),
+		clients:             make(map[*Client]bool),
+		userClient:          make(map[uint]*Client),
+		register:            make(chan *Client),
+		unregister:          make(chan *Client),
+		broadcast:           make(chan BroadcastMessage, broadcastBufferSize),
+		quit:                make(chan struct{}),
+		subscriber:          subscriber,
+		numWorkers:          numWorkers,
+		broadcastBufferSize: broadcastBufferSize,
 	}
 }
 
 func (h *Hub) Run() {
+	ctx, stop := context.WithCancel(context.Background())
+	defer stop()
+	go h.dispatcher(ctx)
+
 	for {
 		select {
 		case client := <-h.register:
 			h.clients[client] = true
+			h.userClient[client.userID] = client
 			metrics.UserOnlineCounter.Inc()
+
 		case client := <-h.unregister:
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)
+				delete(h.userClient, client.userID)
 				close(client.send)
 				metrics.UserOnlineCounter.Dec()
 			}
 
+		case msg := <-h.broadcast:
+			for _, uid := range msg.UserIds {
+				if client, ok := h.userClient[uid]; ok {
+					client.send <- msg.Message
+				}
+			}
+
 		case <-h.quit:
+			<-ctx.Done()
 			return
 		}
+	}
+}
+
+func (h *Hub) dispatcher(ctx context.Context) {
+	jobQueue, err := h.subscriber.SubscribeTopic(ctx, entity.GameSvcCreatedGameEvent)
+	if err != nil {
+		logger.Fatal(err, "failed to subscribe to broker topic")
+	}
+
+	var wg sync.WaitGroup
+	for i := 0; i < int(h.numWorkers); i++ {
+		wg.Add(1)
+		go h.worker(ctx, jobQueue, &wg)
+	}
+
+	wg.Wait()
+}
+
+func (h *Hub) worker(ctx context.Context, jobs <-chan string, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	for {
+		select {
+		case <-ctx.Done():
+			logger.Info("Worker in websocket gateway received shutdown signal")
+			return
+		case job, ok := <-jobs:
+			if !ok {
+				return
+			}
+			h.sendGameCreatedNotificationToClient(ctx, job)
+		}
+	}
+}
+
+func (h *Hub) sendGameCreatedNotificationToClient(ctx context.Context, payload string) {
+
+	gameCreated := protobufencodedecode.DecodeGameSvcCreatedGameEvent(payload)
+	msg := BroadcastMessage{
+		UserIds: gameCreated.PlayerIds,
+		Message: []byte(fmt.Sprintf(`{"event":"game_created", "game_id":"%d"`, gameCreated.GameId)),
+	}
+
+	select {
+	case h.broadcast <- msg:
+	case <-ctx.Done():
+		return
 	}
 }
 
 // Close gracefully shuts down the hub by closing all client connections
 // and stopping the hub's run loop.
 func (h *Hub) Close() {
-
 	var wg sync.WaitGroup
 	for client := range h.clients {
 		wg.Add(1)

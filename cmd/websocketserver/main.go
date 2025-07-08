@@ -4,6 +4,8 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"golang.project/go-fundamentals/gameapp/adapter/redis"
+	"golang.project/go-fundamentals/gameapp/adapter/subscriber"
 	"golang.project/go-fundamentals/gameapp/config/wsconfig"
 	"golang.project/go-fundamentals/gameapp/gateway/websocket"
 	"golang.project/go-fundamentals/gameapp/logger"
@@ -27,7 +29,9 @@ func main() {
 
 	logger.Info(fmt.Sprintf("webSocket config: %v", allConfig))
 
-	ws, sErr := websocket.NewWebSocket(allConfig.WSCfg, allConfig.JwtCfg, allConfig.GrpcPresenceClientCfg)
+	subscriber := subscriber.NewSubscriber(redis.New(allConfig.RedisCfg), allConfig.SubscriberCfg)
+
+	ws, sErr := websocket.NewWebSocket(allConfig.WSCfg, allConfig.JwtCfg, allConfig.GrpcPresenceClientCfg, subscriber)
 	if sErr != nil {
 		logger.Fatal(sErr, "")
 	}

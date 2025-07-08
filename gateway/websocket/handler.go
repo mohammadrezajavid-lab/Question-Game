@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func (ws *WebSocket) NewUpgrader() websocket.Upgrader {
+func (ws *WebSocket) NewUpgrade() websocket.Upgrader {
 	return websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
 			origin := r.Header.Get("Origin")
@@ -32,8 +32,8 @@ func (ws *WebSocket) SocketHandler(hub *Hub) http.HandlerFunc {
 			return
 		}
 
-		upgrader := ws.NewUpgrader()
-		conn, err := upgrader.Upgrade(w, r, nil)
+		upgrade := ws.NewUpgrade()
+		conn, err := upgrade.Upgrade(w, r, nil)
 		if err != nil {
 			logger.Error(err, "WebSocket upgrade failed")
 			http.Error(w, `{"error":"could not open websocket connection"}`, http.StatusBadRequest)

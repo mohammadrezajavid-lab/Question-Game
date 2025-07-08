@@ -123,6 +123,13 @@ You can run the application as a monolith or as individual microservices.
         go run cmd/scheduler/main.go
         ```
 
+* **Test WebSocket Gateway:**
+    * **Send heartbeat request for Upsert Presence User**
+        ```bash
+        websocat --header="Authorization: Bearer <jwt-token> --header="Origin: http://127.0.0.1:3000" ws://<websocat-host>:8090/ws
+        {"event":"heartbeat "}
+        ```
+
 The HTTP server will start on `127.0.0.1:8080` and the metrics server on `127.0.0.1:2112` by default.
 
 ## 🔌 API Endpoints
