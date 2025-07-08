@@ -2,7 +2,7 @@ package websocket
 
 import (
 	"context"
-	"fmt"
+	"encoding/json"
 	"golang.project/go-fundamentals/gameapp/contract/broker"
 	"golang.project/go-fundamentals/gameapp/entity"
 	"golang.project/go-fundamentals/gameapp/logger"
@@ -111,9 +111,19 @@ func (h *Hub) worker(ctx context.Context, jobs <-chan string, wg *sync.WaitGroup
 func (h *Hub) sendGameCreatedNotificationToClient(ctx context.Context, payload string) {
 
 	gameCreated := protobufencodedecode.DecodeGameSvcCreatedGameEvent(payload)
+	type message struct {
+		Event  string `json:"event"`
+		GameId uint   `json:"game_id"`
+	}
+	newMsg := message{
+		Event:  "game_created",
+		GameId: gameCreated.GameId,
+	}
+	msgPayload, _ := json.Marshal(newMsg)
+
 	msg := BroadcastMessage{
 		UserIds: gameCreated.PlayerIds,
-		Message: []byte(fmt.Sprintf(`{"event":"game_created", "game_id":"%d"`, gameCreated.GameId)),
+		Message: msgPayload,
 	}
 
 	select {

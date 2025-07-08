@@ -85,6 +85,10 @@ metrics_cfg:
   host: "127.0.0.1"
   port: 2112
 
+websocket_metrics_cfg:
+  host: "127.0.0.1"
+  port: 2113
+
 pprof_cfg:
   host: "127.0.0.1"
   port: 2111

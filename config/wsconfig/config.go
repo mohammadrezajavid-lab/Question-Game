@@ -5,6 +5,7 @@ import (
 	"golang.project/go-fundamentals/gameapp/adapter/presenceclient"
 	"golang.project/go-fundamentals/gameapp/adapter/redis"
 	"golang.project/go-fundamentals/gameapp/adapter/subscriber"
+	"golang.project/go-fundamentals/gameapp/delivery/metricsserver"
 	"golang.project/go-fundamentals/gameapp/gateway/websocket"
 	"golang.project/go-fundamentals/gameapp/logger"
 	"golang.project/go-fundamentals/gameapp/pkg/jwt"
@@ -18,6 +19,7 @@ type Config struct {
 	GrpcPresenceClientCfg presenceclient.Config `mapstructure:"grpc_presence_client_cfg"`
 	RedisCfg              redis.Config          `mapstructure:"redis_cfg"`
 	SubscriberCfg         subscriber.Config     `mapstructure:"subscriber_cfg"`
+	MetricsCfg            metricsserver.Config  `mapstructure:"websocket_metrics_cfg"`
 }
 
 func NewConfig() *Config {
@@ -28,6 +30,7 @@ func NewConfig() *Config {
 		GrpcPresenceClientCfg: presenceclient.Config{},
 		RedisCfg:              redis.Config{},
 		SubscriberCfg:         subscriber.Config{},
+		MetricsCfg:            metricsserver.Config{},
 	}
 }
 
@@ -61,6 +64,9 @@ func (c *Config) LoadConfig(host string, port int) *Config {
 		}
 		if uErr := viper.Sub("subscriber_cfg").Unmarshal(&c.SubscriberCfg); uErr != nil {
 			logger.Fatal(uErr, "can't unmarshal subscriber config")
+		}
+		if uErr := viper.Sub("metrics_cfg").Unmarshal(&c.MetricsCfg); uErr != nil {
+			logger.Fatal(uErr, "can't unmarshal metrics_cfg config")
 		}
 	} else {
 		if uErr := viper.Unmarshal(c); uErr != nil {
