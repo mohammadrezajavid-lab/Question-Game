@@ -139,6 +139,8 @@ The HTTP server will start on `127.0.0.1:8080` and the metrics server on `127.0.
     * `POST /register`: Register a new user.
     * `POST /login`: Log in an existing user and receive JWT tokens. Updates user presence.
     * `GET /profile`: Get the current user's profile. Requires authentication and updates user presence.
+* **Auth Management (`/auth/`)**
+    * `POST /refresh`: Send Refresh Token and Response JWT tokens.
 * **Backoffice (`/backoffice/users/`)**
     * `GET /`: List all users. Requires admin authentication and the `user-list` permission.
 * **Matchmaking (`/matching-player/`)**

@@ -40,6 +40,8 @@ func (d *DataBase) CreateGame(game entity.Game) (entity.Game, error) {
 	return game, nil
 }
 
+//func (d *DataBase) SetQuestionIDs()
+
 func (d *DataBase) CreatePlayer(player entity.Player) (entity.Player, error) {
 
 	const operation = "gamemysql.CreatePlayer"

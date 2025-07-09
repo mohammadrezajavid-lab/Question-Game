@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package quiz;
+option go_package = "golang.project/go-fundamentals/gameapp/contract/goprotobuf/quiz";
+
+message GenerateQuiz {
+  repeated uint64 question_ids = 1;
+}

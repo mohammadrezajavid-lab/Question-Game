@@ -6,6 +6,8 @@ protoc --proto_path=contract/protobuf/matching --go_out=contract/goprotobuf/matc
 protoc --proto_path=contract/protobuf/notification --go_out=contract/goprotobuf/notification --go_opt=paths=source_relative ./contract/protobuf/notification/notification.proto
 
 protoc --proto_path=contract/protobuf/game --go_out=contract/goprotobuf/game --go_opt=paths=source_relative ./contract/protobuf/game/created_game.proto
+
+protoc --proto_path=contract/protobuf/quiz --go_out=contract/goprotobuf/quiz --go_opt=paths=source_relative ./contract/protobuf/quiz/quiz.proto
 ```
 
 #### --proto_path=[مسیر فایل های proto]

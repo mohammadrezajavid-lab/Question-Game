@@ -102,7 +102,7 @@ func (s *Service) handleMatchedUsers(ctx context.Context, payload string) {
 		// TODO - انتخاب بک مجموعه سوال مثلا 15 تایی از استخر سوال ها با توجه به دسته و سطح سختی یا آسانی تعیین شده توسط کاربر
 
 		// Published CreatedGameEvent
-		cg := entity.NewCreatedGame(newGame.Id, newGame.PlayerIds, newGame.QuestionIds)
+		cg := entity.NewCreatedGame(newGame.Id, newGame.PlayerIds)
 		payloadCg := protobufencodedecode.EncodeGameSvcCreatedGameEvent(cg)
 		s.publisher.PublishEvent(entity.GameSvcCreatedGameEvent, payloadCg)
 	}

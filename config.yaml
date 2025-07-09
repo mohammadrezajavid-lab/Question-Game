@@ -42,7 +42,8 @@ presence_cfg:
   prefix: "presence"
 
 scheduler_cfg:
-  crontab: "*/1 * * * *"
+  matching_job_crontab: "*/1 * * * *"
+  quizpool_job_crontab: "*/3 * * * *"
 
 matching_repo_cfg:
   waiting_list_prefix: "waiting-list"

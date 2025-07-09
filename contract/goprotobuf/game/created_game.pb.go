@@ -25,7 +25,6 @@ type CreatedGame struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	GameId        uint64                 `protobuf:"varint,1,opt,name=game_id,json=gameId,proto3" json:"game_id,omitempty"`
 	PlayerIds     []uint64               `protobuf:"varint,2,rep,packed,name=player_ids,json=playerIds,proto3" json:"player_ids,omitempty"`
-	QuestionIds   []uint64               `protobuf:"varint,3,rep,packed,name=question_ids,json=questionIds,proto3" json:"question_ids,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -74,23 +73,15 @@ func (x *CreatedGame) GetPlayerIds() []uint64 {
 	return nil
 }
 
-func (x *CreatedGame) GetQuestionIds() []uint64 {
-	if x != nil {
-		return x.QuestionIds
-	}
-	return nil
-}
-
 var File_created_game_proto protoreflect.FileDescriptor
 
 const file_created_game_proto_rawDesc = "" +
 	"\n" +
-	"\x12created_game.proto\x12\x04game\"h\n" +
+	"\x12created_game.proto\x12\x04game\"E\n" +
 	"\vCreatedGame\x12\x17\n" +
 	"\agame_id\x18\x01 \x01(\x04R\x06gameId\x12\x1d\n" +
 	"\n" +
-	"player_ids\x18\x02 \x03(\x04R\tplayerIds\x12!\n" +
-	"\fquestion_ids\x18\x03 \x03(\x04R\vquestionIdsBAZ?golang.project/go-fundamentals/gameapp/contract/goprotobuf/gameb\x06proto3"
+	"player_ids\x18\x02 \x03(\x04R\tplayerIdsBAZ?golang.project/go-fundamentals/gameapp/contract/goprotobuf/gameb\x06proto3"
 
 var (
 	file_created_game_proto_rawDescOnce sync.Once

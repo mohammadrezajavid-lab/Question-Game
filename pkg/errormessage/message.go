@@ -26,6 +26,7 @@ const (
 	ErrorMsgPprofServerShutdown           = "failed to gracefully shutdown pprof server"
 	ErrorMsgShutdownSch                   = "not successfully shutdown scheduler"
 	ErrorMsgFailedStartMatchWaitedUserJob = "failed to create matchWaitedUser job"
+	ErrorMsgFailedStartGenerateQuizJob    = "failed to create generateQuiz job"
 	ErrorMsgInvalidJWT                    = "JWT token missing or invalid"
 	ErrorMsgInvalidRefreshToken           = "Refresh Token missing or invalid"
 	ErrorMsgEmptyJWT                      = "JWT Token is Empty"

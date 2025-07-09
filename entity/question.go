@@ -32,13 +32,14 @@ const (
 	Hard
 )
 
+func (q QuestionDifficulty) GetAllDifficulties() []QuestionDifficulty {
+	return []QuestionDifficulty{Easy, Medium, Hard}
+}
+
 func (q QuestionDifficulty) IsValid() bool {
-
 	if q >= Easy && q <= Hard {
-
 		return true
 	}
-
 	return false
 }
 

@@ -17,7 +17,6 @@ var StartSchCounter = prometheus.NewCounter(
 )
 
 var FailedCreateMatchWaitedUserJobCounter = prometheus.NewCounter(
-
 	prometheus.CounterOpts{
 		Name: "failed_create_match_waited_user_job",
 		Help: "Total number of failed create match waited user job",
@@ -45,6 +44,32 @@ var MatchWaitedUserRunSuccessfullyJobCounter = prometheus.NewCounter(
 	},
 )
 
+var FailedCreateGenerateQuizJobCounter = prometheus.NewCounter(
+	prometheus.CounterOpts{
+		Name: "failed_create_generatequiz_job",
+		Help: "Total number of failed create GenerateQuiz job",
+	},
+)
+var CreateGenerateQuizJobCounter = prometheus.NewCounter(
+	prometheus.CounterOpts{
+		Name: "create_generatequiz_job",
+		Help: "Total number of create GenerateQuiz job",
+	},
+)
+var GenerateQuizFailedJobCounter = prometheus.NewCounter(
+	prometheus.CounterOpts{
+		Name: "generatequiz_failed_job",
+		Help: "Total number of GenerateQuiz failed job",
+	},
+)
+
+var GenerateQuizRunSuccessfullyJobCounter = prometheus.NewCounter(
+	prometheus.CounterOpts{
+		Name: "generatequiz_run_successfully_job",
+		Help: "Total number of run successfully GenerateQuiz job",
+	},
+)
+
 func init() {
 	Registry.MustRegister(
 		FailedCreateSchCounter,
@@ -53,5 +78,9 @@ func init() {
 		CreateMatchWaitedUserJobCounter,
 		MatchWaitedUserFailedJobCounter,
 		MatchWaitedUserRunSuccessfullyJobCounter,
+		FailedCreateGenerateQuizJobCounter,
+		CreateGenerateQuizJobCounter,
+		GenerateQuizFailedJobCounter,
+		GenerateQuizRunSuccessfullyJobCounter,
 	)
 }

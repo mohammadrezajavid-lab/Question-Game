@@ -15,9 +15,8 @@ func EncodeGameSvcCreatedGameEvent(cg entity.CreatedGame) string {
 	const operation = "protobufencodedecode.EncodeGameSvcCreatedGameEvent"
 
 	protoBufCg := game.CreatedGame{
-		GameId:      uint64(cg.GameId),
-		PlayerIds:   slice.MapFromUintToUint64(cg.PlayerIds),
-		QuestionIds: slice.MapFromUintToUint64(cg.QuestionIds),
+		GameId:    uint64(cg.GameId),
+		PlayerIds: slice.MapFromUintToUint64(cg.PlayerIds),
 	}
 
 	payload, mErr := proto.Marshal(&protoBufCg)
@@ -44,9 +43,8 @@ func DecodeGameSvcCreatedGameEvent(payload string) entity.CreatedGame {
 	}
 
 	protoBufCg := game.CreatedGame{
-		GameId:      0,
-		PlayerIds:   nil,
-		QuestionIds: nil,
+		GameId:    0,
+		PlayerIds: nil,
 	}
 
 	if uErr := proto.Unmarshal(payloadByte, &protoBufCg); uErr != nil {
@@ -56,9 +54,5 @@ func DecodeGameSvcCreatedGameEvent(payload string) entity.CreatedGame {
 		return entity.CreatedGame{}
 	}
 
-	return entity.NewCreatedGame(
-		uint(protoBufCg.GameId),
-		slice.MapFromUint64ToUint(protoBufCg.PlayerIds),
-		slice.MapFromUint64ToUint(protoBufCg.QuestionIds),
-	)
+	return entity.NewCreatedGame(uint(protoBufCg.GameId), slice.MapFromUint64ToUint(protoBufCg.PlayerIds))
 }

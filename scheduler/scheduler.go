@@ -2,28 +2,30 @@ package scheduler
 
 import (
 	"context"
-	"fmt"
 	"github.com/go-co-op/gocron/v2"
 	"golang.project/go-fundamentals/gameapp/logger"
 	"golang.project/go-fundamentals/gameapp/metrics"
 	"golang.project/go-fundamentals/gameapp/pkg/errormessage"
 	"golang.project/go-fundamentals/gameapp/pkg/infomessage"
 	"golang.project/go-fundamentals/gameapp/service/matchingservice"
+	"golang.project/go-fundamentals/gameapp/service/quizservice"
 	"sync"
 	"time"
 )
 
 type Config struct {
-	Crontab string `mapstructure:"crontab"`
+	MatchingJobCrontab string `mapstructure:"matching_job_crontab"`
+	QuizPoolJobCrontab string `mapstructure:"quizpool_job_crontab"`
 }
 
 type Scheduler struct {
 	sch         gocron.Scheduler
 	matchingSvc matchingservice.Service
+	quizSvc     quizservice.Service
 	config      Config
 }
 
-func New(matchingSvc matchingservice.Service, config Config) Scheduler {
+func New(matchingSvc matchingservice.Service, quizSvc quizservice.Service, config Config) Scheduler {
 
 	sch, err := gocron.NewScheduler(gocron.WithLocation(time.Local))
 	if err != nil {
@@ -34,6 +36,7 @@ func New(matchingSvc matchingservice.Service, config Config) Scheduler {
 	return Scheduler{
 		sch:         sch,
 		matchingSvc: matchingSvc,
+		quizSvc:     quizSvc,
 		config:      config,
 	}
 }
@@ -47,6 +50,7 @@ func (s *Scheduler) Start(ctx context.Context, wg *sync.WaitGroup) {
 	logger.Info(infomessage.InfoMsgSchStart)
 
 	s.newJobMatchWaitedUser()
+	s.newJobGenerateQuiz()
 	s.sch.Start()
 
 	<-ctx.Done()
@@ -55,40 +59,5 @@ func (s *Scheduler) Start(ctx context.Context, wg *sync.WaitGroup) {
 
 	if sErr := s.sch.Shutdown(); sErr != nil {
 		logger.Warn(sErr, errormessage.ErrorMsgShutdownSch)
-	}
-}
-
-func (s *Scheduler) newJobMatchWaitedUser() {
-	matchWaitedUsersJob, nErr := s.sch.NewJob(
-		gocron.CronJob(s.config.Crontab, false),
-		gocron.NewTask(s.matchWaitedUserTask),
-		gocron.WithSingletonMode(gocron.LimitModeWait),
-		gocron.WithName("match-waited-user"),
-		gocron.WithTags("matching-service"),
-	)
-
-	if nErr != nil {
-		metrics.FailedCreateMatchWaitedUserJobCounter.Inc()
-		logger.Fatal(nErr, errormessage.ErrorMsgFailedStartMatchWaitedUserJob)
-	}
-
-	matchWaitedUsersJobInfo := fmt.Sprintf("job info: name[%s], uuid[%v], tags[%v]",
-		matchWaitedUsersJob.Name(), matchWaitedUsersJob.ID(), matchWaitedUsersJob.Tags())
-
-	metrics.CreateMatchWaitedUserJobCounter.Inc()
-	logger.Info(fmt.Sprintf("matchWaitedUser job created, %s", matchWaitedUsersJobInfo))
-}
-
-func (s *Scheduler) matchWaitedUserTask() {
-
-	ctx, cancel := context.WithTimeout(context.Background(), s.matchingSvc.GetConfig().ContextTimeOut)
-	defer cancel()
-	err := s.matchingSvc.MatchWaitedUsers(ctx)
-	if err != nil {
-		metrics.MatchWaitedUserFailedJobCounter.Inc()
-		logger.Info(fmt.Sprintf("matchWaitedUsers_failed, %v", err))
-	} else {
-		metrics.MatchWaitedUserRunSuccessfullyJobCounter.Inc()
-		logger.Info("matchWaitedUsers_successfully")
 	}
 }
