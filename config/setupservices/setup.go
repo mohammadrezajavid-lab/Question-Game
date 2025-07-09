@@ -11,13 +11,16 @@ import (
 	"golang.project/go-fundamentals/gameapp/repository/mysql"
 	"golang.project/go-fundamentals/gameapp/repository/mysql/accesscontrolmysql"
 	"golang.project/go-fundamentals/gameapp/repository/mysql/gamemysql"
+	"golang.project/go-fundamentals/gameapp/repository/mysql/questionmysql"
 	"golang.project/go-fundamentals/gameapp/repository/mysql/usermysql"
 	"golang.project/go-fundamentals/gameapp/repository/redis/redismatching"
+	"golang.project/go-fundamentals/gameapp/repository/redis/redisquiz"
 	"golang.project/go-fundamentals/gameapp/service/authenticationservice"
 	"golang.project/go-fundamentals/gameapp/service/authorizationservice"
 	"golang.project/go-fundamentals/gameapp/service/backofficeuserservice"
 	"golang.project/go-fundamentals/gameapp/service/gameservice"
 	"golang.project/go-fundamentals/gameapp/service/matchingservice"
+	"golang.project/go-fundamentals/gameapp/service/quizservice"
 	"golang.project/go-fundamentals/gameapp/service/userservice"
 	"golang.project/go-fundamentals/gameapp/validator/matchingvalidator"
 	"golang.project/go-fundamentals/gameapp/validator/uservalidator"
@@ -31,6 +34,7 @@ type SetupServices struct {
 	BackOfficeUserSvc backofficeuserservice.Service
 	MatchingSvc       matchingservice.Service
 	GameSvc           gameservice.Service
+	QuizSvc           quizservice.Service
 	MatchingValidator matchingvalidator.Validator
 	PresenceClient    presenceclient.Client
 	AuthHandler       authhandler.AuthHandler
@@ -69,6 +73,8 @@ func New(config httpservercfg.Config) *SetupServices {
 	gameRepo := gamemysql.NewDataBase(mysqlDB)
 	gameSvc := gameservice.New(redisAdapter, gameRepo, redisPublisher, redisSubscriber, config.GameServiceCfg)
 
+	quizSvc := quizservice.New(config.QuizServiceCfg, redisquiz.NewRedisDb(redisAdapter), questionmysql.NewDataBase(mysqlDB))
+
 	jwt := jwt.NewJWT(config.JwtCfg)
 	authHandler := authhandler.New(authSvc, jwt)
 
@@ -80,6 +86,7 @@ func New(config httpservercfg.Config) *SetupServices {
 		BackOfficeUserSvc: backOfficeUserSvc,
 		MatchingSvc:       matchingSvc,
 		GameSvc:           gameSvc,
+		QuizSvc:           quizSvc,
 		MatchingValidator: matchingValidator,
 		PresenceClient:    presenceClient,
 		AuthHandler:       authHandler,

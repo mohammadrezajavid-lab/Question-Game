@@ -71,7 +71,7 @@ func main() {
 	var wg sync.WaitGroup
 
 	// start scheduler goroutine
-	sch := scheduler.New(setupSvc.MatchingSvc, config.SchedulerCfg)
+	sch := scheduler.New(setupSvc.MatchingSvc, setupSvc.QuizSvc, config.SchedulerCfg)
 	wg.Add(1)
 	go sch.Start(ctx, &wg)
 

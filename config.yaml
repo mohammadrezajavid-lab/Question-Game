@@ -37,6 +37,10 @@ matching_cfg:
 game_svc_cfg:
   num_workers: 5
 
+quiz_svc_cfg:
+  context_time_out: 5m
+  number_of_questions: 20
+
 presence_cfg:
   expiration_time: 30m
   prefix: "presence"

@@ -19,6 +19,7 @@ import (
 	"golang.project/go-fundamentals/gameapp/scheduler"
 	"golang.project/go-fundamentals/gameapp/service/gameservice"
 	"golang.project/go-fundamentals/gameapp/service/matchingservice"
+	"golang.project/go-fundamentals/gameapp/service/quizservice"
 	"strings"
 	"time"
 )
@@ -40,6 +41,7 @@ type Config struct {
 	JwtCfg                jwt.Config             `mapstructure:"jwt_cfg"`
 	MatchingCfg           matchingservice.Config `mapstructure:"matching_cfg"`
 	GameServiceCfg        gameservice.Config     `mapstructure:"game_svc_cfg"`
+	QuizServiceCfg        quizservice.Config     `mapstructure:"quiz_svc_cfg"`
 	RedisCfg              redis.Config           `mapstructure:"redis_cfg"`
 	SchedulerCfg          scheduler.Config       `mapstructure:"scheduler_cfg"`
 	MatchingRepoCfg       redismatching.Config   `mapstructure:"matching_repo_cfg"`
@@ -62,6 +64,7 @@ func NewConfig(host string, port int) Config {
 		JwtCfg:                cfg.JwtCfg,
 		MatchingCfg:           cfg.MatchingCfg,
 		GameServiceCfg:        cfg.GameServiceCfg,
+		QuizServiceCfg:        cfg.QuizServiceCfg,
 		RedisCfg:              cfg.RedisCfg,
 		SchedulerCfg:          cfg.SchedulerCfg,
 		MatchingRepoCfg:       cfg.MatchingRepoCfg,
@@ -103,8 +106,11 @@ func loadConfig(host string, port int) Config {
 		if uErr := viper.Sub("matching_cfg").Unmarshal(&cfg.MatchingCfg); uErr != nil {
 			logger.Fatal(uErr, "can't unmarshal matching config")
 		}
-		if uErr := viper.Sub("game_svc_cfg").Unmarshal(&cfg.MatchingCfg); uErr != nil {
+		if uErr := viper.Sub("game_svc_cfg").Unmarshal(&cfg.GameServiceCfg); uErr != nil {
 			logger.Fatal(uErr, "can't unmarshal game_svc_cfg config")
+		}
+		if uErr := viper.Sub("quiz_svc_cfg").Unmarshal(&cfg.QuizServiceCfg); uErr != nil {
+			logger.Fatal(uErr, "can't unmarshal quiz_svc_cfg config")
 		}
 		if uErr := viper.Sub("redis_cfg").Unmarshal(&cfg.RedisCfg); uErr != nil {
 			logger.Fatal(uErr, "can't unmarshal redis config")
