@@ -1,4 +1,4 @@
-package grpcconfig
+package presencegrpcconfig
 
 import (
 	"github.com/spf13/viper"

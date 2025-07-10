@@ -36,7 +36,7 @@ func NewWebSocket(cfg Config, jwtCfg jwt.Config, presenceClientConfig presencecl
 
 	pClient, err := presenceclient.NewClient(presenceClientConfig)
 	if err != nil {
-		return nil, fmt.Errorf("could not create presence client: %w", err)
+		return nil, fmt.Errorf("could not create presence rpc client: %w", err)
 	}
 
 	return &WebSocket{

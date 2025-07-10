@@ -6,3 +6,16 @@ option go_package = "golang.project/go-fundamentals/gameapp/contract/goprotobuf/
 message GenerateQuiz {
   repeated uint64 question_ids = 1;
 }
+
+message GetQuizRequest {
+  string category = 1;
+  uint32 difficulty = 2;
+}
+
+message GetQuizResponse {
+  repeated uint64 question_ids = 1;
+}
+
+service QuizService{
+  rpc GetQuiz(GetQuizRequest) returns (GetQuizResponse);
+}

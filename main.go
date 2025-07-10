@@ -5,6 +5,7 @@ import (
 	"flag"
 	"golang.project/go-fundamentals/gameapp/config/httpservercfg"
 	"golang.project/go-fundamentals/gameapp/config/setupservices"
+	"golang.project/go-fundamentals/gameapp/delivery/grpcserver/quizserver"
 	"golang.project/go-fundamentals/gameapp/delivery/httpserver"
 	"golang.project/go-fundamentals/gameapp/delivery/metricsserver"
 	"golang.project/go-fundamentals/gameapp/delivery/pprofserver"
@@ -70,6 +71,10 @@ func main() {
 	defer stop()
 	var wg sync.WaitGroup
 
+	// start Quiz gRPC server
+	rpcServer := quizserver.NewQuizGrpcServer(&setupSvc.QuizSvc, &config.GrpcQuizCfg)
+	go rpcServer.Start()
+
 	// start scheduler goroutine
 	sch := scheduler.New(setupSvc.MatchingSvc, setupSvc.QuizSvc, config.SchedulerCfg)
 	wg.Add(1)
@@ -95,6 +100,12 @@ func main() {
 		if err := server.GetRouter().Shutdown(shutdownCtx); err != nil {
 			logger.Error(err, errormessage.ErrorMsgHttpServerShutdown)
 		}
+	}()
+
+	shutdownWg.Add(1)
+	go func() {
+		defer shutdownWg.Done()
+		rpcServer.Shutdown()
 	}()
 
 	shutdownWg.Add(1)

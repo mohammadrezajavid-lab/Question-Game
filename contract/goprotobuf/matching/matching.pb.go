@@ -24,7 +24,8 @@ const (
 type MatchedUsers struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Category      string                 `protobuf:"bytes,1,opt,name=Category,proto3" json:"Category,omitempty"`
-	UserIds       []uint64               `protobuf:"varint,2,rep,packed,name=user_ids,json=userIds,proto3" json:"user_ids,omitempty"`
+	Difficulty    uint64                 `protobuf:"varint,2,opt,name=Difficulty,proto3" json:"Difficulty,omitempty"`
+	UserIds       []uint64               `protobuf:"varint,3,rep,packed,name=user_ids,json=userIds,proto3" json:"user_ids,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -66,6 +67,13 @@ func (x *MatchedUsers) GetCategory() string {
 	return ""
 }
 
+func (x *MatchedUsers) GetDifficulty() uint64 {
+	if x != nil {
+		return x.Difficulty
+	}
+	return 0
+}
+
 func (x *MatchedUsers) GetUserIds() []uint64 {
 	if x != nil {
 		return x.UserIds
@@ -77,10 +85,13 @@ var File_matching_proto protoreflect.FileDescriptor
 
 const file_matching_proto_rawDesc = "" +
 	"\n" +
-	"\x0ematching.proto\x12\bmatching\"E\n" +
+	"\x0ematching.proto\x12\bmatching\"e\n" +
 	"\fMatchedUsers\x12\x1a\n" +
-	"\bCategory\x18\x01 \x01(\tR\bCategory\x12\x19\n" +
-	"\buser_ids\x18\x02 \x03(\x04R\auserIdsBAZ?golang.project/go-fundamentals/gameapp/contract/golang/matchingb\x06proto3"
+	"\bCategory\x18\x01 \x01(\tR\bCategory\x12\x1e\n" +
+	"\n" +
+	"Difficulty\x18\x02 \x01(\x04R\n" +
+	"Difficulty\x12\x19\n" +
+	"\buser_ids\x18\x03 \x03(\x04R\auserIdsBEZCgolang.project/go-fundamentals/gameapp/contract/goprotobuf/matchingb\x06proto3"
 
 var (
 	file_matching_proto_rawDescOnce sync.Once

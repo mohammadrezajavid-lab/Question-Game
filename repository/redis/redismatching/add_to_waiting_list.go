@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/redis/go-redis/v9"
-	"golang.project/go-fundamentals/gameapp/entity"
 	"golang.project/go-fundamentals/gameapp/metrics"
 	"golang.project/go-fundamentals/gameapp/pkg/errormessage"
 	"golang.project/go-fundamentals/gameapp/pkg/richerror"
@@ -12,13 +11,12 @@ import (
 	"strconv"
 )
 
-func (r *RedisDb) AddToWaitingList(ctx context.Context, userId uint, category entity.Category) error {
+func (r *RedisDb) AddToWaitingList(ctx context.Context, userId uint, key string) error {
 
 	const operation = "redismatching.AddToWaitingList"
 
 	rdb := r.redisAdapter.GetClient()
 
-	var key = r.GetKey(category)
 	timeStamp := timestamp.Now()
 
 	// score: timestamp and member: userId

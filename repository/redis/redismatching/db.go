@@ -24,6 +24,11 @@ func NewRedisDb(redisAdapter *redis.Adapter, config Config) *RedisDb {
 	}
 }
 
-func (r *RedisDb) GetKey(category entity.Category) string {
-	return fmt.Sprintf("%s:%s", r.config.WaitingListPrefix, category)
+//GetKey
+/*
+* Naming convention,
+* waiting_list_prefix:{difficulty}:{category}
+ */
+func (r *RedisDb) GetKey(category entity.Category, difficulty entity.QuestionDifficulty) string {
+	return fmt.Sprintf("%s:%s:%d", r.config.WaitingListPrefix, category, difficulty)
 }

@@ -3,15 +3,12 @@ package redismatching
 import (
 	"context"
 	"github.com/prometheus/client_golang/prometheus"
-	"golang.project/go-fundamentals/gameapp/entity"
 	"golang.project/go-fundamentals/gameapp/logger"
 	"golang.project/go-fundamentals/gameapp/metrics"
 	"strconv"
 )
 
-func (r *RedisDb) RemoveUserFromWaitingList(userIds []uint, category entity.Category) {
-
-	const operation = "redismatching.RemoveUserFromWaitedList"
+func (r *RedisDb) RemoveUserFromWaitingList(userIds []uint, key string) {
 
 	if len(userIds) < 1 {
 		//logger.Info("No user IDs provided to remove. Skipping ZRem.")
@@ -20,8 +17,6 @@ func (r *RedisDb) RemoveUserFromWaitingList(userIds []uint, category entity.Cate
 
 	ctx, cancel := context.WithTimeout(context.Background(), r.config.ContextTimeOutForZRem)
 	defer cancel()
-
-	var key = r.GetKey(category)
 
 	members := make([]any, 0, len(userIds))
 	for _, userId := range userIds {

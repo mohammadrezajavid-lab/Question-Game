@@ -49,7 +49,7 @@ func NewClient(config Config) (Client, error) {
 
 	if err != nil {
 		metrics.FailedOpenPresenceClientGRPCConnCounter.Inc()
-		logger.Error(err, "failed to dial gRPC server")
+		logger.Error(err, "failed to dial Presence gRPC server")
 		return Client{}, err
 	}
 
@@ -60,13 +60,6 @@ func NewClient(config Config) (Client, error) {
 		conn:   conn,
 		client: client,
 	}, nil
-}
-
-// Close Add a method to close the connection during shutdown
-func (c *Client) Close() {
-	if c.conn != nil {
-		c.conn.Close()
-	}
 }
 
 func (c *Client) Upsert(ctx context.Context, request presenceparam.UpsertPresenceRequest) (presenceparam.UpsertPresenceResponse, error) {
@@ -83,4 +76,11 @@ func (c *Client) GetPresence(ctx context.Context, request presenceparam.GetPrese
 		return presenceparam.GetPresenceResponse{}, err
 	}
 	return protobufmapper.MapProtobufToGetPresenceResponse(res), err
+}
+
+// Close Add a method to close the connection during shutdown
+func (c *Client) Close() {
+	if c.conn != nil {
+		c.conn.Close()
+	}
 }

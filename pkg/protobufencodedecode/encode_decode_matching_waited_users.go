@@ -2,6 +2,8 @@ package protobufencodedecode
 
 import (
 	"encoding/base64"
+	"errors"
+	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.project/go-fundamentals/gameapp/contract/goprotobuf/matching"
 	"golang.project/go-fundamentals/gameapp/entity"
@@ -15,8 +17,9 @@ func EncodeMatchingWaitedUsersEvent(mu entity.MatchedUsers) string {
 	const operation = "protobufencodedecode.EncodeMatchingWaitedUsersEvent"
 
 	pbMu := matching.MatchedUsers{
-		Category: string(mu.Category),
-		UserIds:  slice.MapFromUintToUint64(mu.UserIds),
+		Category:   string(mu.Category),
+		Difficulty: uint64(mu.Difficulty),
+		UserIds:    slice.MapFromUintToUint64(mu.UserIds),
 	}
 
 	payload, mErr := proto.Marshal(&pbMu)
@@ -43,8 +46,9 @@ func DecodeMatchingWaitedUsersEvent(payload string) entity.MatchedUsers {
 	}
 
 	pbMu := matching.MatchedUsers{
-		Category: "",
-		UserIds:  nil,
+		Category:   "",
+		Difficulty: 0,
+		UserIds:    nil,
 	}
 	if uErr := proto.Unmarshal(payloadByte, &pbMu); uErr != nil {
 		metrics.DecodeFromProtobufFailedCounter.With(prometheus.Labels{"decoder_name": operation}).Inc()
@@ -53,5 +57,12 @@ func DecodeMatchingWaitedUsersEvent(payload string) entity.MatchedUsers {
 		return entity.MatchedUsers{}
 	}
 
-	return entity.NewMatchedUsers(entity.Category(pbMu.Category), slice.MapFromUint64ToUint(pbMu.UserIds))
+	if !entity.QuestionDifficulty(pbMu.Difficulty).IsValid() {
+		metrics.DecodeFromProtobufFailedCounter.With(prometheus.Labels{"decoder_name": operation}).Inc()
+		logger.Error(errors.New("invalid difficulty data type Error"), fmt.Sprintf("difficulty must betwen 1 to 3, but we get: %d", pbMu.Difficulty))
+
+		return entity.MatchedUsers{}
+	}
+
+	return entity.NewMatchedUsers(entity.Category(pbMu.Category), entity.QuestionDifficulty(pbMu.Difficulty), slice.MapFromUint64ToUint(pbMu.UserIds))
 }

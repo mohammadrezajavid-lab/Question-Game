@@ -3,6 +3,7 @@ package setupservices
 import (
 	"golang.project/go-fundamentals/gameapp/adapter/presenceclient"
 	"golang.project/go-fundamentals/gameapp/adapter/publisher"
+	"golang.project/go-fundamentals/gameapp/adapter/quizclient"
 	"golang.project/go-fundamentals/gameapp/adapter/redis"
 	"golang.project/go-fundamentals/gameapp/adapter/subscriber"
 	"golang.project/go-fundamentals/gameapp/config/httpservercfg"
@@ -71,9 +72,10 @@ func New(config httpservercfg.Config) *SetupServices {
 	matchingValidator := matchingvalidator.NewValidator()
 
 	gameRepo := gamemysql.NewDataBase(mysqlDB)
-	gameSvc := gameservice.New(redisAdapter, gameRepo, redisPublisher, redisSubscriber, config.GameServiceCfg)
+	quizClient, _ := quizclient.NewClient(config.GrpcQuizClientCfg)
+	gameSvc := gameservice.New(redisAdapter, gameRepo, &quizClient, redisPublisher, redisSubscriber, config.GameServiceCfg)
 
-	quizSvc := quizservice.New(config.QuizServiceCfg, redisquiz.NewRedisDb(redisAdapter), questionmysql.NewDataBase(mysqlDB))
+	quizSvc := quizservice.New(config.QuizServiceCfg, redisquiz.NewRedisDb(redisAdapter, config.QuizRedisRepoCfg), questionmysql.NewDataBase(mysqlDB))
 
 	jwt := jwt.NewJWT(config.JwtCfg)
 	authHandler := authhandler.New(authSvc, jwt)

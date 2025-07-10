@@ -1,13 +1,15 @@
 package entity
 
 type MatchedUsers struct {
-	Category Category
-	UserIds  []uint
+	Category   Category
+	Difficulty QuestionDifficulty
+	UserIds    []uint
 }
 
-func NewMatchedUsers(category Category, userIds []uint) MatchedUsers {
+func NewMatchedUsers(category Category, difficulty QuestionDifficulty, userIds []uint) MatchedUsers {
 	return MatchedUsers{
-		Category: category,
-		UserIds:  userIds,
+		Category:   category,
+		Difficulty: difficulty,
+		UserIds:    userIds,
 	}
 }

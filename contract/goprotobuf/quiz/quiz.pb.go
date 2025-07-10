@@ -65,6 +65,102 @@ func (x *GenerateQuiz) GetQuestionIds() []uint64 {
 	return nil
 }
 
+type GetQuizRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Category      string                 `protobuf:"bytes,1,opt,name=category,proto3" json:"category,omitempty"`
+	Difficulty    uint32                 `protobuf:"varint,2,opt,name=difficulty,proto3" json:"difficulty,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetQuizRequest) Reset() {
+	*x = GetQuizRequest{}
+	mi := &file_quiz_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetQuizRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetQuizRequest) ProtoMessage() {}
+
+func (x *GetQuizRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_quiz_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetQuizRequest.ProtoReflect.Descriptor instead.
+func (*GetQuizRequest) Descriptor() ([]byte, []int) {
+	return file_quiz_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *GetQuizRequest) GetCategory() string {
+	if x != nil {
+		return x.Category
+	}
+	return ""
+}
+
+func (x *GetQuizRequest) GetDifficulty() uint32 {
+	if x != nil {
+		return x.Difficulty
+	}
+	return 0
+}
+
+type GetQuizResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	QuestionIds   []uint64               `protobuf:"varint,1,rep,packed,name=question_ids,json=questionIds,proto3" json:"question_ids,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetQuizResponse) Reset() {
+	*x = GetQuizResponse{}
+	mi := &file_quiz_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetQuizResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetQuizResponse) ProtoMessage() {}
+
+func (x *GetQuizResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_quiz_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetQuizResponse.ProtoReflect.Descriptor instead.
+func (*GetQuizResponse) Descriptor() ([]byte, []int) {
+	return file_quiz_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *GetQuizResponse) GetQuestionIds() []uint64 {
+	if x != nil {
+		return x.QuestionIds
+	}
+	return nil
+}
+
 var File_quiz_proto protoreflect.FileDescriptor
 
 const file_quiz_proto_rawDesc = "" +
@@ -72,7 +168,16 @@ const file_quiz_proto_rawDesc = "" +
 	"\n" +
 	"quiz.proto\x12\x04quiz\"1\n" +
 	"\fGenerateQuiz\x12!\n" +
-	"\fquestion_ids\x18\x01 \x03(\x04R\vquestionIdsBAZ?golang.project/go-fundamentals/gameapp/contract/goprotobuf/quizb\x06proto3"
+	"\fquestion_ids\x18\x01 \x03(\x04R\vquestionIds\"L\n" +
+	"\x0eGetQuizRequest\x12\x1a\n" +
+	"\bcategory\x18\x01 \x01(\tR\bcategory\x12\x1e\n" +
+	"\n" +
+	"difficulty\x18\x02 \x01(\rR\n" +
+	"difficulty\"4\n" +
+	"\x0fGetQuizResponse\x12!\n" +
+	"\fquestion_ids\x18\x01 \x03(\x04R\vquestionIds2E\n" +
+	"\vQuizService\x126\n" +
+	"\aGetQuiz\x12\x14.quiz.GetQuizRequest\x1a\x15.quiz.GetQuizResponseBAZ?golang.project/go-fundamentals/gameapp/contract/goprotobuf/quizb\x06proto3"
 
 var (
 	file_quiz_proto_rawDescOnce sync.Once
@@ -86,13 +191,17 @@ func file_quiz_proto_rawDescGZIP() []byte {
 	return file_quiz_proto_rawDescData
 }
 
-var file_quiz_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_quiz_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_quiz_proto_goTypes = []any{
-	(*GenerateQuiz)(nil), // 0: quiz.GenerateQuiz
+	(*GenerateQuiz)(nil),    // 0: quiz.GenerateQuiz
+	(*GetQuizRequest)(nil),  // 1: quiz.GetQuizRequest
+	(*GetQuizResponse)(nil), // 2: quiz.GetQuizResponse
 }
 var file_quiz_proto_depIdxs = []int32{
-	0, // [0:0] is the sub-list for method output_type
-	0, // [0:0] is the sub-list for method input_type
+	1, // 0: quiz.QuizService.GetQuiz:input_type -> quiz.GetQuizRequest
+	2, // 1: quiz.QuizService.GetQuiz:output_type -> quiz.GetQuizResponse
+	1, // [1:2] is the sub-list for method output_type
+	0, // [0:1] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -109,9 +218,9 @@ func file_quiz_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_quiz_proto_rawDesc), len(file_quiz_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   1,
+			NumMessages:   3,
 			NumExtensions: 0,
-			NumServices:   0,
+			NumServices:   1,
 		},
 		GoTypes:           file_quiz_proto_goTypes,
 		DependencyIndexes: file_quiz_proto_depIdxs,

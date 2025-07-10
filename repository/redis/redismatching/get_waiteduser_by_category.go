@@ -10,10 +10,10 @@ import (
 	"strconv"
 )
 
-func (r *RedisDb) GetWaitedUserByCategory(ctx context.Context, category entity.Category) ([]matchingparam.WaitedUser, error) {
+func (r *RedisDb) GetWaitedUsersByCategory(ctx context.Context, category entity.Category, difficulty entity.QuestionDifficulty) ([]matchingparam.WaitedUser, error) {
 	const operation = "redismatching.PopMinWaitedUserByCategory"
 
-	var key = r.GetKey(category)
+	var key = r.GetKey(category, difficulty)
 	var numRecords = r.redisAdapter.GetClient().ZCard(ctx, key).Val()
 	if numRecords > 5000 {
 		numRecords = numRecords / 4
@@ -32,7 +32,7 @@ func (r *RedisDb) GetWaitedUserByCategory(ctx context.Context, category entity.C
 	waitedUsersList := make([]matchingparam.WaitedUser, 0, numRecords)
 	for _, z := range waitedUsers {
 		userId, _ := strconv.Atoi(z.Member.(string))
-		waitedUsersList = append(waitedUsersList, matchingparam.NewWaitedUser(int64(z.Score), uint(userId), category))
+		waitedUsersList = append(waitedUsersList, matchingparam.NewWaitedUser(int64(z.Score), uint(userId), category, difficulty))
 	}
 
 	return waitedUsersList, nil

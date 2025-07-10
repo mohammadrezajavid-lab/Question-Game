@@ -6,6 +6,7 @@ import (
 	"golang.project/go-fundamentals/gameapp/contract/broker"
 	"golang.project/go-fundamentals/gameapp/entity"
 	"golang.project/go-fundamentals/gameapp/logger"
+	"golang.project/go-fundamentals/gameapp/param/quizparam"
 	"golang.project/go-fundamentals/gameapp/pkg/protobufencodedecode"
 	"sync"
 )
@@ -15,6 +16,10 @@ type Repository interface {
 	CreateGame(game entity.Game) (entity.Game, error)
 }
 
+type QuizClient interface {
+	GetQuiz(ctx context.Context, request quizparam.GetQuizRequest) (quizparam.GetQuizResponse, error)
+}
+
 type Config struct {
 	NumWorkers uint `mapstructure:"num_workers"`
 }
@@ -22,15 +27,17 @@ type Config struct {
 type Service struct {
 	brokerAdapter *redis.Adapter
 	gameRepo      Repository
+	quizClient    QuizClient
 	publisher     broker.Publisher
 	subscriber    broker.Subscriber
 	config        Config
 }
 
-func New(brokerAdapter *redis.Adapter, gameRepo Repository, publisher broker.Publisher, subscriber broker.Subscriber, config Config) Service {
+func New(brokerAdapter *redis.Adapter, gameRepo Repository, quizClient QuizClient, publisher broker.Publisher, subscriber broker.Subscriber, config Config) Service {
 	return Service{
 		brokerAdapter: brokerAdapter,
 		gameRepo:      gameRepo,
+		quizClient:    quizClient,
 		publisher:     publisher,
 		subscriber:    subscriber,
 		config:        config,
@@ -85,7 +92,7 @@ func (s *Service) handleMatchedUsers(ctx context.Context, payload string) {
 		mu := protobufencodedecode.DecodeMatchingWaitedUsersEvent(payload)
 
 		// Create newGame
-		newGame, rErr := s.gameRepo.CreateGame(entity.NewGame(mu.Category))
+		newGame, rErr := s.gameRepo.CreateGame(entity.NewGame(mu.Category, mu.Difficulty))
 		if rErr != nil {
 			logger.Error(rErr, "failed to create game")
 			return
@@ -100,7 +107,10 @@ func (s *Service) handleMatchedUsers(ctx context.Context, payload string) {
 		newGame.PlayerIds = playerIds
 
 		// TODO - انتخاب بک مجموعه سوال مثلا 15 تایی از استخر سوال ها با توجه به دسته و سطح سختی یا آسانی تعیین شده توسط کاربر
-
+		s.quizClient.GetQuiz(ctx, quizparam.GetQuizRequest{
+			Category:   newGame.Category,
+			Difficulty: newGame.Difficulty,
+		})
 		// Published CreatedGameEvent
 		cg := entity.NewCreatedGame(newGame.Id, newGame.PlayerIds)
 		payloadCg := protobufencodedecode.EncodeGameSvcCreatedGameEvent(cg)

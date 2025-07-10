@@ -23,16 +23,18 @@ type Config struct {
 }
 
 type PresenceGrpcServer struct {
+	grpcCfg *Config
 	presence.UnimplementedPresenceServiceServer
 	presenceSvc *presenceservice.Service
-	grpcCfg     *Config
+	grpcServer  *grpc.Server
 }
 
 func NewPresenceGrpcServer(presenceSvc *presenceservice.Service, grpcCfg *Config) *PresenceGrpcServer {
 	return &PresenceGrpcServer{
+		grpcCfg:                            grpcCfg,
 		UnimplementedPresenceServiceServer: presence.UnimplementedPresenceServiceServer{},
 		presenceSvc:                        presenceSvc,
-		grpcCfg:                            grpcCfg,
+		grpcServer:                         nil,
 	}
 }
 
@@ -77,6 +79,7 @@ func (s *PresenceGrpcServer) Start() {
 
 	// grpc server
 	grpcSrv := grpc.NewServer()
+	s.grpcServer = grpcSrv
 
 	// presence service register to grpc server
 	presence.RegisterPresenceServiceServer(grpcSrv, s)
@@ -84,6 +87,13 @@ func (s *PresenceGrpcServer) Start() {
 	// server grpcServer by listen
 	logger.Info(fmt.Sprintf("presence grpc server started on %s", addr))
 	if sErr := grpcSrv.Serve(listener); sErr != nil {
-		logger.Fatal(sErr, "couldn't server presence grpc server")
+		logger.Fatal(sErr, "couldn't serve presence grpc server")
+	}
+}
+
+func (s *PresenceGrpcServer) Shutdown() {
+	if s != nil && s.grpcServer != nil {
+		logger.Info("presence grpc server shutting down gracefully")
+		s.grpcServer.Stop()
 	}
 }

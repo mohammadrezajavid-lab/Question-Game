@@ -53,6 +53,9 @@ matching_repo_cfg:
   waiting_list_prefix: "waiting-list"
   context_timeout_ZRem: 5s
 
+quiz_redis_repo_cfg:
+  prefix: "quiz-pool"
+
 publisher_cfg:
   context_timeout_redis_pub: 3s
 
@@ -108,3 +111,12 @@ grpc_presence_client_cfg:
   port: 8086
   network: "tcp"
 
+grpc_quiz_server_cfg:
+  host: "127.0.0.1"
+  port: 8087
+  network: "tcp"
+
+grpc_quiz_client_cfg:
+  host: "127.0.0.1"
+  port: 8087
+  network: "tcp"

@@ -29,16 +29,18 @@ func NewPlayer(userId uint, gameId uint) Player {
 type Game struct {
 	Id          uint
 	Category    Category
+	Difficulty  QuestionDifficulty
 	QuestionIds []uint
 	PlayerIds   []uint
 	WinnerId    uint
 	StartTime   time.Time
 }
 
-func NewGame(category Category) Game {
+func NewGame(category Category, difficulty QuestionDifficulty) Game {
 	return Game{
 		Id:          0,
 		Category:    category,
+		Difficulty:  difficulty,
 		QuestionIds: nil,
 		PlayerIds:   nil,
 		WinnerId:    0,

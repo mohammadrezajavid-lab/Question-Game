@@ -6,9 +6,11 @@ import (
 	"github.com/spf13/viper"
 	"golang.project/go-fundamentals/gameapp/adapter/presenceclient"
 	"golang.project/go-fundamentals/gameapp/adapter/publisher"
+	"golang.project/go-fundamentals/gameapp/adapter/quizclient"
 	"golang.project/go-fundamentals/gameapp/adapter/redis"
 	"golang.project/go-fundamentals/gameapp/adapter/subscriber"
 	"golang.project/go-fundamentals/gameapp/config/httpservercfg/constant"
+	"golang.project/go-fundamentals/gameapp/delivery/grpcserver/quizserver"
 	"golang.project/go-fundamentals/gameapp/delivery/metricsserver"
 	"golang.project/go-fundamentals/gameapp/delivery/pprofserver"
 	"golang.project/go-fundamentals/gameapp/logger"
@@ -16,6 +18,7 @@ import (
 	"golang.project/go-fundamentals/gameapp/repository/migrator"
 	"golang.project/go-fundamentals/gameapp/repository/mysql"
 	"golang.project/go-fundamentals/gameapp/repository/redis/redismatching"
+	"golang.project/go-fundamentals/gameapp/repository/redis/redisquiz"
 	"golang.project/go-fundamentals/gameapp/scheduler"
 	"golang.project/go-fundamentals/gameapp/service/gameservice"
 	"golang.project/go-fundamentals/gameapp/service/matchingservice"
@@ -45,7 +48,10 @@ type Config struct {
 	RedisCfg              redis.Config           `mapstructure:"redis_cfg"`
 	SchedulerCfg          scheduler.Config       `mapstructure:"scheduler_cfg"`
 	MatchingRepoCfg       redismatching.Config   `mapstructure:"matching_repo_cfg"`
+	QuizRedisRepoCfg      redisquiz.Config       `mapstructure:"quiz_redis_repo_cfg"`
 	GrpcPresenceClientCfg presenceclient.Config  `mapstructure:"grpc_presence_client_cfg"`
+	GrpcQuizClientCfg     quizclient.Config      `mapstructure:"grpc_quiz_client_cfg"`
+	GrpcQuizCfg           quizserver.Config      `mapstructure:"grpc_quiz_server_cfg"`
 	PublisherCfg          publisher.Config       `mapstructure:"publisher_cfg"`
 	SubscriberCfg         subscriber.Config      `mapstructure:"subscriber_cfg"`
 	LoggerCfg             logger.Config          `mapstructure:"logger_cfg"`
@@ -68,7 +74,10 @@ func NewConfig(host string, port int) Config {
 		RedisCfg:              cfg.RedisCfg,
 		SchedulerCfg:          cfg.SchedulerCfg,
 		MatchingRepoCfg:       cfg.MatchingRepoCfg,
+		QuizRedisRepoCfg:      cfg.QuizRedisRepoCfg,
 		GrpcPresenceClientCfg: cfg.GrpcPresenceClientCfg,
+		GrpcQuizClientCfg:     cfg.GrpcQuizClientCfg,
+		GrpcQuizCfg:           cfg.GrpcQuizCfg,
 		PublisherCfg:          cfg.PublisherCfg,
 		SubscriberCfg:         cfg.SubscriberCfg,
 		LoggerCfg:             cfg.LoggerCfg,
@@ -124,8 +133,17 @@ func loadConfig(host string, port int) Config {
 		if uErr := viper.Sub("matching_repo_cfg").Unmarshal(&cfg.MatchingRepoCfg); uErr != nil {
 			logger.Fatal(uErr, "can't unmarshal matching_repo_cfg config")
 		}
+		if uErr := viper.Sub("quiz_redis_repo_cfg").Unmarshal(&cfg.QuizRedisRepoCfg); uErr != nil {
+			logger.Fatal(uErr, "can't unmarshal quiz_redis_repo_cfg config")
+		}
 		if uErr := viper.Sub("grpc_presence_client_cfg").Unmarshal(&cfg.GrpcPresenceClientCfg); uErr != nil {
 			logger.Fatal(uErr, "can't unmarshal grpc_presence_client_cfg config")
+		}
+		if uErr := viper.Sub("grpc_quiz_client_cfg").Unmarshal(&cfg.GrpcQuizClientCfg); uErr != nil {
+			logger.Fatal(uErr, "can't unmarshal grpc_quiz_client_cfg config")
+		}
+		if uErr := viper.Sub("grpc_quiz_server_cfg").Unmarshal(&cfg.GrpcQuizCfg); uErr != nil {
+			logger.Fatal(uErr, "can't unmarshal grpc_quiz_server_cfg config")
 		}
 		if uErr := viper.Sub("publisher_cfg").Unmarshal(&cfg.PublisherCfg); uErr != nil {
 			logger.Fatal(uErr, "can't unmarshal publisher_cfg config")

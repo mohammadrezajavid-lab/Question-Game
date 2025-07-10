@@ -5,6 +5,7 @@ option go_package = "golang.project/go-fundamentals/gameapp/contract/goprotobuf/
 
 message MatchedUsers {
   string Category = 1;
-  repeated uint64 user_ids = 2;
+  uint64 Difficulty = 2;
+  repeated uint64 user_ids = 3;
 }
 

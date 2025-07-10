@@ -20,6 +20,7 @@ protoc --proto_path=contract/protobuf/quiz --go_out=contract/goprotobuf/quiz --g
 
 ```bash
 protoc --proto_path=contract/protobuf/presence --go_out=contract/goprotobuf/presence --go_opt=paths=source_relative --go-grpc_out=contract/goprotobuf/presence --go-grpc_opt=paths=source_relative ./contract/protobuf/presence/presence.proto
+protoc --proto_path=contract/protobuf/quiz --go_out=contract/goprotobuf/quiz --go_opt=paths=source_relative --go-grpc_out=contract/goprotobuf/quiz --go-grpc_opt=paths=source_relative ./contract/protobuf/quiz/quiz.proto
 ```
 
 ### profiling commands

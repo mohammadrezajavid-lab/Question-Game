@@ -2,9 +2,10 @@ package quizservice
 
 import (
 	"context"
-	"fmt"
 	"golang.project/go-fundamentals/gameapp/entity"
+	"golang.project/go-fundamentals/gameapp/param/quizparam"
 	"golang.project/go-fundamentals/gameapp/pkg/protobufencodedecode"
+	"golang.project/go-fundamentals/gameapp/pkg/richerror"
 	"sync"
 	"time"
 )
@@ -12,6 +13,8 @@ import (
 type SetRepository interface {
 	SetLength(ctx context.Context, key string) (int, error)
 	SetAdd(ctx context.Context, key string, value string)
+	SetPop(ctx context.Context, key string) (string, error)
+	GetKey(category entity.Category, difficulty entity.QuestionDifficulty) string
 }
 
 type DBRepository interface {
@@ -43,7 +46,7 @@ func (s *Service) GenerateQuiz(ctx context.Context) {
 	var wg sync.WaitGroup
 	for _, dif := range difficulties {
 		for _, cat := range categories {
-			key := s.generateKey(cat, dif)
+			key := s.setRepo.GetKey(cat, dif)
 			length, _ := s.setRepo.SetLength(ctx, key)
 			if uint(length) < s.Config.NumberOfQuestions {
 				wg.Add(1)
@@ -61,7 +64,7 @@ func (s *Service) GenerateQuiz(ctx context.Context) {
 
 func (s *Service) createQuiz(ctx context.Context, category entity.Category, difficulty entity.QuestionDifficulty, num uint, wg *sync.WaitGroup) {
 	defer wg.Done()
-	key := s.generateKey(category, difficulty)
+	key := s.setRepo.GetKey(category, difficulty)
 
 	for i := 0; i < int(num); i++ {
 		questionIds, _ := s.dbRepo.GetRandomQuestions(ctx, category, difficulty, s.Config.NumberOfQuestions)
@@ -70,10 +73,21 @@ func (s *Service) createQuiz(ctx context.Context, category entity.Category, diff
 	}
 }
 
-/*
-* Naming convention for key in key-value data structure,
-* quiz_pool:{difficulty}:{category}
- */
-func (s *Service) generateKey(category entity.Category, difficulty entity.QuestionDifficulty) string {
-	return fmt.Sprintf("quiz_pool:%d:%s", difficulty, category)
+func (s *Service) GetQuiz(ctx context.Context, request quizparam.GetQuizRequest) (quizparam.GetQuizResponse, error) {
+	const operation = "quizservice.GetQuiz"
+
+	key := s.setRepo.GetKey(request.Category, request.Difficulty)
+
+	value, err := s.setRepo.SetPop(ctx, key)
+	if err != nil {
+		return quizparam.GetQuizResponse{},
+			richerror.NewRichError(operation).
+				WithError(err).
+				WithMessage("pop quiz from set is failed").
+				WithMeta(map[string]interface{}{"category": request.Category, "difficulty": request.Difficulty})
+	}
+
+	quiz := protobufencodedecode.DecodeQuizSvcQuiz(value)
+
+	return quizparam.GetQuizResponse{QuestionIds: quiz.QuestionIDs}, nil
 }

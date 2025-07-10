@@ -16,9 +16,17 @@ var FailedAddToWaitingListCounter = prometheus.NewCounter(
 	},
 )
 
+var FailedGetWaitedUsersByCategoryCounter = prometheus.NewCounter(
+	prometheus.CounterOpts{
+		Name: "failed_getWaitedUsersByCategory_total",
+		Help: "Total number of failed get user from WaitingList by category",
+	},
+)
+
 func init() {
 	Registry.MustRegister(
 		FailedGetPresenceClientCounter,
 		FailedAddToWaitingListCounter,
+		FailedGetWaitedUsersByCategoryCounter,
 	)
 }

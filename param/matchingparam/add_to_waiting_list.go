@@ -6,14 +6,16 @@ import (
 )
 
 type AddToWaitingListRequest struct {
-	UserId   uint            `json:"-"`
-	Category entity.Category `json:"category"`
+	UserId     uint                      `json:"-"`
+	Category   entity.Category           `json:"category"`
+	Difficulty entity.QuestionDifficulty `json:"difficulty"`
 }
 
 func NewAddToWaitingListRequest() *AddToWaitingListRequest {
 	return &AddToWaitingListRequest{
-		UserId:   0,
-		Category: "",
+		UserId:     0,
+		Category:   "",
+		Difficulty: 0,
 	}
 }
 
