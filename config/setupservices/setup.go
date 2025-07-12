@@ -15,7 +15,7 @@ import (
 	"golang.project/go-fundamentals/gameapp/repository/mysql/questionmysql"
 	"golang.project/go-fundamentals/gameapp/repository/mysql/usermysql"
 	"golang.project/go-fundamentals/gameapp/repository/redis/redismatching"
-	"golang.project/go-fundamentals/gameapp/repository/redis/redisquiz"
+	"golang.project/go-fundamentals/gameapp/repository/redis/redisset"
 	"golang.project/go-fundamentals/gameapp/service/authenticationservice"
 	"golang.project/go-fundamentals/gameapp/service/authorizationservice"
 	"golang.project/go-fundamentals/gameapp/service/backofficeuserservice"
@@ -72,10 +72,20 @@ func New(config httpservercfg.Config) *SetupServices {
 	matchingValidator := matchingvalidator.NewValidator()
 
 	gameRepo := gamemysql.NewDataBase(mysqlDB)
+	questionRepo := questionmysql.NewDataBase(mysqlDB)
+	kvStore := redisset.NewRedisDb(redisAdapter)
 	quizClient, _ := quizclient.NewClient(config.GrpcQuizClientCfg)
-	gameSvc := gameservice.New(redisAdapter, gameRepo, &quizClient, redisPublisher, redisSubscriber, config.GameServiceCfg)
+	gameSvc := gameservice.New(
+		redisAdapter,
+		gameRepo,
+		questionRepo,
+		kvStore,
+		&quizClient,
+		redisPublisher,
+		redisSubscriber,
+		config.GameServiceCfg)
 
-	quizSvc := quizservice.New(config.QuizServiceCfg, redisquiz.NewRedisDb(redisAdapter, config.QuizRedisRepoCfg), questionmysql.NewDataBase(mysqlDB))
+	quizSvc := quizservice.New(config.QuizServiceCfg, redisset.NewRedisDb(redisAdapter), questionmysql.NewDataBase(mysqlDB))
 
 	jwt := jwt.NewJWT(config.JwtCfg)
 	authHandler := authhandler.New(authSvc, jwt)

@@ -88,6 +88,10 @@ You can run the application as a monolith or as individual microservices.
     # This will also run migrations
     go run main.go -migrate-command=up
     ```
+    * **After migrating the project tables, run or import the following SQL script to insert questions into the question table.**
+      ```
+      file: ./repository/mysql/migrations/seed_question.sql
+      ```
     * **To run without auto-migrating after the first time:**
       ```bash
       go run main.go
@@ -111,6 +115,10 @@ You can run the application as a monolith or as individual microservices.
         go run cmd/presenceserver/main.go
         ```
     * **Game Service:**
+        ```bash
+        go run cmd/gameservice/main.go
+        ```
+    * **Quiz Service:**
         ```bash
         go run cmd/gameservice/main.go
         ```

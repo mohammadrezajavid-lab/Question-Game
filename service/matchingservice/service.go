@@ -2,6 +2,7 @@ package matchingservice
 
 import (
 	"context"
+	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.project/go-fundamentals/gameapp/contract/broker"
 	"golang.project/go-fundamentals/gameapp/entity"
@@ -83,6 +84,7 @@ func (s *Service) MatchWaitedUsers(ctx context.Context) {
 			metrics.GoActiveGoroutinesServiceGauge.With(prometheus.Labels{"service": "matching_user"}).Inc()
 			wg.Add(1)
 			go s.matchingUsers(ctx, cat, diff, wg)
+			fmt.Println("------------>", cat, ":", diff)
 		}
 	}
 

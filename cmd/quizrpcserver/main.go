@@ -11,7 +11,7 @@ import (
 	"golang.project/go-fundamentals/gameapp/pkg/infomessage"
 	"golang.project/go-fundamentals/gameapp/repository/mysql"
 	"golang.project/go-fundamentals/gameapp/repository/mysql/questionmysql"
-	"golang.project/go-fundamentals/gameapp/repository/redis/redisquiz"
+	"golang.project/go-fundamentals/gameapp/repository/redis/redisset"
 	"golang.project/go-fundamentals/gameapp/service/quizservice"
 	"os"
 	"os/signal"
@@ -31,7 +31,7 @@ func main() {
 
 	redisAdapter := redis.New(grpcCfg.RedisCfg)
 	mysqlDB := mysql.NewDB(grpcCfg.DataBaseCfg)
-	setRepo := redisquiz.NewRedisDb(redisAdapter, grpcCfg.QuizRedisRepoCfg)
+	setRepo := redisset.NewRedisDb(redisAdapter)
 	dbRepo := questionmysql.NewDataBase(mysqlDB)
 	quizSvc := quizservice.New(grpcCfg.QuizServiceCfg, setRepo, dbRepo)
 	rpcServer := quizserver.NewQuizGrpcServer(&quizSvc, &grpcCfg.GrpcQuizCfg)

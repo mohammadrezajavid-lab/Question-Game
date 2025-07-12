@@ -52,8 +52,8 @@ type Question struct {
 	Category        Category
 }
 
-func NewQuestion(id uint, text string) *Question {
-	return &Question{
+func NewQuestion(id uint, text string) Question {
+	return Question{
 		Id:              id,
 		Text:            text,
 		PossibleAnswers: nil,

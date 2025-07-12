@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"golang.project/go-fundamentals/gameapp/adapter/publisher"
+	"golang.project/go-fundamentals/gameapp/adapter/quizclient"
 	"golang.project/go-fundamentals/gameapp/adapter/redis"
 	"golang.project/go-fundamentals/gameapp/adapter/subscriber"
 	"golang.project/go-fundamentals/gameapp/config/gameservicecfg"
@@ -11,6 +12,8 @@ import (
 	"golang.project/go-fundamentals/gameapp/pkg/infomessage"
 	"golang.project/go-fundamentals/gameapp/repository/mysql"
 	"golang.project/go-fundamentals/gameapp/repository/mysql/gamemysql"
+	"golang.project/go-fundamentals/gameapp/repository/mysql/questionmysql"
+	"golang.project/go-fundamentals/gameapp/repository/redis/redisset"
 	"golang.project/go-fundamentals/gameapp/service/gameservice"
 	"os"
 	"os/signal"
@@ -47,8 +50,19 @@ func setUpSvc(config *gameservicecfg.Config) gameservice.Service {
 	redisAdapter := redis.New(config.RedisCfg)
 	mysqlDB := mysql.NewDB(config.DataBaseCfg)
 	gameRepo := gamemysql.NewDataBase(mysqlDB)
+	questionRepo := questionmysql.NewDataBase(mysqlDB)
 	redisPublisher := publisher.NewPublisher(config.PublisherCfg, redisAdapter)
 	redisSubscriber := subscriber.NewSubscriber(redisAdapter, config.SubscriberCfg)
+	kvStore := redisset.NewRedisDb(redisAdapter)
+	quizClient, _ := quizclient.NewClient(config.GrpcQuizClientCfg)
 
-	return gameservice.New(redisAdapter, gameRepo, redisPublisher, redisSubscriber, config.GameServiceCfg)
+	return gameservice.New(
+		redisAdapter,
+		gameRepo,
+		questionRepo,
+		kvStore,
+		&quizClient,
+		redisPublisher,
+		redisSubscriber,
+		config.GameServiceCfg)
 }

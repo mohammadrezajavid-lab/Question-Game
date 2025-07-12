@@ -31,8 +31,8 @@ func (s *Scheduler) newJobGenerateQuiz() {
 }
 
 func (s *Scheduler) generateQuizTask() {
-	ctx, cancel := context.WithTimeout(context.Background(), s.quizSvc.Config.ContextTimeOut)
-	defer cancel()
+	ctx := context.Background()
+
 	s.quizSvc.GenerateQuiz(ctx)
 
 	metrics.GenerateQuizRunSuccessfullyJobCounter.Inc()

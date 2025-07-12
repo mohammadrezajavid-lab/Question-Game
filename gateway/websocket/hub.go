@@ -116,7 +116,7 @@ func (h *Hub) sendGameCreatedNotificationToClient(ctx context.Context, payload s
 		GameId uint   `json:"game_id"`
 	}
 	newMsg := message{
-		Event:  "game_created",
+		Event:  entity.GameSvcCreatedGameEvent,
 		GameId: gameCreated.GameId,
 	}
 	msgPayload, _ := json.Marshal(newMsg)

@@ -11,7 +11,7 @@ import (
 	"golang.project/go-fundamentals/gameapp/repository/mysql"
 	"golang.project/go-fundamentals/gameapp/repository/mysql/questionmysql"
 	"golang.project/go-fundamentals/gameapp/repository/redis/redismatching"
-	"golang.project/go-fundamentals/gameapp/repository/redis/redisquiz"
+	"golang.project/go-fundamentals/gameapp/repository/redis/redisset"
 	"golang.project/go-fundamentals/gameapp/scheduler"
 	"golang.project/go-fundamentals/gameapp/service/matchingservice"
 	"golang.project/go-fundamentals/gameapp/service/quizservice"
@@ -52,7 +52,7 @@ func setUpSvc(config httpservercfg.Config) (matchingservice.Service, quizservice
 	redisPublisher := publisher.NewPublisher(config.PublisherCfg, redisAdapter)
 
 	mysqlDB := mysql.NewDB(config.DataBaseCfg)
-	setRepo := redisquiz.NewRedisDb(redisAdapter, config.QuizRedisRepoCfg)
+	setRepo := redisset.NewRedisDb(redisAdapter)
 	dbRepo := questionmysql.NewDataBase(mysqlDB)
 
 	quizSvc := quizservice.New(config.QuizServiceCfg, setRepo, dbRepo)

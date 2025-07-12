@@ -2,7 +2,9 @@ package quizservice
 
 import (
 	"context"
+	"fmt"
 	"golang.project/go-fundamentals/gameapp/entity"
+	"golang.project/go-fundamentals/gameapp/logger"
 	"golang.project/go-fundamentals/gameapp/param/quizparam"
 	"golang.project/go-fundamentals/gameapp/pkg/protobufencodedecode"
 	"golang.project/go-fundamentals/gameapp/pkg/richerror"
@@ -14,7 +16,6 @@ type SetRepository interface {
 	SetLength(ctx context.Context, key string) (int, error)
 	SetAdd(ctx context.Context, key string, value string)
 	SetPop(ctx context.Context, key string) (string, error)
-	GetKey(category entity.Category, difficulty entity.QuestionDifficulty) string
 }
 
 type DBRepository interface {
@@ -24,7 +25,9 @@ type DBRepository interface {
 type Config struct {
 	ContextTimeOut    time.Duration `mapstructure:"context_time_out"`
 	NumberOfQuestions uint          `mapstructure:"number_of_questions"`
+	Prefix            string        `mapstructure:"prefix"`
 }
+
 type Service struct {
 	Config  Config
 	setRepo SetRepository
@@ -40,43 +43,51 @@ func New(config Config, setRepository SetRepository, dbRepository DBRepository) 
 }
 
 func (s *Service) GenerateQuiz(ctx context.Context) {
+	var wg sync.WaitGroup
+
 	difficulties := entity.QuestionDifficulty(0).GetAllDifficulties()
 	categories := entity.Category("all_categories").GetCategories()
 
-	var wg sync.WaitGroup
 	for _, dif := range difficulties {
 		for _, cat := range categories {
-			key := s.setRepo.GetKey(cat, dif)
+			key := s.getKey(cat, dif)
 			length, _ := s.setRepo.SetLength(ctx, key)
+
 			if uint(length) < s.Config.NumberOfQuestions {
 				wg.Add(1)
-				/*
-					Since the number of combinations of category and difficulty is limited,
-					goroutines have been used. However,
-					if the number of these combinations increases significantly,
-					it would be better to use a worker pool.
-				*/
-				go s.createQuiz(ctx, cat, dif, s.Config.NumberOfQuestions-uint(length), &wg)
+				go s.createQuiz(cat, dif, s.Config.NumberOfQuestions-uint(length), &wg)
 			}
 		}
 	}
+
+	wg.Wait()
 }
 
-func (s *Service) createQuiz(ctx context.Context, category entity.Category, difficulty entity.QuestionDifficulty, num uint, wg *sync.WaitGroup) {
+func (s *Service) createQuiz(category entity.Category, difficulty entity.QuestionDifficulty, num uint, wg *sync.WaitGroup) {
 	defer wg.Done()
-	key := s.setRepo.GetKey(category, difficulty)
+	key := s.getKey(category, difficulty)
 
 	for i := 0; i < int(num); i++ {
-		questionIds, _ := s.dbRepo.GetRandomQuestions(ctx, category, difficulty, s.Config.NumberOfQuestions)
-		quizPayload := protobufencodedecode.EncodeQuizSvcQuiz(entity.Quiz{QuestionIDs: questionIds})
-		s.setRepo.SetAdd(ctx, key, quizPayload)
+		localCtx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
+
+		questionIds, err := s.dbRepo.GetRandomQuestions(localCtx, category, difficulty, s.Config.NumberOfQuestions)
+		if err != nil {
+			logger.Warn(err, "failed to get random questions")
+			cancel()
+
+			continue
+		}
+
+		payload := protobufencodedecode.EncodeQuizSvcQuiz(entity.Quiz{QuestionIDs: questionIds})
+		s.setRepo.SetAdd(localCtx, key, payload)
+		cancel()
 	}
 }
 
 func (s *Service) GetQuiz(ctx context.Context, request quizparam.GetQuizRequest) (quizparam.GetQuizResponse, error) {
 	const operation = "quizservice.GetQuiz"
 
-	key := s.setRepo.GetKey(request.Category, request.Difficulty)
+	key := s.getKey(request.Category, request.Difficulty)
 
 	value, err := s.setRepo.SetPop(ctx, key)
 	if err != nil {
@@ -90,4 +101,13 @@ func (s *Service) GetQuiz(ctx context.Context, request quizparam.GetQuizRequest)
 	quiz := protobufencodedecode.DecodeQuizSvcQuiz(value)
 
 	return quizparam.GetQuizResponse{QuestionIds: quiz.QuestionIDs}, nil
+}
+
+//getKey
+/*
+* Naming convention for key in key-value data structure,
+* quiz-pool:{difficulty}:{category}
+ */
+func (s *Service) getKey(category entity.Category, difficulty entity.QuestionDifficulty) string {
+	return fmt.Sprintf("%s:%d:%s", s.Config.Prefix, difficulty, category)
 }

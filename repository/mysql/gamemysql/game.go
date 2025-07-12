@@ -1,6 +1,7 @@
 package gamemysql
 
 import (
+	"context"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.project/go-fundamentals/gameapp/entity"
 	"golang.project/go-fundamentals/gameapp/logger"
@@ -9,12 +10,13 @@ import (
 	"golang.project/go-fundamentals/gameapp/pkg/richerror"
 )
 
-func (d *DataBase) CreateGame(game entity.Game) (entity.Game, error) {
+func (d *DataBase) CreateGame(ctx context.Context, game entity.Game) (entity.Game, error) {
 
 	const operation = "gamemysql.CreateGame"
 	const queryType = "insert"
 
-	var result, eErr = d.dataBase.MysqlConnection.Exec(
+	var result, eErr = d.dataBase.MysqlConnection.ExecContext(
+		ctx,
 		`INSERT INTO game_app_db.games(category, winner_id, start_time) VALUES(?, ?, ?)`,
 		game.Category,
 		game.WinnerId,
@@ -40,12 +42,13 @@ func (d *DataBase) CreateGame(game entity.Game) (entity.Game, error) {
 	return game, nil
 }
 
-func (d *DataBase) CreatePlayer(player entity.Player) (entity.Player, error) {
+func (d *DataBase) CreatePlayer(ctx context.Context, player entity.Player) (entity.Player, error) {
 
 	const operation = "gamemysql.CreatePlayer"
 	const queryType = "insert"
 
-	var result, eErr = d.dataBase.MysqlConnection.Exec(
+	var result, eErr = d.dataBase.MysqlConnection.ExecContext(
+		ctx,
 		`INSERT INTO game_app_db.players(user_id, game_id, score) VALUES(?,?,?)`,
 		player.UserId,
 		player.GameId,

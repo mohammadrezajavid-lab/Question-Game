@@ -35,11 +35,14 @@ matching_cfg:
   waiting_time_out: 5m
 
 game_svc_cfg:
-  num_workers: 5
+  num_workers_game_event: 5
+  num_workers_matched_event: 5
+  game_quiz_ttl_expiration: 30m
 
 quiz_svc_cfg:
-  context_time_out: 5m
+  context_time_out: 2h
   number_of_questions: 20
+  prefix: "quiz-pool"
 
 presence_cfg:
   expiration_time: 30m
@@ -52,9 +55,6 @@ scheduler_cfg:
 matching_repo_cfg:
   waiting_list_prefix: "waiting-list"
   context_timeout_ZRem: 5s
-
-quiz_redis_repo_cfg:
-  prefix: "quiz-pool"
 
 publisher_cfg:
   context_timeout_redis_pub: 3s

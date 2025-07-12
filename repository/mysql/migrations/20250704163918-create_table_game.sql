@@ -6,7 +6,8 @@ CREATE TABLE games
     difficulty   TINYINT UNSIGNED NOT NULL CHECK ( difficulty BETWEEN 1 AND 3),
     winner_id    BIGINT UNSIGNED DEFAULT NULL,
     start_time   DATETIME         NOT NULL,
-    question_ids JSON            DEFAULT NULL
+    question_ids JSON            DEFAULT NULL,
+    created_at   DATETIME        DEFAULT current_timestamp
 );
 
 -- +migrate Down

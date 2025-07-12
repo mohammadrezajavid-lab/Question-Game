@@ -1,5 +1,7 @@
 package richerror
 
+import "fmt"
+
 type Kind int
 
 const (
@@ -165,5 +167,5 @@ func (re RichError) Error() string {
 		return re.wrappedError.Error()
 	}
 
-	return re.message
+	return fmt.Sprintf("%s, error: %s", re.message, re.GetError())
 }

@@ -6,7 +6,7 @@ import (
 	"golang.project/go-fundamentals/gameapp/delivery/grpcserver/quizserver"
 	"golang.project/go-fundamentals/gameapp/logger"
 	"golang.project/go-fundamentals/gameapp/repository/mysql"
-	"golang.project/go-fundamentals/gameapp/repository/redis/redisquiz"
+	"golang.project/go-fundamentals/gameapp/repository/redis/redisset"
 	"golang.project/go-fundamentals/gameapp/service/quizservice"
 	"strings"
 )
@@ -14,7 +14,7 @@ import (
 type Config struct {
 	QuizServiceCfg   quizservice.Config `mapstructure:"quiz_svc_cfg"`
 	GrpcQuizCfg      quizserver.Config  `mapstructure:"grpc_quiz_server_cfg"`
-	QuizRedisRepoCfg redisquiz.Config   `mapstructure:"quiz_redis_repo_cfg"`
+	QuizRedisRepoCfg redisset.Config    `mapstructure:"quiz_redis_repo_cfg"`
 	DataBaseCfg      mysql.Config       `mapstructure:"database_cfg"`
 	RedisCfg         redis.Config       `mapstructure:"redis_cfg"`
 	LoggerCfg        logger.Config      `mapstructure:"logger_cfg"`
@@ -24,7 +24,7 @@ func NewConfig() *Config {
 	return &Config{
 		QuizServiceCfg:   quizservice.Config{},
 		GrpcQuizCfg:      quizserver.Config{},
-		QuizRedisRepoCfg: redisquiz.Config{},
+		QuizRedisRepoCfg: redisset.Config{},
 		DataBaseCfg:      mysql.Config{},
 		RedisCfg:         redis.Config{},
 		LoggerCfg:        logger.Config{},

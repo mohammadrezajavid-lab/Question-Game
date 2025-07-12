@@ -3,6 +3,7 @@ package gameservicecfg
 import (
 	"github.com/spf13/viper"
 	"golang.project/go-fundamentals/gameapp/adapter/publisher"
+	"golang.project/go-fundamentals/gameapp/adapter/quizclient"
 	"golang.project/go-fundamentals/gameapp/adapter/redis"
 	"golang.project/go-fundamentals/gameapp/adapter/subscriber"
 	"golang.project/go-fundamentals/gameapp/logger"
@@ -12,16 +13,25 @@ import (
 )
 
 type Config struct {
-	GameServiceCfg gameservice.Config `mapstructure:"game_svc_cfg"`
-	RedisCfg       redis.Config       `mapstructure:"redis_cfg"`
-	DataBaseCfg    mysql.Config       `mapstructure:"database_cfg"`
-	PublisherCfg   publisher.Config   `mapstructure:"publisher_cfg"`
-	SubscriberCfg  subscriber.Config  `mapstructure:"subscriber_cfg"`
-	LoggerCfg      logger.Config      `mapstructure:"logger_cfg"`
+	GameServiceCfg    gameservice.Config `mapstructure:"game_svc_cfg"`
+	RedisCfg          redis.Config       `mapstructure:"redis_cfg"`
+	DataBaseCfg       mysql.Config       `mapstructure:"database_cfg"`
+	PublisherCfg      publisher.Config   `mapstructure:"publisher_cfg"`
+	SubscriberCfg     subscriber.Config  `mapstructure:"subscriber_cfg"`
+	LoggerCfg         logger.Config      `mapstructure:"logger_cfg"`
+	GrpcQuizClientCfg quizclient.Config  `mapstructure:"grpc_quiz_client_cfg"`
 }
 
 func NewConfig() *Config {
-	return &Config{GameServiceCfg: gameservice.Config{}}
+	return &Config{
+		GameServiceCfg:    gameservice.Config{},
+		RedisCfg:          redis.Config{},
+		DataBaseCfg:       mysql.Config{},
+		PublisherCfg:      publisher.Config{},
+		SubscriberCfg:     subscriber.Config{},
+		LoggerCfg:         logger.Config{},
+		GrpcQuizClientCfg: quizclient.Config{},
+	}
 }
 
 func (c *Config) LoadConfig() *Config {
@@ -54,6 +64,9 @@ func (c *Config) LoadConfig() *Config {
 		}
 		if uErr := viper.Sub("logger_cfg").Unmarshal(&c.LoggerCfg); uErr != nil {
 			logger.Fatal(uErr, "can't unmarshal logger_cfg config")
+		}
+		if uErr := viper.Sub("grpc_quiz_client_cfg").Unmarshal(&c.GrpcQuizClientCfg); uErr != nil {
+			logger.Fatal(uErr, "can't unmarshal grpc_quiz_client_cfg config")
 		}
 	} else {
 		if uErr := viper.Unmarshal(c); uErr != nil {

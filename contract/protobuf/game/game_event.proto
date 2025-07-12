@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package game;
+option go_package = "golang.project/go-fundamentals/gameapp/contract/goprotobuf/game";
+
+message GameEvent {
+  uint64 game_id = 1;
+  repeated uint64 player_ids = 2;
+  repeated uint64 question_ids = 3;
+}

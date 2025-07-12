@@ -34,7 +34,9 @@ func (s *Scheduler) matchWaitedUserTask() {
 
 	ctx, cancel := context.WithTimeout(context.Background(), s.matchingSvc.GetConfig().ContextTimeOut)
 	defer cancel()
+
 	s.matchingSvc.MatchWaitedUsers(ctx)
+
 	metrics.MatchWaitedUserRunSuccessfullyJobCounter.Inc()
 	logger.Info("matchWaitedUsers_successfully")
 }

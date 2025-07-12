@@ -47,3 +47,9 @@ func NewGame(category Category, difficulty QuestionDifficulty) Game {
 		StartTime:   time.Now(),
 	}
 }
+
+type GameQuiz struct {
+	GameId    uint
+	PlayerIds []uint
+	Questions []Question
+}

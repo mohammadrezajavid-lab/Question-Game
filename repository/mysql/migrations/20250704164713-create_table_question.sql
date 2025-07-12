@@ -3,12 +3,10 @@ CREATE TABLE questions
 (
     id                BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     text              TEXT             NOT NULL,
-    correct_answer_id BIGINT UNSIGNED,
+    correct_answer_id INT UNSIGNED,
     difficulty        TINYINT UNSIGNED NOT NULL CHECK ( difficulty BETWEEN 1 AND 3),
     category          VARCHAR(32)      NOT NULL,
-
-    INDEX idx_category (category),
-    INDEX idx_difficulty (difficulty)
+    created_at        DATETIME DEFAULT current_timestamp
 );
 
 CREATE TABLE possible_answers
