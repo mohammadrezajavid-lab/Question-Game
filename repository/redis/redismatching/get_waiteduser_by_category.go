@@ -5,12 +5,12 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.project/go-fundamentals/gameapp/entity"
 	"golang.project/go-fundamentals/gameapp/metrics"
-	"golang.project/go-fundamentals/gameapp/param/matchingparam"
+	"golang.project/go-fundamentals/gameapp/param/gameparam"
 	"golang.project/go-fundamentals/gameapp/pkg/richerror"
 	"strconv"
 )
 
-func (r *RedisDb) GetWaitedUsersByCategory(ctx context.Context, category entity.Category, difficulty entity.QuestionDifficulty) ([]matchingparam.WaitedUser, error) {
+func (r *RedisDb) GetWaitedUsersByCategory(ctx context.Context, category entity.Category, difficulty entity.QuestionDifficulty) ([]gameparam.WaitedUser, error) {
 	const operation = "redismatching.PopMinWaitedUserByCategory"
 
 	var key = r.GetKey(category, difficulty)
@@ -24,15 +24,15 @@ func (r *RedisDb) GetWaitedUsersByCategory(ctx context.Context, category entity.
 	if zErr != nil {
 		metrics.RedisRequestsCounter.With(prometheus.Labels{"status": "fail"}).Inc()
 
-		return make([]matchingparam.WaitedUser, 0),
+		return make([]gameparam.WaitedUser, 0),
 			richerror.NewRichError(operation).WithError(zErr).WithKind(richerror.KindUnexpected)
 	}
 	metrics.RedisRequestsCounter.With(prometheus.Labels{"status": "success"}).Inc()
 
-	waitedUsersList := make([]matchingparam.WaitedUser, 0, numRecords)
+	waitedUsersList := make([]gameparam.WaitedUser, 0, numRecords)
 	for _, z := range waitedUsers {
 		userId, _ := strconv.Atoi(z.Member.(string))
-		waitedUsersList = append(waitedUsersList, matchingparam.NewWaitedUser(int64(z.Score), uint(userId), category, difficulty))
+		waitedUsersList = append(waitedUsersList, gameparam.NewWaitedUser(int64(z.Score), uint(userId), category, difficulty))
 	}
 
 	return waitedUsersList, nil

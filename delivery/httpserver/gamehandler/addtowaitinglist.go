@@ -1,16 +1,16 @@
-package matchinghandler
+package gamehandler
 
 import (
 	"github.com/labstack/echo/v4"
 	"golang.project/go-fundamentals/gameapp/delivery/httpserver/parsericherror"
-	"golang.project/go-fundamentals/gameapp/param/matchingparam"
+	"golang.project/go-fundamentals/gameapp/param/gameparam"
 	"golang.project/go-fundamentals/gameapp/pkg/claim"
 	"net/http"
 )
 
-func (h *MatchingHandler) addToWaitingList(ctx echo.Context) error {
+func (q *GameHandler) addToWaitingList(ctx echo.Context) error {
 
-	var request = matchingparam.NewAddToWaitingListRequest()
+	var request = gameparam.NewAddToWaitingListRequest()
 	if err := ctx.Bind(request); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
@@ -20,7 +20,7 @@ func (h *MatchingHandler) addToWaitingList(ctx echo.Context) error {
 	request.UserId = claims.UserId
 
 	// validate request
-	if fieldErrors, validateErr := h.matchingValidator.ValidateAddToWaitingListRequest(request); validateErr != nil {
+	if fieldErrors, validateErr := q.matchingValidator.ValidateAddToWaitingListRequest(request); validateErr != nil {
 
 		message, statusCode := parsericherror.New().ParseRichError(validateErr)
 
@@ -30,7 +30,7 @@ func (h *MatchingHandler) addToWaitingList(ctx echo.Context) error {
 		})
 	}
 
-	response, aErr := h.matchingService.AddToWaitingList(ctx.Request().Context(), request)
+	response, aErr := q.matchingService.AddToWaitingList(ctx.Request().Context(), request)
 	if aErr != nil {
 
 		message, statusCode := parsericherror.New().ParseRichError(aErr)

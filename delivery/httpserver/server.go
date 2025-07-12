@@ -9,7 +9,7 @@ import (
 	"golang.project/go-fundamentals/gameapp/config/httpservercfg"
 	"golang.project/go-fundamentals/gameapp/delivery/httpserver/authhandler"
 	"golang.project/go-fundamentals/gameapp/delivery/httpserver/backofficeuserhandler"
-	"golang.project/go-fundamentals/gameapp/delivery/httpserver/matchinghandler"
+	"golang.project/go-fundamentals/gameapp/delivery/httpserver/gamehandler"
 	httpServerMiddleware "golang.project/go-fundamentals/gameapp/delivery/httpserver/middleware"
 	"golang.project/go-fundamentals/gameapp/delivery/httpserver/userhandler"
 	"golang.project/go-fundamentals/gameapp/logger"
@@ -17,6 +17,7 @@ import (
 	"golang.project/go-fundamentals/gameapp/service/authenticationservice"
 	"golang.project/go-fundamentals/gameapp/service/authorizationservice"
 	"golang.project/go-fundamentals/gameapp/service/backofficeuserservice"
+	"golang.project/go-fundamentals/gameapp/service/gameservice"
 	"golang.project/go-fundamentals/gameapp/service/matchingservice"
 	"golang.project/go-fundamentals/gameapp/service/userservice"
 	"golang.project/go-fundamentals/gameapp/validator/matchingvalidator"
@@ -29,7 +30,7 @@ type Server struct {
 	config                httpservercfg.Config
 	userHandler           userhandler.UserHandler
 	backOfficeUserHandler backofficeuserhandler.BackOfficeUserHandler
-	matchingHandler       matchinghandler.MatchingHandler
+	gameHandler           gamehandler.GameHandler
 	authHandler           authhandler.AuthHandler
 	router                *echo.Echo
 }
@@ -45,13 +46,14 @@ func New(
 	matchingValidator matchingvalidator.Validator,
 	presenceClient presenceclient.Client,
 	authHandler authhandler.AuthHandler,
+	gameService gameservice.Service,
 ) *Server {
 
 	return &Server{
 		config:                cfg,
 		userHandler:           userhandler.NewHandler(userSvc, authSvc, authorizationSvc, userValidator, presenceClient),
 		backOfficeUserHandler: backofficeuserhandler.NewHandler(backOfficeUserSvc, authSvc, authorizationSvc, userValidator, presenceClient),
-		matchingHandler:       matchinghandler.NewHandler(authSvc, authorizationSvc, matchingSvc, matchingValidator, presenceClient),
+		gameHandler:           gamehandler.NewHandler(authSvc, authorizationSvc, matchingSvc, matchingValidator, presenceClient, gameService),
 		authHandler:           authHandler,
 		router:                echo.New(),
 	}
@@ -72,7 +74,7 @@ func (s *Server) Serve() {
 
 	s.userHandler.SetRoute(s.router)
 	s.backOfficeUserHandler.SetRoute(s.router)
-	s.matchingHandler.SetRoute(s.router)
+	s.gameHandler.SetRoute(s.router)
 	s.authHandler.SetRoute(s.router)
 
 	serverAddress := fmt.Sprintf("%s:%d", s.config.ServerCfg.Host, s.config.ServerCfg.Port)

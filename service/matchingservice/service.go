@@ -8,7 +8,7 @@ import (
 	"golang.project/go-fundamentals/gameapp/entity"
 	"golang.project/go-fundamentals/gameapp/logger"
 	"golang.project/go-fundamentals/gameapp/metrics"
-	"golang.project/go-fundamentals/gameapp/param/matchingparam"
+	"golang.project/go-fundamentals/gameapp/param/gameparam"
 	"golang.project/go-fundamentals/gameapp/param/presenceparam"
 	"golang.project/go-fundamentals/gameapp/pkg/protobufencodedecode"
 	"golang.project/go-fundamentals/gameapp/pkg/richerror"
@@ -19,7 +19,7 @@ import (
 
 type Repository interface {
 	AddToWaitingList(ctx context.Context, userId uint, key string) error
-	GetWaitedUsersByCategory(ctx context.Context, category entity.Category, difficulty entity.QuestionDifficulty) ([]matchingparam.WaitedUser, error)
+	GetWaitedUsersByCategory(ctx context.Context, category entity.Category, difficulty entity.QuestionDifficulty) ([]gameparam.WaitedUser, error)
 	RemoveUserFromWaitingList(userIds []uint, key string)
 	GetKey(category entity.Category, difficulty entity.QuestionDifficulty) string
 }
@@ -58,7 +58,7 @@ func NewService(config Config, repo Repository, presenceClient PresenceClient, p
 	}
 }
 
-func (s *Service) AddToWaitingList(ctx context.Context, req *matchingparam.AddToWaitingListRequest) (*matchingparam.AddToWaitingListResponse, error) {
+func (s *Service) AddToWaitingList(ctx context.Context, req *gameparam.AddToWaitingListRequest) (*gameparam.AddToWaitingListResponse, error) {
 	const operation = richerror.Operation("matchingservice.AddToWaitingList")
 
 	err := s.repo.AddToWaitingList(ctx, req.UserId, s.repo.GetKey(req.Category, req.Difficulty))
@@ -68,7 +68,7 @@ func (s *Service) AddToWaitingList(ctx context.Context, req *matchingparam.AddTo
 		return nil, richerror.NewRichError(operation).WithError(err)
 	}
 
-	return matchingparam.NewAddToWaitingListResponse(s.config.WaitingTimeOut), nil
+	return gameparam.NewAddToWaitingListResponse(s.config.WaitingTimeOut), nil
 }
 
 func (s *Service) MatchWaitedUsers(ctx context.Context) {
@@ -84,7 +84,6 @@ func (s *Service) MatchWaitedUsers(ctx context.Context) {
 			metrics.GoActiveGoroutinesServiceGauge.With(prometheus.Labels{"service": "matching_user"}).Inc()
 			wg.Add(1)
 			go s.matchingUsers(ctx, cat, diff, wg)
-			fmt.Println("------------>", cat, ":", diff)
 		}
 	}
 
@@ -95,7 +94,8 @@ func (s *Service) matchingUsers(ctx context.Context, category entity.Category, d
 	defer metrics.GoActiveGoroutinesServiceGauge.With(prometheus.Labels{"service": "matching_user"}).Dec()
 	defer wg.Done()
 
-	waitingListByCategory, err := s.getWaitedUsersByCategory(ctx, matchingparam.NewMatchWaitedUserRequest(category, difficulty))
+	waitingListByCategory, err := s.getWaitedUsersByCategory(ctx, gameparam.NewMatchWaitedUserRequest(category, difficulty))
+	fmt.Println("--------------------------------->", waitingListByCategory.WaitedUsers)
 	if err != nil {
 		metrics.FailedGetWaitedUsersByCategoryCounter.Inc()
 		logger.Warn(err, "get user from WaitingList by category Failed")
@@ -115,7 +115,7 @@ func (s *Service) matchingUsers(ctx context.Context, category entity.Category, d
 		return
 	}
 
-	var finalListWaitedUsers = make([]matchingparam.WaitedUser, 0)
+	var finalListWaitedUsers = make([]gameparam.WaitedUser, 0)
 	var allUsersToRemoved = make([]uint, 0)
 	presenceResponse.SortItemsByUserId()
 	for _, waitedUser := range waitingListByCategory.WaitedUsers {
@@ -152,14 +152,14 @@ func (s *Service) matchingUsers(ctx context.Context, category entity.Category, d
 	}()
 }
 
-func (s *Service) getWaitedUsersByCategory(ctx context.Context, req *matchingparam.MatchWaitedUserRequest) (matchingparam.MatchWaitedUserResponse, error) {
+func (s *Service) getWaitedUsersByCategory(ctx context.Context, req *gameparam.MatchWaitedUserRequest) (gameparam.MatchWaitedUserResponse, error) {
 	const operation = richerror.Operation("matchingservice.MatchWaitedUser")
 
 	waitedUsers, err := s.repo.GetWaitedUsersByCategory(ctx, req.Category, req.Difficulty)
 	if err != nil {
-		return matchingparam.MatchWaitedUserResponse{},
+		return gameparam.MatchWaitedUserResponse{},
 			richerror.NewRichError(operation).WithError(err)
 	}
 
-	return matchingparam.MatchWaitedUserResponse{WaitedUsers: waitedUsers}, nil
+	return gameparam.MatchWaitedUserResponse{WaitedUsers: waitedUsers}, nil
 }

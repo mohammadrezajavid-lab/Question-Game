@@ -90,7 +90,7 @@ You can run the application as a monolith or as individual microservices.
     ```
     * **After migrating the project tables, run or import the following SQL script to insert questions into the question table.**
       ```
-      file: ./repository/mysql/migrations/seed_question.sql
+      file: ./repository/mysql/seed_question.sql
       ```
     * **To run without auto-migrating after the first time:**
       ```bash
@@ -151,6 +151,7 @@ The HTTP server will start on `127.0.0.1:8080` and the metrics server on `127.0.
     * `POST /refresh`: Send Refresh Token and Response JWT tokens.
 * **Backoffice (`/backoffice/users/`)**
     * `GET /`: List all users. Requires admin authentication and the `user-list` permission.
-* **Matchmaking (`/matching-player/`)**
-    * `POST /add-to-waiting-list`: Add the authenticated user to a matchmaking waiting list for a specific category.
+* **game (`/game/`)**
+    * `POST add-to-waiting-list`: Add the authenticated user to a matchmaking waiting list for a specific category.
       Updates user presence.
+    * `POST get-quiz`: For Get Quiz by game_id

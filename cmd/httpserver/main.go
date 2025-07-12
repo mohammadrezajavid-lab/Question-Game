@@ -51,6 +51,7 @@ func main() {
 		setupSvc.MatchingValidator,
 		setupSvc.PresenceClient,
 		setupSvc.AuthHandler,
+		setupSvc.GameSvc,
 	)
 	metricServer := metricsserver.NewMetricsServer(config.MetricsCfg)
 
