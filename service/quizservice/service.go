@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"golang.project/go-fundamentals/gameapp/entity"
 	"golang.project/go-fundamentals/gameapp/logger"
+	"golang.project/go-fundamentals/gameapp/metrics"
 	"golang.project/go-fundamentals/gameapp/param/quizparam"
 	"golang.project/go-fundamentals/gameapp/pkg/protobufencodedecode"
 	"golang.project/go-fundamentals/gameapp/pkg/richerror"
@@ -23,9 +24,9 @@ type DBRepository interface {
 }
 
 type Config struct {
-	ContextTimeOut    time.Duration `mapstructure:"context_time_out"`
-	NumberOfQuestions uint          `mapstructure:"number_of_questions"`
-	Prefix            string        `mapstructure:"prefix"`
+	LocalContextTimeOut time.Duration `mapstructure:"local_context_timeout"`
+	NumberOfQuestions   uint          `mapstructure:"number_of_questions"`
+	Prefix              string        `mapstructure:"prefix"`
 }
 
 type Service struct {
@@ -42,7 +43,10 @@ func New(config Config, setRepository SetRepository, dbRepository DBRepository) 
 	}
 }
 
-func (s *Service) GenerateQuiz(ctx context.Context) {
+func (s *Service) GenerateQuiz() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	var wg sync.WaitGroup
 
 	difficulties := entity.QuestionDifficulty(0).GetAllDifficulties()
@@ -68,11 +72,11 @@ func (s *Service) createQuiz(category entity.Category, difficulty entity.Questio
 	key := s.getKey(category, difficulty)
 
 	for i := 0; i < int(num); i++ {
-		localCtx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
-
+		localCtx, cancel := context.WithTimeout(context.Background(), s.Config.LocalContextTimeOut)
 		questionIds, err := s.dbRepo.GetRandomQuestions(localCtx, category, difficulty, s.Config.NumberOfQuestions)
 		if err != nil {
 			logger.Warn(err, "failed to get random questions")
+			metrics.FailedGetRandomQuestions.Inc()
 			cancel()
 
 			continue
@@ -88,9 +92,10 @@ func (s *Service) GetQuiz(ctx context.Context, request quizparam.GetQuizRequest)
 	const operation = "quizservice.GetQuiz"
 
 	key := s.getKey(request.Category, request.Difficulty)
-
 	value, err := s.setRepo.SetPop(ctx, key)
 	if err != nil {
+		logger.Warn(err, "pop quiz from set is failed")
+
 		return quizparam.GetQuizResponse{},
 			richerror.NewRichError(operation).
 				WithError(err).

@@ -71,7 +71,8 @@ func New(
 func (s *Service) Start(ctx context.Context, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	logger.Info("Starting game service dispatcher...")
-	go s.startMatchedUsersWorkers(ctx)
-	s.startGameEventWorkers(ctx)
+	logger.Info("Started game service")
+
+	go s.startMatchEventWorkers(ctx)
+	s.startQuizStoreWorkers(ctx)
 }

@@ -40,7 +40,7 @@ game_svc_cfg:
   game_quiz_ttl_expiration: 30m
 
 quiz_svc_cfg:
-  context_time_out: 2h
+  local_context_timeout: 4m
   number_of_questions: 20
   prefix: "quiz-pool"
 

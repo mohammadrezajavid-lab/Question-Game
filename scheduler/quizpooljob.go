@@ -1,7 +1,6 @@
 package scheduler
 
 import (
-	"context"
 	"fmt"
 	"github.com/go-co-op/gocron/v2"
 	"golang.project/go-fundamentals/gameapp/logger"
@@ -31,9 +30,7 @@ func (s *Scheduler) newJobGenerateQuiz() {
 }
 
 func (s *Scheduler) generateQuizTask() {
-	ctx := context.Background()
-
-	s.quizSvc.GenerateQuiz(ctx)
+	s.quizSvc.GenerateQuiz()
 
 	metrics.GenerateQuizRunSuccessfullyJobCounter.Inc()
 	logger.Info("generateQuizJob_successfully")

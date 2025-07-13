@@ -11,7 +11,7 @@ var FailedZRemRedisCounter = prometheus.NewCounter(
 
 var FailedPublishedEventCounter = prometheus.NewCounter(
 	prometheus.CounterOpts{
-		Name: "failed_published_event",
+		Name: "failed_published_event_total",
 		Help: "Total number of failed published event",
 	},
 )
@@ -21,6 +21,13 @@ var PublishedEventCounter = prometheus.NewCounterVec(
 		Name: "published_event_total",
 		Help: "Total number of succeed published event",
 	}, []string{"event_name"},
+)
+
+var FailedSubscribeTopicCounter = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Name: "failed_subscribe_topic",
+		Help: "Total number of failed subscribe topic",
+	}, []string{"topic"},
 )
 
 var RedisRequestsCounter = prometheus.NewCounterVec(
@@ -35,6 +42,7 @@ func init() {
 		FailedZRemRedisCounter,
 		FailedPublishedEventCounter,
 		PublishedEventCounter,
+		FailedSubscribeTopicCounter,
 		RedisRequestsCounter,
 	)
 }

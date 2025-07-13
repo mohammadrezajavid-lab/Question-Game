@@ -55,7 +55,10 @@ func (d *DataBase) GetQuestions(ctx context.Context, questionIDs []uint) ([]enti
 	metrics.DBQueryCounter.With(prometheus.Labels{"query_type": queryType}).Inc()
 	if err != nil {
 		metrics.DBFailedQueryCounter.With(prometheus.Labels{"query_type": queryType}).Inc()
-		return nil, err
+		return nil, richerror.NewRichError(operation).
+			WithError(err).
+			WithMessage(errormessage.ErrorMsgUnexpected).
+			WithKind(richerror.KindUnexpected)
 	}
 	defer rows.Close()
 
@@ -69,7 +72,7 @@ func (d *DataBase) GetQuestions(ctx context.Context, questionIDs []uint) ([]enti
 			answersRaw sql.NullString
 		)
 
-		err := rows.Scan(
+		sErr := rows.Scan(
 			&question.Id,
 			&question.Text,
 			&question.CorrectAnswer,
@@ -77,8 +80,17 @@ func (d *DataBase) GetQuestions(ctx context.Context, questionIDs []uint) ([]enti
 			&category,
 			&answersRaw,
 		)
-		if err != nil {
-			return nil, err
+		if sErr != nil {
+			if errors.Is(sErr, sql.ErrNoRows) {
+				return nil, richerror.NewRichError(operation).
+					WithError(sErr).
+					WithMessage(errormessage.ErrorMsgRecordNotFound).
+					WithKind(richerror.KindNotFound)
+			}
+			return nil, richerror.NewRichError(operation).
+				WithError(sErr).
+				WithMessage(errormessage.ErrorMsgUnexpected).
+				WithKind(richerror.KindUnexpected)
 		}
 
 		question.Difficulty = entity.QuestionDifficulty(difficulty)
@@ -114,9 +126,11 @@ func (d *DataBase) GetQuestions(ctx context.Context, questionIDs []uint) ([]enti
 		questions = append(questions, question)
 	}
 
-	if err := rows.Err(); err != nil {
+	if rErr := rows.Err(); rErr != nil {
 		metrics.DBFailedQueryCounter.With(prometheus.Labels{"query_type": queryType}).Inc()
-		return nil, err
+		return nil, richerror.NewRichError(operation).
+			WithError(rErr).
+			WithMessage(rErr.Error())
 	}
 
 	return questions, nil

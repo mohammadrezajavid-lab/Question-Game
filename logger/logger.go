@@ -104,38 +104,84 @@ func GetPackageName(skip int) string {
 	return "unknown"
 }
 
-func Warn(err error, msg string) {
+func Warn(err error, msg string, args ...interface{}) {
 	fields := []zapcore.Field{
 		zap.String("warning", err.Error()),
+	}
+
+	for i := 0; i < len(args)-1; i += 2 {
+		key, ok := args[i].(string)
+		if !ok {
+			continue
+		}
+
+		fields = append(fields, zap.Any(key, args[i+1]))
 	}
 
 	zap.L().Named(GetPackageFuncName(2)).Warn(msg, fields...)
 }
 
-func Panic(err error, msg string) {
+func Panic(err error, msg string, args ...interface{}) {
 	fields := []zapcore.Field{
 		zap.String("panic", err.Error()),
+	}
+
+	for i := 0; i < len(args)-1; i += 2 {
+		key, ok := args[i].(string)
+		if !ok {
+			continue
+		}
+
+		fields = append(fields, zap.Any(key, args[i+1]))
 	}
 
 	zap.L().Named(GetPackageFuncName(2)).Panic(msg, fields...)
 }
 
-func Fatal(err error, msg string) {
+func Fatal(err error, msg string, args ...interface{}) {
 	fields := []zapcore.Field{
 		zap.String("fatal", err.Error()),
+	}
+
+	for i := 0; i < len(args)-1; i += 2 {
+		key, ok := args[i].(string)
+		if !ok {
+			continue
+		}
+
+		fields = append(fields, zap.Any(key, args[i+1]))
 	}
 
 	zap.L().Named(GetPackageFuncName(2)).Fatal(msg, fields...)
 }
 
-func Info(msg string) {
+func Info(msg string, args ...interface{}) {
+	fields := make([]zapcore.Field, 0)
 
-	zap.L().Named(GetPackageFuncName(2)).Info(msg)
+	for i := 0; i < len(args)-1; i += 2 {
+		key, ok := args[i].(string)
+		if !ok {
+			continue
+		}
+
+		fields = append(fields, zap.Any(key, args[i+1]))
+	}
+
+	zap.L().Named(GetPackageFuncName(2)).Info(msg, fields...)
 }
 
-func Error(err error, msg string) {
+func Error(err error, msg string, args ...interface{}) {
 	fields := []zapcore.Field{
 		zap.String("error", err.Error()),
+	}
+
+	for i := 0; i < len(args)-1; i += 2 {
+		key, ok := args[i].(string)
+		if !ok {
+			continue
+		}
+
+		fields = append(fields, zap.Any(key, args[i+1]))
 	}
 
 	zap.L().Named(GetPackageFuncName(2)).Error(msg, fields...)
