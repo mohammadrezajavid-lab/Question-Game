@@ -14,8 +14,9 @@ import (
 )
 
 type Config struct {
-	MatchingJobCrontab string `mapstructure:"matching_job_crontab"`
-	QuizPoolJobCrontab string `mapstructure:"quizpool_job_crontab"`
+	MatchingJobCrontab        string        `mapstructure:"matching_job_crontab"`
+	QuizPoolJobCrontab        string        `mapstructure:"quizpool_job_crontab"`
+	MatchingJobContextTimeOut time.Duration `mapstructure:"matching_context_time_out"`
 }
 
 type Scheduler struct {

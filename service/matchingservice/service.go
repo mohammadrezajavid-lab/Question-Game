@@ -2,7 +2,6 @@ package matchingservice
 
 import (
 	"context"
-	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.project/go-fundamentals/gameapp/contract/broker"
 	"golang.project/go-fundamentals/gameapp/entity"
@@ -29,8 +28,7 @@ type PresenceClient interface {
 }
 
 type Config struct {
-	WaitingTimeOut          time.Duration `mapstructure:"waiting_time_out"`
-	ContextTimeOut          time.Duration `mapstructure:"context_time_out"`
+	WaitingListUserTimeOut  time.Duration `mapstructure:"waiting_list_user_time_out"`
 	OnlineThresholdDuration time.Duration `mapstructure:"online_threshold_duration"`
 }
 
@@ -68,7 +66,7 @@ func (s *Service) AddToWaitingList(ctx context.Context, req *gameparam.AddToWait
 		return nil, richerror.NewRichError(operation).WithError(err)
 	}
 
-	return gameparam.NewAddToWaitingListResponse(s.config.WaitingTimeOut), nil
+	return gameparam.NewAddToWaitingListResponse(s.config.WaitingListUserTimeOut), nil
 }
 
 func (s *Service) MatchWaitedUsers(ctx context.Context) {
@@ -77,25 +75,30 @@ func (s *Service) MatchWaitedUsers(ctx context.Context) {
 
 	var wg sync.WaitGroup
 
-	/* TODO - If you have a large number of categories, you can use a worker pool instead of a goroutine for each one.*/
-
 	for _, diff := range difficulties {
 		for _, cat := range categories {
-			metrics.GoActiveGoroutinesServiceGauge.With(prometheus.Labels{"service": "matching_user"}).Inc()
 			wg.Add(1)
-			go s.matchingUsers(ctx, cat, diff, wg)
+			go func(category entity.Category, difficulty entity.QuestionDifficulty) {
+				defer wg.Done()
+
+				childCtx, cancel := context.WithTimeout(ctx, 1*time.Second)
+				defer cancel()
+
+				s.matchingUsers(childCtx, category, difficulty)
+
+			}(cat, diff)
 		}
 	}
 
 	wg.Wait()
 }
 
-func (s *Service) matchingUsers(ctx context.Context, category entity.Category, difficulty entity.QuestionDifficulty, wg sync.WaitGroup) {
+func (s *Service) matchingUsers(ctx context.Context, category entity.Category, difficulty entity.QuestionDifficulty) {
 	defer metrics.GoActiveGoroutinesServiceGauge.With(prometheus.Labels{"service": "matching_user"}).Dec()
-	defer wg.Done()
+
+	metrics.GoActiveGoroutinesServiceGauge.With(prometheus.Labels{"service": "matching_user"}).Inc()
 
 	waitingListByCategory, err := s.getWaitedUsersByCategory(ctx, gameparam.NewMatchWaitedUserRequest(category, difficulty))
-	fmt.Println("--------------------------------->", waitingListByCategory.WaitedUsers)
 	if err != nil {
 		metrics.FailedGetWaitedUsersByCategoryCounter.Inc()
 		logger.Warn(err, "get user from WaitingList by category Failed")
@@ -122,7 +125,7 @@ func (s *Service) matchingUsers(ctx context.Context, category entity.Category, d
 		userPresence := presenceResponse.FindByUserId(waitedUser.UserId)
 
 		if userPresence != nil && userPresence.Timestamp > timestamp.Add(-1*s.config.OnlineThresholdDuration) &&
-			waitedUser.Timestamp > timestamp.Add(-1*s.config.WaitingTimeOut) {
+			waitedUser.Timestamp > timestamp.Add(-1*s.config.WaitingListUserTimeOut) {
 
 			finalListWaitedUsers = append(finalListWaitedUsers, waitedUser)
 			continue

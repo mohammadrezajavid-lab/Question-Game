@@ -2,12 +2,14 @@ package websocket
 
 import (
 	"context"
-	"fmt"
 	"github.com/gorilla/websocket"
+	"github.com/prometheus/client_golang/prometheus"
 	"golang.project/go-fundamentals/gameapp/adapter/presenceclient"
 	"golang.project/go-fundamentals/gameapp/logger"
+	"golang.project/go-fundamentals/gameapp/metrics"
 	"golang.project/go-fundamentals/gameapp/param/presenceparam"
 	"golang.project/go-fundamentals/gameapp/pkg/timestamp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -31,7 +33,8 @@ func (c *Client) readPump() {
 
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				logger.Warn(err, "read data from websocket error")
+				metrics.FailedReadPompCounter.Inc()
+				logger.Error(err, "Read data from websocket error", "user_id", c.userID)
 			}
 			break
 		}
@@ -42,16 +45,17 @@ func (c *Client) readPump() {
 		}
 
 		if strings.TrimSpace(string(msg)) != `{"event":"heartbeat"}` {
-			logger.Info("invalid heartbeat message")
+			metrics.InvalidHeartBeatMessageCounter.With(prometheus.Labels{"user_id": strconv.Itoa(int(c.userID))}).Inc()
+			logger.Info("Invalid heartbeat message", "user_id", c.userID, "message", string(msg))
 			continue
 		}
 
 		ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 		if _, uErr := c.presenceClient.Upsert(ctx, presenceparam.NewUpsertPresenceRequest(c.userID, timestamp.Now())); uErr != nil {
-			logger.Warn(uErr, fmt.Sprintf("failed to upsert presence for user user_id: %d", c.userID))
+			logger.Error(uErr, "Failed Upsert presence for user", "user_id", c.userID)
 		}
 
-		logger.Info(fmt.Sprintf("recived heartbeat message as user_id: %d", c.userID))
+		logger.Info("received heartbeat message", "user_id", c.userID)
 	}
 }
 
@@ -60,7 +64,8 @@ func (c *Client) writePump() {
 
 	for msg := range c.send {
 		if err := c.conn.WriteMessage(websocket.TextMessage, msg); err != nil {
-			logger.Warn(err, "write data to websocket error")
+			metrics.FailedWritePompCounter.Inc()
+			logger.Error(err, "write data to websocket error", "user_id", c.userID)
 			return
 		}
 	}
@@ -70,7 +75,8 @@ func (c *Client) writePump() {
 func (c *Client) Close() {
 	c.closeOnce.Do(
 		func() {
-			logger.Info(fmt.Sprintf("Closing connection for user: %d", c.userID))
+			metrics.ClosingConnectionWebsocket.Inc()
+			logger.Info("Closing connection websocket.", "user_id", c.userID)
 			c.hub.unregister <- c
 			_ = c.conn.Close()
 		},

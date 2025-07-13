@@ -3,6 +3,7 @@ package websocket
 import (
 	"context"
 	"encoding/json"
+	"github.com/prometheus/client_golang/prometheus"
 	"golang.project/go-fundamentals/gameapp/contract/broker"
 	"golang.project/go-fundamentals/gameapp/entity"
 	"golang.project/go-fundamentals/gameapp/logger"
@@ -79,28 +80,30 @@ func (h *Hub) Run() {
 func (h *Hub) dispatcher(ctx context.Context) {
 	jobQueue, err := h.subscriber.SubscribeTopic(ctx, entity.GameSvcCreatedGameEvent)
 	if err != nil {
-		logger.Fatal(err, "failed to subscribe to broker topic")
+		metrics.FailedSubscribeTopicCounter.With(prometheus.Labels{"topic": entity.GameSvcCreatedGameEvent}).Inc()
+		logger.Fatal(err, "subscribe to topic failed", "topic", entity.GameSvcCreatedGameEvent)
 	}
 
 	var wg sync.WaitGroup
 	for i := 0; i < int(h.numWorkers); i++ {
 		wg.Add(1)
-		go h.worker(ctx, jobQueue, &wg)
+		go h.worker(ctx, jobQueue, &wg, i)
 	}
 
 	wg.Wait()
 }
 
-func (h *Hub) worker(ctx context.Context, jobs <-chan string, wg *sync.WaitGroup) {
+func (h *Hub) worker(ctx context.Context, jobs <-chan string, wg *sync.WaitGroup, workerId int) {
 	defer wg.Done()
 
 	for {
 		select {
 		case <-ctx.Done():
-			logger.Info("Worker in websocket gateway received shutdown signal")
+			logger.Info("WebsocketGateway shutdown initiated", "worker_id", workerId)
 			return
 		case job, ok := <-jobs:
 			if !ok {
+				logger.Info("WebsocketGateway job channel closed", "worker_id", workerId)
 				return
 			}
 			h.sendGameCreatedNotificationToClient(ctx, job)

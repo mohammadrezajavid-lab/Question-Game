@@ -14,7 +14,7 @@ func (m *Middleware) AccessCheck(permissions ...entity.PermissionTitle) echo.Mid
 			claims := claim.GetClaimsFromEchoContext(c)
 			isAccess, cErr := m.authorizationService.CheckAccess(claims.UserId, claims.Role, permissions...)
 			if cErr != nil {
-				// TODO - log unexpected error
+
 				return c.JSON(http.StatusInternalServerError, echo.Map{
 					"message": errormessage.ErrorMsgUnexpected,
 				})

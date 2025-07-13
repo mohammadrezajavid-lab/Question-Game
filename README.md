@@ -5,16 +5,6 @@ choose a topic, and compete live by answering questions against other online pla
 API backend, real-time matchmaking capabilities, a robust user authentication system, and can be run as a monolith or as
 separate microservices.
 
-## 🛠️ Getting Started
-
-### Prerequisites
-
-* [Go (1.21+ recommended)](https://go.dev/dl/)
-* [Docker & Docker Compose](https://www.docker.com/get-started)
-* [make (optional, for using Makefile commands)](https://www.gnu.org/software/make/)
-* [sql-migrate](https://github.com/rubenv/sql-migrate) (if you wish to run migrations manually)
-* [protoc](https://grpc.io/docs/protoc-installation/)
-
 ### Installation & Setup
 
 1. **Clone the repository:**
@@ -88,7 +78,8 @@ You can run the application as a monolith or as individual microservices.
     # This will also run migrations
     go run main.go -migrate-command=up
     ```
-    * **After migrating the project tables, run or import the following SQL script to insert questions into the question table.**
+    * **After migrating the project tables, run or import the following SQL script to insert questions into the question
+      table.**
       ```
       file: ./repository/mysql/seed_question.sql
       ```
@@ -140,7 +131,11 @@ You can run the application as a monolith or as individual microservices.
 
 The HTTP server will start on `127.0.0.1:8080` and the metrics server on `127.0.0.1:2112` by default.
 
-## 🔌 API Endpoints
+* **Admin User Info:**
+    * **phone_number:** +989191234567
+    * **password:** @admin123456789
+
+## API Endpoints
 
 * `GET /health-check`: Checks the health of the application and its dependencies (MySQL, Redis).
 * **User Management (`/users/`)**

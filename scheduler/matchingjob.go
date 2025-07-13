@@ -7,6 +7,7 @@ import (
 	"golang.project/go-fundamentals/gameapp/logger"
 	"golang.project/go-fundamentals/gameapp/metrics"
 	"golang.project/go-fundamentals/gameapp/pkg/errormessage"
+	"time"
 )
 
 func (s *Scheduler) newJobMatchWaitedUser() {
@@ -32,7 +33,9 @@ func (s *Scheduler) newJobMatchWaitedUser() {
 
 func (s *Scheduler) matchWaitedUserTask() {
 
-	ctx, cancel := context.WithTimeout(context.Background(), s.matchingSvc.GetConfig().ContextTimeOut)
+	logger.Info(fmt.Sprintf("matchWaitedUsers started at: %s", time.Now().Format(time.RFC3339)))
+
+	ctx, cancel := context.WithTimeout(context.Background(), s.config.MatchingJobContextTimeOut)
 	defer cancel()
 
 	s.matchingSvc.MatchWaitedUsers(ctx)

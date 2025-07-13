@@ -54,7 +54,7 @@ func New(config httpservercfg.Config) *SetupServices {
 	userSvc := userservice.NewService(userRepo, &authSvc)
 	userValidator := uservalidator.NewValidator(userRepo)
 
-	backOfficeUserSvc := backofficeuserservice.NewService()
+	backOfficeUserSvc := backofficeuserservice.NewService(userRepo)
 
 	redisAdapter := redis.New(config.RedisCfg)
 

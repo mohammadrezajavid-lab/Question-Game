@@ -8,7 +8,7 @@ import (
 
 func (h *BackOfficeUserHandler) listUsers(ctx echo.Context) error {
 
-	users, lErr := h.backOfficeUserService.ListAllUsers()
+	users, lErr := h.backOfficeUserService.ListAllUsers(ctx.Request().Context())
 	if lErr != nil {
 		message, statusCode := parsericherror.New().ParseRichError(lErr)
 

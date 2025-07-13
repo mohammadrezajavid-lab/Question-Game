@@ -6,6 +6,7 @@ import (
 	"golang.project/go-fundamentals/gameapp/logger"
 	"golang.project/go-fundamentals/gameapp/metrics"
 	"golang.project/go-fundamentals/gameapp/pkg/errormessage"
+	"time"
 )
 
 func (s *Scheduler) newJobGenerateQuiz() {
@@ -30,6 +31,7 @@ func (s *Scheduler) newJobGenerateQuiz() {
 }
 
 func (s *Scheduler) generateQuizTask() {
+	logger.Info(fmt.Sprintf("generateQuizTask started at: %s", time.Now().Format(time.RFC3339)))
 	s.quizSvc.GenerateQuiz()
 
 	metrics.GenerateQuizRunSuccessfullyJobCounter.Inc()

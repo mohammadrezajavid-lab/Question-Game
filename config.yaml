@@ -30,9 +30,8 @@ jwt_cfg:
   sign_method: "HS256"
 
 matching_cfg:
-  context_time_out: 3m
   online_threshold_duration: 3m
-  waiting_time_out: 5m
+  waiting_list_user_time_out: 5m
 
 game_svc_cfg:
   num_workers_game_event: 5
@@ -51,6 +50,7 @@ presence_cfg:
 scheduler_cfg:
   matching_job_crontab: "*/1 * * * *"
   quizpool_job_crontab: "*/3 * * * *"
+  matching_context_time_out: 2m
 
 matching_repo_cfg:
   waiting_list_prefix: "waiting-list"

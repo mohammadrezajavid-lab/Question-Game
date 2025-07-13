@@ -1,25 +1,38 @@
 package backofficeuserservice
 
-import "golang.project/go-fundamentals/gameapp/entity"
+import (
+	"context"
+	"golang.project/go-fundamentals/gameapp/entity"
+)
 
+type UserRepository interface {
+	ListUsers(ctx context.Context) ([]entity.User, error)
+}
 type Service struct {
+	userRepo UserRepository
 }
 
-func NewService() Service {
-	return Service{}
+func NewService(repository UserRepository) Service {
+	return Service{userRepo: repository}
 }
 
-func (s Service) ListAllUsers() ([]entity.User, error) {
-	// TODO - implement me
-	list := make([]entity.User, 0)
+func (s Service) ListAllUsers(ctx context.Context) ([]entity.User, error) {
 
-	list = append(list, entity.User{
-		Id:             0,
-		Name:           "fake",
-		PhoneNumber:    "fake",
-		HashedPassword: "fake",
-		Role:           entity.AdminRole,
-	})
+	listUsers, err := s.userRepo.ListUsers(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-	return list, nil
+	//// TODO - implement me
+	//list := make([]entity.User, 0)
+	//
+	//list = append(list, entity.User{
+	//	Id:             0,
+	//	Name:           "fake",
+	//	PhoneNumber:    "fake",
+	//	HashedPassword: "fake",
+	//	Role:           entity.AdminRole,
+	//})
+
+	return listUsers, nil
 }

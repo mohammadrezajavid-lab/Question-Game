@@ -146,6 +146,56 @@ func (d *DataBase) GetUserById(ctx context.Context, userId uint) (*entity.User, 
 	return user, nil
 }
 
+func (d *DataBase) ListUsers(ctx context.Context) ([]entity.User, error) {
+	const operation = "mysql.user.ListUsers"
+	const queryType = "select"
+
+	userRows, err := d.dataBase.MysqlConnection.QueryContext(ctx, `SELECT * FROM game_app_db.users`)
+	metrics.DBQueryCounter.With(prometheus.Labels{"query_type": queryType}).Inc()
+	if err != nil {
+		metrics.DBFailedQueryCounter.With(prometheus.Labels{"query_type": queryType}).Inc()
+		return nil, richerror.NewRichError(operation).
+			WithError(err).
+			WithMessage(errormessage.ErrorMsgUnexpected).
+			WithKind(richerror.KindUnexpected)
+	}
+	defer userRows.Close()
+
+	users := make([]entity.User, 0)
+
+	for userRows.Next() {
+		user, sErr := scanUser(userRows)
+		if sErr != nil {
+			if errors.Is(sErr, sql.ErrNoRows) {
+
+				return nil, richerror.NewRichError(operation).
+					WithError(sErr).
+					WithMessage(errormessage.ErrorMsgRecordNotFound).
+					WithKind(richerror.KindNotFound).
+					WithMeta(map[string]interface{}{"user_id": user.Id})
+			}
+
+			metrics.DBFailedQueryCounter.With(prometheus.Labels{"query_type": queryType}).Inc()
+
+			return nil, richerror.NewRichError(operation).
+				WithError(sErr).
+				WithMessage(errormessage.ErrorMsgUnexpected).
+				WithKind(richerror.KindUnexpected)
+		}
+
+		users = append(users, *user)
+	}
+
+	if rErr := userRows.Err(); rErr != nil {
+		metrics.DBFailedQueryCounter.With(prometheus.Labels{"query_type": queryType}).Inc()
+		return nil, richerror.NewRichError(operation).
+			WithError(rErr).
+			WithMessage(rErr.Error())
+	}
+
+	return users, nil
+}
+
 func scanUser(scanner mysql.Scanner) (*entity.User, error) {
 
 	var createdAt time.Time

@@ -60,7 +60,7 @@ func (ws *WebSocket) ServeWs() {
 	logger.Info(fmt.Sprintf("WebSocket Gateway started on %s", ws.Server.Addr))
 
 	if err := ws.Server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-		logger.Error(err, "WebSocket Gateway server failed to start")
+		logger.Error(err, "WebSocket Gateway server failed to start", "addr", ws.Server.Addr)
 	}
 }
 

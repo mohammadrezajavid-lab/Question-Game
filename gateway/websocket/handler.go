@@ -1,6 +1,7 @@
 package websocket
 
 import (
+	"encoding/json"
 	"github.com/gorilla/websocket"
 	"golang.project/go-fundamentals/gameapp/logger"
 	"golang.project/go-fundamentals/gameapp/pkg/jwt"
@@ -28,7 +29,9 @@ func (ws *WebSocket) SocketHandler(hub *Hub) http.HandlerFunc {
 
 		claims, err := newJwt.ParseJWT(tokenStr)
 		if err != nil {
-			http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(w).Encode(map[string]string{"error": "unauthorized"})
 			return
 		}
 
@@ -36,7 +39,9 @@ func (ws *WebSocket) SocketHandler(hub *Hub) http.HandlerFunc {
 		conn, err := upgrade.Upgrade(w, r, nil)
 		if err != nil {
 			logger.Error(err, "WebSocket upgrade failed")
-			http.Error(w, `{"error":"could not open websocket connection"}`, http.StatusBadRequest)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "can't open websocket connection"})
 			return
 		}
 
